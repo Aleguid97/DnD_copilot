@@ -28,6 +28,10 @@ class WeaponAttackInfo {
 class CombatStats {
   final Character character;
   final List<GameItem> equippedItems;
+  bool get hasDangerSense =>
+      character.characterClass.id == 'barbarian' && character.level >= 2;
+  bool get hasFeralInstinct =>
+      character.characterClass.id == 'barbarian' && character.level >= 7;
 
   const CombatStats({required this.character, required this.equippedItems});
 

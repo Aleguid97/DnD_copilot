@@ -37,7 +37,6 @@ class Character {
     required this.abilityScores,
     required this.hitPoints,
   });
-
   Map<Ability, int> get totalAbilityBonuses {
     final bgBonuses = backgroundAbilityChoice.toBonusMap(
       background.abilityScoreOptions,
@@ -45,7 +44,36 @@ class Character {
     final asiBonuses = mergeAbilityBonusMaps(
       asiChoices.map((c) => c.toBonusMap()).toList(),
     );
-    return mergeAbilityBonusMaps([bgBonuses, asiBonuses]);
+    final baseMerged = mergeAbilityBonusMaps([bgBonuses, asiBonuses]);
+    if (characterClass.id == 'barbarian' && level >= 20) {
+      final currentStr =
+          abilityScores.baseScores[Ability.strength]! +
+          (baseMerged[Ability.strength] ?? 0);
+      final currentCon =
+          abilityScores.baseScores[Ability.constitution]! +
+          (baseMerged[Ability.constitution] ?? 0);
+      final champBonus = <Ability, int>{
+        Ability.strength: (25 - currentStr).clamp(0, 4),
+        Ability.constitution: (25 - currentCon).clamp(0, 4),
+      };
+      return mergeAbilityBonusMaps([baseMerged, champBonus]);
+    }
+    return baseMerged;
+  }
+
+  Map<Ability, int> get racialAndClassBonuses {
+    final result = <Ability, int>{};
+    if (characterClass.id == 'barbarian' && level >= 20) {
+      final currentStr =
+          abilityScores.baseScores[Ability.strength]! +
+          (totalAbilityBonuses[Ability.strength] ?? 0);
+      final currentCon =
+          abilityScores.baseScores[Ability.constitution]! +
+          (totalAbilityBonuses[Ability.constitution] ?? 0);
+      result[Ability.strength] = (25 - currentStr).clamp(0, 4);
+      result[Ability.constitution] = (25 - currentCon).clamp(0, 4);
+    }
+    return result;
   }
 
   int get conModifier => abilityScores.modifierFor(

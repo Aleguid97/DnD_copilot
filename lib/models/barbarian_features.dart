@@ -7,3 +7,7 @@ int rageDamageBonus(int barbarianLevel) {
 
 /// Relentless Rage: DC starts at 10, +5 each additional use since the last rest.
 int relentlessRageDc(int usesSinceRest) => 10 + (usesSinceRest * 5);
+
+/// Frenzy (Berserker): extra d6s equal to Rage Damage bonus, once per turn on Reckless Attack hit.
+String frenzyExtraDice(int barbarianLevel) =>
+    '${rageDamageBonus(barbarianLevel)}d6';

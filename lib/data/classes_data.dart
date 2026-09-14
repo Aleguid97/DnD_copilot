@@ -79,9 +79,21 @@ final List<CharacterClass> allClasses = [
       LevelFeature(
         level: 3,
         fixedTraits: [
-          'Primal Knowledge: proficiency in another Barbarian skill; while raging, use Strength instead of the normal ability for Acrobatics/Intimidation/Perception/Stealth/Survival checks',
+          'Primal Knowledge: while raging, use Strength instead of the normal ability for Acrobatics/Intimidation/Perception/Stealth/Survival checks',
         ],
         choices: [
+          Choice(
+            id: 'barbarian_primal_knowledge_skill',
+            title: 'Primal Knowledge: choose 1 additional skill proficiency',
+            options: [
+              ChoiceOption(id: 'animal_handling', label: 'Animal Handling'),
+              ChoiceOption(id: 'athletics', label: 'Athletics'),
+              ChoiceOption(id: 'intimidation', label: 'Intimidation'),
+              ChoiceOption(id: 'nature', label: 'Nature'),
+              ChoiceOption(id: 'perception', label: 'Perception'),
+              ChoiceOption(id: 'survival', label: 'Survival'),
+            ],
+          ),
           Choice(
             id: 'barbarian_subclass',
             title: 'Choose your Primal Path (subclass)',

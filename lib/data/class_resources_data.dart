@@ -38,12 +38,11 @@ final Map<String, List<ClassResource>> classResources = {
       id: 'war_priest',
       name: 'War Priest (bonus action attack)',
       maxUses: (level) =>
-          0, // overridden dynamically below by Wisdom modifier — see note
+          0, // overridden dynamically by Wisdom modifier — see combat_screen.dart
       availableFromLevel: 3,
       fullRecoveryOn: RestType.short,
     ),
   ],
-
   'barbarian': [
     ClassResource(
       id: 'rage',

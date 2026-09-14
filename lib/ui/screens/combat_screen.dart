@@ -12,6 +12,7 @@ import '../../models/dice_roller.dart';
 import '../../models/class_resource.dart';
 import '../../models/cleric_features.dart';
 import '../../models/barbarian_features.dart';
+
 import '../../state/database_provider.dart';
 import '../../state/resource_uses_provider.dart';
 import '../../state/inventory_provider.dart';
@@ -50,6 +51,8 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _preserveLifeTargetId;
   bool _isRaging = false;
   bool _isRecklessAttack = false;
+  int? _speedOverride;
+  bool _retaliationAvailable = false;
 
   @override
   void dispose() {
@@ -199,10 +202,38 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                             }(),
                             onTap: () {
                               final total = stats.totalInitiative(profBonus);
-                              final result = rollAttack(total);
+                              final hasAdvantage = stats.hasFeralInstinct;
+                              final firstRoll = rollAttack(total);
+                              DiceRollResult result = firstRoll;
+                              String advantageNote = '';
+                              if (hasAdvantage) {
+                                final secondRoll = rollAttack(total);
+                                if (secondRoll.total > firstRoll.total)
+                                  result = secondRoll;
+                                advantageNote =
+                                    ' (Advantage - Feral Instinct: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
+                              }
+                              if (widget.character.characterClass.id ==
+                                      'barbarian' &&
+                                  widget.character.level >= 15 &&
+                                  characterId != null) {
+                                final rageResource =
+                                    (classResources['barbarian'] ?? [])
+                                        .firstWhere((r) => r.id == 'rage');
+                                final maxUses = rageResource.maxUses(
+                                  widget.character.level,
+                                );
+                                ref.read(appDatabaseProvider).applyRest(
+                                  characterId,
+                                  RestType.long,
+                                  [rageResource],
+                                );
+                                advantageNote +=
+                                    ' — Persistent Rage: Rage uses restored to $maxUses';
+                              }
                               setState(() {
                                 _lastRollResult =
-                                    'Initiative: ${result.rolls.first} ${total >= 0 ? "+$total" : total} = ${result.total}';
+                                    'Initiative: ${result.rolls.first} ${total >= 0 ? "+$total" : total} = ${result.total}$advantageNote';
                               });
                             },
                           ),
@@ -220,6 +251,78 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                     Text(
                       'AC breakdown: ${ac.explanation}',
                       style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        final fastMovementBonus =
+                            widget.character.characterClass.id == 'barbarian' &&
+                                widget.character.level >= 5 &&
+                                equippedItems.every(
+                                  (i) => i.category != ItemCategory.heavyArmor,
+                                )
+                            ? 10
+                            : 0;
+                        final baseSpeed =
+                            widget.character.race.speed + fastMovementBonus;
+                        final currentSpeed = _speedOverride ?? baseSpeed;
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Speed',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleSmall,
+                                    ),
+                                    Text(
+                                      '$currentSpeed ft${currentSpeed != baseSpeed ? " (base $baseSpeed ft)" : ""}${fastMovementBonus > 0 ? " — includes Fast Movement" : ""}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _speedOverride =
+                                            (currentSpeed - 5).clamp(0, 999),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.add_circle_outline,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _speedOverride = currentSpeed + 5,
+                                      ),
+                                    ),
+                                    if (_speedOverride != null)
+                                      IconButton(
+                                        icon: const Icon(Icons.refresh),
+                                        tooltip: 'Reset to base',
+                                        onPressed: () => setState(
+                                          () => _speedOverride = null,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -313,6 +416,28 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                         characterId,
                                                         newHp,
                                                       );
+                                                  final isBerserkerRaging =
+                                                      widget
+                                                              .character
+                                                              .characterClass
+                                                              .id ==
+                                                          'barbarian' &&
+                                                      widget
+                                                              .character
+                                                              .classSelections['barbarian_subclass']
+                                                              ?.firstOrNull ==
+                                                          'berserker' &&
+                                                      widget.character.level >=
+                                                          10 &&
+                                                      _isRaging;
+                                                  if (delta < 0 &&
+                                                      isBerserkerRaging) {
+                                                    setState(
+                                                      () =>
+                                                          _retaliationAvailable =
+                                                              true,
+                                                    );
+                                                  }
                                                   _hpAdjustController.clear();
                                                 },
                                           child: const Text('Apply'),
@@ -464,12 +589,25 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                 : Colors.grey,
                           ),
                           title: Text('${_abilityShort(a)} Save'),
+
                           trailing: OutlinedButton(
                             onPressed: () {
-                              final result = rollAttack(bonus);
+                              final hasAdvantage =
+                                  stats.hasDangerSense &&
+                                  a == Ability.dexterity;
+                              final firstRoll = rollAttack(bonus);
+                              DiceRollResult result = firstRoll;
+                              String advantageNote = '';
+                              if (hasAdvantage) {
+                                final secondRoll = rollAttack(bonus);
+                                if (secondRoll.total > firstRoll.total)
+                                  result = secondRoll;
+                                advantageNote =
+                                    ' (Advantage - Danger Sense: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
+                              }
                               setState(() {
                                 _lastRollResult =
-                                    '${_abilityShort(a)} Save: ${result.rolls.first} $bonusText = ${result.total}';
+                                    '${_abilityShort(a)} Save: ${result.rolls.first} $bonusText = ${result.total}$advantageNote';
                               });
                             },
                             child: Text('Roll ($bonusText)'),
@@ -660,6 +798,88 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                             ),
                           ),
                         ),
+                        if (widget.character.level >= 3 && _isRaging) ...[
+                          const SizedBox(height: 8),
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Primal Knowledge (Strength checks)',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
+                                  Text(
+                                    'While raging, use Strength for these checks instead of the normal ability.',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ...[
+                                    'Acrobatics',
+                                    'Intimidation',
+                                    'Perception',
+                                    'Stealth',
+                                    'Survival',
+                                  ].map((skill) {
+                                    final strMod = widget
+                                        .character
+                                        .abilityScores
+                                        .modifierFor(
+                                          Ability.strength,
+                                          bonuses: widget
+                                              .character
+                                              .totalAbilityBonuses,
+                                        );
+                                    final isProficient = widget
+                                        .character
+                                        .classSelections
+                                        .values
+                                        .any(
+                                          (set) => set.contains(
+                                            skill.toLowerCase().replaceAll(
+                                              ' ',
+                                              '_',
+                                            ),
+                                          ),
+                                        );
+                                    final bonus =
+                                        strMod + (isProficient ? profBonus : 0);
+                                    final bonusText = bonus >= 0
+                                        ? '+$bonus'
+                                        : '$bonus';
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(skill),
+                                          OutlinedButton(
+                                            onPressed: () {
+                                              final result = rollAttack(bonus);
+                                              setState(() {
+                                                _lastRollResult =
+                                                    '$skill (Str): ${result.rolls.first} $bonusText = ${result.total}';
+                                              });
+                                            },
+                                            child: Text('Roll ($bonusText)'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                       if (widget.character.level >= 9) ...[
                         const SizedBox(height: 8),
@@ -753,6 +973,56 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                             ),
                           ),
                         ),
+
+                        if (widget
+                                    .character
+                                    .classSelections['barbarian_subclass']
+                                    ?.firstOrNull ==
+                                'berserker' &&
+                            widget.character.level >= 10) ...[
+                          const SizedBox(height: 8),
+                          Card(
+                            color: _retaliationAvailable
+                                ? Theme.of(context).colorScheme.errorContainer
+                                : null,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Retaliation',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
+                                  Text(
+                                    _retaliationAvailable
+                                        ? 'Available! Use the Equipped Weapons "Roll to Hit" button above, then tap Consume below.'
+                                        : 'Triggers when you take damage while raging.',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  if (_retaliationAvailable) ...[
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton(
+                                        onPressed: () => setState(
+                                          () => _retaliationAvailable = false,
+                                        ),
+                                        child: const Text(
+                                          'Consume Retaliation',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
 
                       const SizedBox(height: 24),
@@ -1023,6 +1293,24 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                               );
                                               parts.add('+$bonus (Rage)');
                                               grandTotal += bonus;
+
+                                              final subclass = widget
+                                                  .character
+                                                  .classSelections['barbarian_subclass']
+                                                  ?.firstOrNull;
+                                              if (subclass == 'berserker') {
+                                                final extra = rollDamage(
+                                                  frenzyExtraDice(
+                                                    widget.character.level,
+                                                  ),
+                                                  0,
+                                                  isCritical: isCrit,
+                                                );
+                                                parts.add(
+                                                  '+${extra.total} (Frenzy)',
+                                                );
+                                                grandTotal += extra.total;
+                                              }
                                             }
 
                                             String targetNote = '';
