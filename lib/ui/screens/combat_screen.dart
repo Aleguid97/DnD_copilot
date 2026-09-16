@@ -25,6 +25,9 @@ import '../../data/racial_cantrip_swap_data.dart';
 import '../../state/racial_cantrip_provider.dart';
 import 'enemies_screen.dart';
 import 'party_screen.dart';
+import '../../data/skills_data.dart';
+import '../../models/character_proficiencies.dart';
+import '../../data/xp_table.dart'; // già presente probabilmente
 
 class CombatScreen extends ConsumerStatefulWidget {
   final Character character;
@@ -53,6 +56,11 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   bool _isRecklessAttack = false;
   int? _speedOverride;
   bool _retaliationAvailable = false;
+  bool _lastAttackHit = true;
+  bool _hasAdvantageFromStudiedAttacks = false;
+  int? _lastSkillRollForCorrection;
+  String? _lastSkillRolledName;
+  int? _lifeGivingForceTargetId;
 
   @override
   void dispose() {
@@ -208,8 +216,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                               String advantageNote = '';
                               if (hasAdvantage) {
                                 final secondRoll = rollAttack(total);
-                                if (secondRoll.total > firstRoll.total)
+                                if (secondRoll.total > firstRoll.total) {
                                   result = secondRoll;
+                                }
                                 advantageNote =
                                     ' (Advantage - Feral Instinct: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
                               }
@@ -600,8 +609,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                               String advantageNote = '';
                               if (hasAdvantage) {
                                 final secondRoll = rollAttack(bonus);
-                                if (secondRoll.total > firstRoll.total)
+                                if (secondRoll.total > firstRoll.total) {
                                   result = secondRoll;
+                                }
                                 advantageNote =
                                     ' (Advantage - Danger Sense: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
                               }
@@ -615,6 +625,159 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                         ),
                       );
                     }),
+
+                    const SizedBox(height: 24),
+                    Text(
+                      'Skill Checks',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Builder(
+                      builder: (context) {
+                        final proficient = proficientSkills(widget.character);
+                        final sortedSkills = allSkillNames.toList()..sort();
+                        return Column(
+                          children: sortedSkills.map((skill) {
+                            final ability = skillAbilityMap[skill]!;
+                            final abilityMod = widget.character.abilityScores
+                                .modifierFor(
+                                  ability,
+                                  bonuses: widget.character.totalAbilityBonuses,
+                                );
+                            final isProficient = proficient.contains(skill);
+                            final bonus =
+                                abilityMod + (isProficient ? profBonus : 0);
+                            final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
+                            return Card(
+                              child: ListTile(
+                                leading: Icon(
+                                  isProficient
+                                      ? Icons.check_circle
+                                      : Icons.circle_outlined,
+                                  color: isProficient
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey,
+                                ),
+                                title: Text(skill),
+                                trailing: OutlinedButton(
+                                  onPressed: () {
+                                    final result = rollAttack(bonus);
+                                    setState(() {
+                                      _lastRollResult =
+                                          '$skill: ${result.rolls.first} $bonusText = ${result.total}';
+                                      _lastSkillRollForCorrection =
+                                          result.total;
+                                      _lastSkillRolledName = skill;
+                                    });
+                                  },
+                                  child: Text('Roll ($bonusText)'),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    if (widget.character.characterClass.id == 'fighter' &&
+                        widget.character.level >= 2 &&
+                        characterId != null) ...[
+                      const SizedBox(height: 8),
+                      resourceUsesAsync.when(
+                        loading: () => const SizedBox.shrink(),
+                        error: (e, st) => const SizedBox.shrink(),
+                        data: (usesRows) {
+                          final swResource = (classResources['fighter'] ?? [])
+                              .firstWhere((r) => r.id == 'second_wind');
+                          final maxUses = swResource.maxUses(
+                            widget.character.level,
+                          );
+                          final row = usesRows
+                              .where((r) => r.resourceId == 'second_wind')
+                              .firstOrNull;
+                          final spent = row?.usesSpent ?? 0;
+                          final remaining = (maxUses - spent).clamp(0, maxUses);
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Tactical Mind',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
+                                  Text(
+                                    _lastSkillRollForCorrection != null
+                                        ? 'Last check: $_lastSkillRolledName = $_lastSkillRollForCorrection. Second Wind uses: $remaining/$maxUses.'
+                                        : 'Roll a Skill Check above first.',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed:
+                                              (remaining > 0 &&
+                                                  _lastSkillRollForCorrection !=
+                                                      null)
+                                              ? () {
+                                                  final bonus = rollDamage(
+                                                    '1d10',
+                                                    0,
+                                                  );
+                                                  final newTotal =
+                                                      _lastSkillRollForCorrection! +
+                                                      bonus.total;
+                                                  setState(() {
+                                                    _lastRollResult =
+                                                        'Tactical Mind: +${bonus.total} → $_lastSkillRolledName new total: $newTotal (did it succeed?)';
+                                                    _lastSkillRollForCorrection =
+                                                        newTotal;
+                                                  });
+                                                }
+                                              : null,
+                                          child: const Text('Add 1d10'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () => ref
+                                              .read(appDatabaseProvider)
+                                              .useResource(
+                                                characterId,
+                                                'second_wind',
+                                                maxUses,
+                                              ),
+                                          child: const Text(
+                                            'It worked (spend use)',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'If the check still fails, don\'t press "It worked" — the use stays free.',
+                                      style: TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
 
                     const SizedBox(height: 24),
                     Builder(
@@ -1022,6 +1185,434 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                               ),
                             ),
                           ),
+                          Builder(
+                            builder: (context) {
+                              final subclass = widget
+                                  .character
+                                  .classSelections['barbarian_subclass']
+                                  ?.firstOrNull;
+                              final wildHeartAspect = widget
+                                  .character
+                                  .classSelections['barbarian_rage_of_the_wilds']
+                                  ?.firstOrNull;
+                              final powerAspect = widget
+                                  .character
+                                  .classSelections['barbarian_power_of_the_wilds']
+                                  ?.firstOrNull;
+
+                              if (subclass == 'wild_heart' &&
+                                  powerAspect == 'ram' &&
+                                  widget.character.level >= 14) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Ram: Force Prone',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleSmall,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton(
+                                              onPressed:
+                                                  _selectedEnemyId == null
+                                                  ? null
+                                                  : () async {
+                                                      final enemies =
+                                                          ref
+                                                              .read(
+                                                                combatEnemiesProvider(
+                                                                  characterId!,
+                                                                ),
+                                                              )
+                                                              .value ??
+                                                          [];
+                                                      final target = enemies
+                                                          .where(
+                                                            (e) =>
+                                                                e.id ==
+                                                                _selectedEnemyId,
+                                                          )
+                                                          .firstOrNull;
+                                                      if (target == null)
+                                                        return;
+                                                      final current =
+                                                          (jsonDecode(
+                                                                    target
+                                                                        .conditionsJson,
+                                                                  )
+                                                                  as List)
+                                                              .cast<String>();
+                                                      if (!current.contains(
+                                                        'Prone (Ram)',
+                                                      ))
+                                                        current.add(
+                                                          'Prone (Ram)',
+                                                        );
+                                                      await ref
+                                                          .read(
+                                                            appDatabaseProvider,
+                                                          )
+                                                          .updateEnemyConditions(
+                                                            target.id,
+                                                            current,
+                                                          );
+                                                      setState(
+                                                        () => _lastRollResult =
+                                                            '${target.name}: failed save, Prone (Ram).',
+                                                      );
+                                                    },
+                                              child: const Text(
+                                                'Target failed save → Prone',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              if (subclass == 'world_tree') {
+                                return Column(
+                                  children: [
+                                    if (widget.character.level >= 3)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Card(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Life-Giving Force',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.titleSmall,
+                                                ),
+                                                Text(
+                                                  'While raging, give an ally Temp HP (${lifeGivingForceDice(widget.character.level)}) at the start of your turn.',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Builder(
+                                                  builder: (context) {
+                                                    final partyAsync = ref
+                                                        .watch(
+                                                          partyMembersProvider(
+                                                            characterId!,
+                                                          ),
+                                                        );
+                                                    return partyAsync.when(
+                                                      loading: () =>
+                                                          const SizedBox.shrink(),
+                                                      error: (e, st) =>
+                                                          const SizedBox.shrink(),
+                                                      data: (members) {
+                                                        if (members.isEmpty)
+                                                          return const Text(
+                                                            'Add allies from the Party screen.',
+                                                          );
+                                                        return Column(
+                                                          children: [
+                                                            DropdownButton<
+                                                              int?
+                                                            >(
+                                                              value:
+                                                                  _lifeGivingForceTargetId,
+                                                              hint: const Text(
+                                                                'Choose ally',
+                                                              ),
+                                                              items: members
+                                                                  .map(
+                                                                    (
+                                                                      m,
+                                                                    ) => DropdownMenuItem(
+                                                                      value:
+                                                                          m.id,
+                                                                      child: Text(
+                                                                        m.name,
+                                                                      ),
+                                                                    ),
+                                                                  )
+                                                                  .toList(),
+                                                              onChanged: (v) =>
+                                                                  setState(
+                                                                    () =>
+                                                                        _lifeGivingForceTargetId =
+                                                                            v,
+                                                                  ),
+                                                            ),
+                                                            SizedBox(
+                                                              width: double
+                                                                  .infinity,
+                                                              child: OutlinedButton(
+                                                                onPressed:
+                                                                    _lifeGivingForceTargetId ==
+                                                                        null
+                                                                    ? null
+                                                                    : () async {
+                                                                        final target = members
+                                                                            .where(
+                                                                              (
+                                                                                m,
+                                                                              ) =>
+                                                                                  m.id ==
+                                                                                  _lifeGivingForceTargetId,
+                                                                            )
+                                                                            .firstOrNull;
+                                                                        if (target ==
+                                                                            null)
+                                                                          return;
+                                                                        final result = rollDamage(
+                                                                          lifeGivingForceDice(
+                                                                            widget.character.level,
+                                                                          ),
+                                                                          0,
+                                                                        );
+                                                                        final newHp =
+                                                                            (target.currentHp +
+                                                                                    result.total)
+                                                                                .clamp(
+                                                                                  0,
+                                                                                  target.maxHp,
+                                                                                );
+                                                                        await ref
+                                                                            .read(
+                                                                              appDatabaseProvider,
+                                                                            )
+                                                                            .updatePartyMemberHp(
+                                                                              target.id,
+                                                                              newHp,
+                                                                            );
+                                                                        setState(() {
+                                                                          _lastRollResult =
+                                                                              'Life-Giving Force: ${target.name} +${result.total} Temp HP';
+                                                                        });
+                                                                      },
+                                                                child: const Text(
+                                                                  'Grant Temp HP',
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    if (widget.character.level >= 6)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Card(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Branches of the Tree',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.titleSmall,
+                                                ),
+                                                Text(
+                                                  'Reaction: teleport a creature within 30 ft and reduce its Speed to 0 (Str save DC ${8 + rageDamageBonus(widget.character.level) + profBonus}).',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: OutlinedButton(
+                                                    onPressed:
+                                                        _selectedEnemyId == null
+                                                        ? null
+                                                        : () async {
+                                                            final enemies =
+                                                                ref
+                                                                    .read(
+                                                                      combatEnemiesProvider(
+                                                                        characterId!,
+                                                                      ),
+                                                                    )
+                                                                    .value ??
+                                                                [];
+                                                            final target = enemies
+                                                                .where(
+                                                                  (e) =>
+                                                                      e.id ==
+                                                                      _selectedEnemyId,
+                                                                )
+                                                                .firstOrNull;
+                                                            if (target == null)
+                                                              return;
+                                                            await ref
+                                                                .read(
+                                                                  appDatabaseProvider,
+                                                                )
+                                                                .updateEnemySpeed(
+                                                                  target.id,
+                                                                  0,
+                                                                );
+                                                            setState(
+                                                              () => _lastRollResult =
+                                                                  '${target.name}: Speed reduced to 0 (Branches of the Tree).',
+                                                            );
+                                                          },
+                                                    child: const Text(
+                                                      'Target failed save → Speed 0',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              }
+
+                              if (subclass == 'zealot') {
+                                return Column(
+                                  children: [
+                                    if (widget.character.level >= 3)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: resourceUsesAsync.when(
+                                          loading: () =>
+                                              const SizedBox.shrink(),
+                                          error: (e, st) =>
+                                              const SizedBox.shrink(),
+                                          data: (usesRows) {
+                                            final poolSize =
+                                                warriorOfTheGodsPoolSize(
+                                                  widget.character.level,
+                                                );
+                                            final row = usesRows
+                                                .where(
+                                                  (r) =>
+                                                      r.resourceId ==
+                                                      'warrior_of_the_gods_pool',
+                                                )
+                                                .firstOrNull;
+                                            final spent = row?.usesSpent ?? 0;
+                                            final remaining = (poolSize - spent)
+                                                .clamp(0, poolSize);
+                                            return Card(
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  12,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Warrior of the Gods',
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.titleSmall,
+                                                    ),
+                                                    Text(
+                                                      'd12 pool: $remaining/$poolSize remaining (refills on Long Rest)',
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.bodySmall,
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    SizedBox(
+                                                      width: double.infinity,
+                                                      child: OutlinedButton(
+                                                        onPressed: remaining > 0
+                                                            ? () async {
+                                                                final result =
+                                                                    rollDamage(
+                                                                      '1d12',
+                                                                      0,
+                                                                    );
+                                                                await ref
+                                                                    .read(
+                                                                      appDatabaseProvider,
+                                                                    )
+                                                                    .useResource(
+                                                                      characterId!,
+                                                                      'warrior_of_the_gods_pool',
+                                                                      poolSize,
+                                                                    );
+                                                                final maxHp = widget
+                                                                    .character
+                                                                    .totalHitPoints;
+                                                                final currentStored =
+                                                                    await ref.read(
+                                                                      currentHpProvider(
+                                                                        characterId!,
+                                                                      ).future,
+                                                                    );
+                                                                final currentHp =
+                                                                    currentStored ??
+                                                                    maxHp;
+                                                                final newHp =
+                                                                    (currentHp +
+                                                                            result.total)
+                                                                        .clamp(
+                                                                          0,
+                                                                          maxHp,
+                                                                        );
+                                                                await ref
+                                                                    .read(
+                                                                      appDatabaseProvider,
+                                                                    )
+                                                                    .setCurrentHp(
+                                                                      characterId!,
+                                                                      newHp,
+                                                                    );
+                                                                setState(() {
+                                                                  _lastRollResult =
+                                                                      'Warrior of the Gods: healed ${result.total} HP → $newHp/$maxHp';
+                                                                });
+                                                              }
+                                                            : null,
+                                                        child: const Text(
+                                                          'Spend 1 die to heal (Bonus Action)',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              }
+
+                              return const SizedBox.shrink();
+                            },
+                          ),
                         ],
                       ],
                     ],
@@ -1086,6 +1677,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                         onPressed: () async {
                                           final hasAdvantage =
                                               _hasAdvantageFromVex ||
+                                              _hasAdvantageFromStudiedAttacks ||
                                               (widget
                                                           .character
                                                           .characterClass
@@ -1102,8 +1694,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                               info.attackBonus,
                                             );
                                             if (secondRoll.total >
-                                                firstRoll.total)
+                                                firstRoll.total) {
                                               result = secondRoll;
+                                            }
                                             advantageNote =
                                                 ' (Advantage: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
                                           }
@@ -1165,9 +1758,16 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                         : ' — HIT!')
                                                   : ' — MISS';
                                               setState(
+                                                () => _lastAttackHit = didHit,
+                                              );
+                                              setState(
                                                 () => _lastAttackWasCritical =
                                                     isNat20 && didHit,
                                               );
+                                              if (isNat20) {
+                                                hitNote =
+                                                    ' — CRITICAL HIT (natural 20)!';
+                                              }
                                               if (didHit &&
                                                   masteryProp == 'Vex') {
                                                 setState(
@@ -1177,10 +1777,27 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                 masteryNote =
                                                     ' — Vex: Advantage granted on your next attack vs this target';
                                               } else if (hasAdvantage) {
+                                                setState(() {
+                                                  _hasAdvantageFromVex = false;
+                                                  _hasAdvantageFromStudiedAttacks =
+                                                      false;
+                                                });
+                                              }
+                                              if (!didHit &&
+                                                  widget
+                                                          .character
+                                                          .characterClass
+                                                          .id ==
+                                                      'fighter' &&
+                                                  widget.character.level >=
+                                                      13) {
                                                 setState(
-                                                  () => _hasAdvantageFromVex =
-                                                      false,
+                                                  () =>
+                                                      _hasAdvantageFromStudiedAttacks =
+                                                          true,
                                                 );
+                                                masteryNote +=
+                                                    ' — Studied Attacks: Advantage granted on your next attack vs this target';
                                               }
                                             }
                                           } else {
@@ -1222,141 +1839,174 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: OutlinedButton(
-                                        onPressed: () async {
-                                          final isCrit = _lastAttackWasCritical;
-                                          final baseResult = usesGwf
-                                              ? rollDamageWithReroll(
-                                                  info.damageDice,
-                                                  0,
-                                                  isCritical: isCrit,
-                                                )
-                                              : rollDamage(
-                                                  info.damageDice,
-                                                  0,
-                                                  isCritical: isCrit,
-                                                );
+                                        onPressed: !_lastAttackHit
+                                            ? null
+                                            : () async {
+                                                final isCrit =
+                                                    _lastAttackWasCritical;
+                                                final baseResult = usesGwf
+                                                    ? rollDamageWithReroll(
+                                                        info.damageDice,
+                                                        0,
+                                                        isCritical: isCrit,
+                                                      )
+                                                    : rollDamage(
+                                                        info.damageDice,
+                                                        0,
+                                                        isCritical: isCrit,
+                                                      );
 
-                                          final parts = <String>[
-                                            '${baseResult.rolls.join('+')} (dice)',
-                                          ];
-                                          var grandTotal = baseResult.total;
+                                                final parts = <String>[
+                                                  '${baseResult.rolls.join('+')} (dice)',
+                                                ];
+                                                var grandTotal =
+                                                    baseResult.total;
 
-                                          if (info.damageModifier != 0) {
-                                            parts.add(
-                                              '${info.damageModifier >= 0 ? "+" : ""}${info.damageModifier} (mod)',
-                                            );
-                                            grandTotal += info.damageModifier;
-                                          }
+                                                if (info.damageModifier != 0) {
+                                                  parts.add(
+                                                    '${info.damageModifier >= 0 ? "+" : ""}${info.damageModifier} (mod)',
+                                                  );
+                                                  grandTotal +=
+                                                      info.damageModifier;
+                                                }
 
-                                          if (widget
-                                                  .character
-                                                  .characterClass
-                                                  .id ==
-                                              'cleric') {
-                                            final blessedChoice = widget
-                                                .character
-                                                .classSelections['cleric_blessed_strikes']
-                                                ?.firstOrNull;
-                                            if (blessedChoice ==
-                                                'divine_strike') {
-                                              final extraDice =
-                                                  widget.character.level >= 14
-                                                  ? '2d8'
-                                                  : '1d8';
-                                              final extra = rollDamage(
-                                                extraDice,
-                                                0,
-                                                isCritical: isCrit,
-                                              );
-                                              parts.add(
-                                                '+${extra.total} (Divine Strike)',
-                                              );
-                                              grandTotal += extra.total;
-                                            }
-                                          }
-
-                                          if (widget
+                                                if (widget
+                                                        .character
+                                                        .characterClass
+                                                        .id ==
+                                                    'cleric') {
+                                                  final blessedChoice = widget
                                                       .character
-                                                      .characterClass
-                                                      .id ==
-                                                  'barbarian' &&
-                                              _isRaging) {
-                                            final bonus = rageDamageBonus(
-                                              widget.character.level,
-                                            );
-                                            parts.add('+$bonus (Rage)');
-                                            grandTotal += bonus;
-
-                                            final subclass = widget
-                                                .character
-                                                .classSelections['barbarian_subclass']
-                                                ?.firstOrNull;
-                                            if (subclass == 'berserker') {
-                                              final extra = rollDamage(
-                                                frenzyExtraDice(
-                                                  widget.character.level,
-                                                ),
-                                                0,
-                                                isCritical: isCrit,
-                                              );
-                                              parts.add(
-                                                '+${extra.total} (Frenzy)',
-                                              );
-                                              grandTotal += extra.total;
-                                            }
-                                          }
-
-                                          String targetNote = '';
-                                          if (characterId != null &&
-                                              _selectedEnemyId != null) {
-                                            final enemies =
-                                                ref
-                                                    .read(
-                                                      combatEnemiesProvider(
-                                                        characterId,
-                                                      ),
-                                                    )
-                                                    .value ??
-                                                [];
-                                            final target = enemies
-                                                .where(
-                                                  (e) =>
-                                                      e.id == _selectedEnemyId,
-                                                )
-                                                .firstOrNull;
-                                            if (target != null) {
-                                              final newHp =
-                                                  (target.currentHp -
-                                                          grandTotal)
-                                                      .clamp(0, target.maxHp);
-                                              if (newHp <= 0) {
-                                                await ref
-                                                    .read(appDatabaseProvider)
-                                                    .removeEnemy(target.id);
-                                                targetNote =
-                                                    ' — ${target.name} defeated!';
-                                                setState(
-                                                  () => _selectedEnemyId = null,
-                                                );
-                                              } else {
-                                                await ref
-                                                    .read(appDatabaseProvider)
-                                                    .updateEnemyHp(
-                                                      target.id,
-                                                      newHp,
+                                                      .classSelections['cleric_blessed_strikes']
+                                                      ?.firstOrNull;
+                                                  if (blessedChoice ==
+                                                      'divine_strike') {
+                                                    final extraDice =
+                                                        widget
+                                                                .character
+                                                                .level >=
+                                                            14
+                                                        ? '2d8'
+                                                        : '1d8';
+                                                    final extra = rollDamage(
+                                                      extraDice,
+                                                      0,
+                                                      isCritical: isCrit,
                                                     );
-                                                targetNote =
-                                                    ' — ${target.name}: $newHp/${target.maxHp} HP left';
-                                              }
-                                            }
-                                          }
+                                                    parts.add(
+                                                      '+${extra.total} (Divine Strike)',
+                                                    );
+                                                    grandTotal += extra.total;
+                                                  }
+                                                }
 
-                                          setState(() {
-                                            _lastRollResult =
-                                                '${w.name} — Damage: ${parts.join(' ')} = $grandTotal ${info.damageType}$targetNote';
-                                            _lastAttackWasCritical = false;
-                                          });
-                                        },
+                                                if (widget
+                                                            .character
+                                                            .characterClass
+                                                            .id ==
+                                                        'barbarian' &&
+                                                    _isRaging) {
+                                                  final bonus = rageDamageBonus(
+                                                    widget.character.level,
+                                                  );
+                                                  parts.add('+$bonus (Rage)');
+                                                  grandTotal += bonus;
+
+                                                  final subclass = widget
+                                                      .character
+                                                      .classSelections['barbarian_subclass']
+                                                      ?.firstOrNull;
+                                                  if (subclass == 'berserker') {
+                                                    final extra = rollDamage(
+                                                      frenzyExtraDice(
+                                                        widget.character.level,
+                                                      ),
+                                                      0,
+                                                      isCritical: isCrit,
+                                                    );
+                                                    parts.add(
+                                                      '+${extra.total} (Frenzy)',
+                                                    );
+                                                    grandTotal += extra.total;
+                                                  }
+                                                  if (subclass == 'zealot') {
+                                                    final extra = rollDamage(
+                                                      divineFuryExtraDice(),
+                                                      divineFuryFlatBonus(
+                                                        widget.character.level,
+                                                      ),
+                                                      isCritical: isCrit,
+                                                    );
+                                                    parts.add(
+                                                      '+${extra.total} (Divine Fury)',
+                                                    );
+                                                    grandTotal += extra.total;
+                                                  }
+                                                }
+
+                                                String targetNote = '';
+                                                if (characterId != null &&
+                                                    _selectedEnemyId != null) {
+                                                  final enemies =
+                                                      ref
+                                                          .read(
+                                                            combatEnemiesProvider(
+                                                              characterId,
+                                                            ),
+                                                          )
+                                                          .value ??
+                                                      [];
+                                                  final target = enemies
+                                                      .where(
+                                                        (e) =>
+                                                            e.id ==
+                                                            _selectedEnemyId,
+                                                      )
+                                                      .firstOrNull;
+                                                  if (target != null) {
+                                                    final newHp =
+                                                        (target.currentHp -
+                                                                grandTotal)
+                                                            .clamp(
+                                                              0,
+                                                              target.maxHp,
+                                                            );
+                                                    if (newHp <= 0) {
+                                                      await ref
+                                                          .read(
+                                                            appDatabaseProvider,
+                                                          )
+                                                          .removeEnemy(
+                                                            target.id,
+                                                          );
+                                                      targetNote =
+                                                          ' — ${target.name} defeated!';
+                                                      setState(
+                                                        () => _selectedEnemyId =
+                                                            null,
+                                                      );
+                                                    } else {
+                                                      await ref
+                                                          .read(
+                                                            appDatabaseProvider,
+                                                          )
+                                                          .updateEnemyHp(
+                                                            target.id,
+                                                            newHp,
+                                                          );
+                                                      targetNote =
+                                                          ' — ${target.name}: $newHp/${target.maxHp} HP left';
+                                                    }
+                                                  }
+                                                }
+
+                                                setState(() {
+                                                  _lastRollResult =
+                                                      '${w.name} — Damage: ${parts.join(' ')} = $grandTotal ${info.damageType}$targetNote';
+                                                  _lastAttackWasCritical =
+                                                      false;
+                                                });
+                                              },
 
                                         child: Text(
                                           'Roll Damage (${info.damageDice})',
@@ -1374,8 +2024,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
 
                                     Future<CombatEnemy?> currentTarget() async {
                                       if (characterId == null ||
-                                          _selectedEnemyId == null)
+                                          _selectedEnemyId == null) {
                                         return null;
+                                      }
                                       final enemies =
                                           ref
                                               .read(
@@ -1406,8 +2057,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                       final current = target.conditionsJson;
                                       final list = (jsonDecode(current) as List)
                                           .cast<String>();
-                                      if (!list.contains(label))
+                                      if (!list.contains(label)) {
                                         list.add(label);
+                                      }
                                       await ref
                                           .read(appDatabaseProvider)
                                           .updateEnemyConditions(
@@ -1657,8 +2309,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                             .toList(),
                                                       ),
                                                     );
-                                                if (secondTarget == null)
+                                                if (secondTarget == null) {
                                                   return;
+                                                }
                                                 final cleaveModifier =
                                                     info.damageModifier < 0
                                                     ? info.damageModifier
@@ -1840,8 +2493,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                       builder: (context) {
                         final offHandInfo = stats.offHandAttackInfo(profBonus);
                         final offHandWeapon = stats.offHandWeapon;
-                        if (offHandInfo == null || offHandWeapon == null)
+                        if (offHandInfo == null || offHandWeapon == null) {
                           return const SizedBox.shrink();
+                        }
                         final attackText = offHandInfo.attackBonus >= 0
                             ? '+${offHandInfo.attackBonus}'
                             : '${offHandInfo.attackBonus}';
@@ -2485,8 +3139,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                     );
                                                     if (amount == null ||
                                                         _preserveLifeTargetId ==
-                                                            null)
+                                                            null) {
                                                       return;
+                                                    }
                                                     final target = members
                                                         .where(
                                                           (m) =>

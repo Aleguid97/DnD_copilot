@@ -140,7 +140,32 @@ final List<CharacterClass> allClasses = [
                     level: 3,
                     fixedTraits: [
                       'Animal Speaker: cast Beast Sense and Speak with Animals as Rituals (Wisdom)',
-                      'Rage of the Wilds: choose Bear (Resistance to almost all damage types while raging), Eagle (Disengage+Dash as part of Rage bonus action), or Wolf (allies get Advantage vs enemies within 5 ft of you)',
+                    ],
+                    choices: [
+                      Choice(
+                        id: 'barbarian_rage_of_the_wilds',
+                        title: 'Rage of the Wilds: choose your animal aspect',
+                        options: [
+                          ChoiceOption(
+                            id: 'bear',
+                            label: 'Bear',
+                            description:
+                                'Resistance to all damage except Psychic while raging.',
+                          ),
+                          ChoiceOption(
+                            id: 'eagle',
+                            label: 'Eagle',
+                            description:
+                                'As part of your Rage Bonus Action, you can Disengage and your jump distance doubles.',
+                          ),
+                          ChoiceOption(
+                            id: 'wolf',
+                            label: 'Wolf',
+                            description:
+                                'Allies within 5 ft of you have Advantage on attacks vs enemies within 5 ft of you.',
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                   6: LevelFeature(
@@ -157,8 +182,31 @@ final List<CharacterClass> allClasses = [
                   ),
                   14: LevelFeature(
                     level: 14,
-                    fixedTraits: [
-                      'Power of the Wilds: choose Falcon (Fly Speed while raging, unarmored), Lion (enemies near you have Disadvantage attacking others), or Ram (melee hits can Prone Large-or-smaller creatures)',
+                    choices: [
+                      Choice(
+                        id: 'barbarian_power_of_the_wilds',
+                        title: 'Power of the Wilds: choose your animal aspect',
+                        options: [
+                          ChoiceOption(
+                            id: 'falcon',
+                            label: 'Falcon',
+                            description:
+                                'Fly Speed equal to Speed while raging and unarmored.',
+                          ),
+                          ChoiceOption(
+                            id: 'lion',
+                            label: 'Lion',
+                            description:
+                                'Enemies within 10 ft of you have Disadvantage on attacks against creatures other than you.',
+                          ),
+                          ChoiceOption(
+                            id: 'ram',
+                            label: 'Ram',
+                            description:
+                                'Your melee hits can force a Large-or-smaller creature to make a Strength save or fall Prone.',
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 },

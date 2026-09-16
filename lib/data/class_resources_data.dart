@@ -1,4 +1,5 @@
 import '../models/class_resource.dart';
+import '../models/barbarian_features.dart';
 
 final Map<String, List<ClassResource>> classResources = {
   'fighter': [
@@ -57,6 +58,20 @@ final Map<String, List<ClassResource>> classResources = {
       availableFromLevel: 1,
       fullRecoveryOn: RestType.long,
       shortRestPartialRecovery: 1,
+    ),
+    ClassResource(
+      id: 'warrior_of_the_gods_pool',
+      name: 'Warrior of the Gods (d12 healing pool)',
+      maxUses: warriorOfTheGodsPoolSize,
+      availableFromLevel: 3,
+      fullRecoveryOn: RestType.long,
+    ),
+    ClassResource(
+      id: 'zealous_presence',
+      name: 'Zealous Presence',
+      maxUses: (level) => 1,
+      availableFromLevel: 10,
+      fullRecoveryOn: RestType.long,
     ),
   ],
 };
