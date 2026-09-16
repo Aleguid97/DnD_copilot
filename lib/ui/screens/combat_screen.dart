@@ -1024,181 +1024,152 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                           ),
                         ],
                       ],
+                    ],
 
-                      const SizedBox(height: 24),
-                      Text(
-                        'Equipped Weapons',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      if (weapons.isEmpty)
-                        const Text(
-                          'No weapons currently equipped. Mark a weapon as equipped in Inventory.',
-                        )
-                      else
-                        ...weapons.map((w) {
-                          final info = stats.weaponAttackInfo(w, profBonus);
-                          final attackText = info.attackBonus >= 0
-                              ? '+${info.attackBonus}'
-                              : '${info.attackBonus}';
-                          final usesGwf = stats.weaponUsesGreatWeaponFighting(
-                            w,
-                          );
-                          final masteryProp = weaponMasteryProperty[w.id];
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    w.name,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  Text(
-                                    [
-                                      w.damage ?? '',
-                                      ...w.properties,
-                                    ].where((s) => s.isNotEmpty).join(' • '),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                  if (usesGwf)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        'Great Weapon Fighting active: 1s and 2s auto-reroll',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              fontStyle: FontStyle.italic,
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                            ),
-                                      ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Equipped Weapons',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    if (weapons.isEmpty)
+                      const Text(
+                        'No weapons currently equipped. Mark a weapon as equipped in Inventory.',
+                      )
+                    else
+                      ...weapons.map((w) {
+                        final info = stats.weaponAttackInfo(w, profBonus);
+                        final attackText = info.attackBonus >= 0
+                            ? '+${info.attackBonus}'
+                            : '${info.attackBonus}';
+                        final usesGwf = stats.weaponUsesGreatWeaponFighting(w);
+                        final masteryProp = weaponMasteryProperty[w.id];
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  w.name,
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                Text(
+                                  [
+                                    w.damage ?? '',
+                                    ...w.properties,
+                                  ].where((s) => s.isNotEmpty).join(' • '),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                if (usesGwf)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'Great Weapon Fighting active: 1s and 2s auto-reroll',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            fontStyle: FontStyle.italic,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                          ),
                                     ),
+                                  ),
 
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () async {
-                                            final hasAdvantage =
-                                                _hasAdvantageFromVex ||
-                                                (widget
-                                                            .character
-                                                            .characterClass
-                                                            .id ==
-                                                        'barbarian' &&
-                                                    _isRecklessAttack);
-                                            final firstRoll = rollAttack(
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () async {
+                                          final hasAdvantage =
+                                              _hasAdvantageFromVex ||
+                                              (widget
+                                                          .character
+                                                          .characterClass
+                                                          .id ==
+                                                      'barbarian' &&
+                                                  _isRecklessAttack);
+                                          final firstRoll = rollAttack(
+                                            info.attackBonus,
+                                          );
+                                          DiceRollResult result = firstRoll;
+                                          String advantageNote = '';
+                                          if (hasAdvantage) {
+                                            final secondRoll = rollAttack(
                                               info.attackBonus,
                                             );
-                                            DiceRollResult result = firstRoll;
-                                            String advantageNote = '';
-                                            if (hasAdvantage) {
-                                              final secondRoll = rollAttack(
-                                                info.attackBonus,
-                                              );
-                                              if (secondRoll.total >
-                                                  firstRoll.total)
-                                                result = secondRoll;
-                                              advantageNote =
-                                                  ' (Advantage: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
-                                            }
+                                            if (secondRoll.total >
+                                                firstRoll.total)
+                                              result = secondRoll;
+                                            advantageNote =
+                                                ' (Advantage: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
+                                          }
 
-                                            String ammoNote = '';
-                                            if (w.ammunitionItemId != null &&
-                                                characterId != null) {
-                                              final ammoRow = inventoryRows
-                                                  .where(
-                                                    (r) =>
-                                                        r.itemId ==
-                                                        w.ammunitionItemId,
-                                                  )
-                                                  .firstOrNull;
-                                              if (ammoRow != null &&
-                                                  ammoRow.quantity > 0) {
-                                                await ref
-                                                    .read(appDatabaseProvider)
-                                                    .setInventoryQuantity(
-                                                      ammoRow.id,
-                                                      ammoRow.quantity - 1,
-                                                    );
-                                                ammoNote =
-                                                    ' (1 ${w.ammunitionItemId} used, ${ammoRow.quantity - 1} left)';
-                                              } else {
-                                                ammoNote = ' (OUT OF AMMO!)';
-                                              }
-                                            }
-
-                                            String masteryNote = '';
-                                            String hitNote = '';
-                                            final isNat20 =
-                                                result.rolls.first == 20;
-                                            if (characterId != null &&
-                                                _selectedEnemyId != null) {
-                                              final enemies =
-                                                  ref
-                                                      .read(
-                                                        combatEnemiesProvider(
-                                                          characterId,
-                                                        ),
-                                                      )
-                                                      .value ??
-                                                  [];
-                                              final target = enemies
-                                                  .where(
-                                                    (e) =>
-                                                        e.id ==
-                                                        _selectedEnemyId,
-                                                  )
-                                                  .firstOrNull;
-                                              if (target != null) {
-                                                final didHit =
-                                                    isNat20 ||
-                                                    result.total >=
-                                                        target.armorClass;
-                                                hitNote = didHit
-                                                    ? (isNat20
-                                                          ? ' — CRITICAL HIT!'
-                                                          : ' — HIT!')
-                                                    : ' — MISS';
-                                                setState(
-                                                  () => _lastAttackWasCritical =
-                                                      isNat20 && didHit,
-                                                );
-                                                if (didHit &&
-                                                    masteryProp == 'Vex') {
-                                                  setState(
-                                                    () => _hasAdvantageFromVex =
-                                                        true,
+                                          String ammoNote = '';
+                                          if (w.ammunitionItemId != null &&
+                                              characterId != null) {
+                                            final ammoRow = inventoryRows
+                                                .where(
+                                                  (r) =>
+                                                      r.itemId ==
+                                                      w.ammunitionItemId,
+                                                )
+                                                .firstOrNull;
+                                            if (ammoRow != null &&
+                                                ammoRow.quantity > 0) {
+                                              await ref
+                                                  .read(appDatabaseProvider)
+                                                  .setInventoryQuantity(
+                                                    ammoRow.id,
+                                                    ammoRow.quantity - 1,
                                                   );
-                                                  masteryNote =
-                                                      ' — Vex: Advantage granted on your next attack vs this target';
-                                                } else if (hasAdvantage) {
-                                                  setState(
-                                                    () => _hasAdvantageFromVex =
-                                                        false,
-                                                  );
-                                                }
-                                              }
+                                              ammoNote =
+                                                  ' (1 ${w.ammunitionItemId} used, ${ammoRow.quantity - 1} left)';
                                             } else {
+                                              ammoNote = ' (OUT OF AMMO!)';
+                                            }
+                                          }
+
+                                          String masteryNote = '';
+                                          String hitNote = '';
+                                          final isNat20 =
+                                              result.rolls.first == 20;
+                                          if (characterId != null &&
+                                              _selectedEnemyId != null) {
+                                            final enemies =
+                                                ref
+                                                    .read(
+                                                      combatEnemiesProvider(
+                                                        characterId,
+                                                      ),
+                                                    )
+                                                    .value ??
+                                                [];
+                                            final target = enemies
+                                                .where(
+                                                  (e) =>
+                                                      e.id == _selectedEnemyId,
+                                                )
+                                                .firstOrNull;
+                                            if (target != null) {
+                                              final didHit =
+                                                  isNat20 ||
+                                                  result.total >=
+                                                      target.armorClass;
+                                              hitNote = didHit
+                                                  ? (isNat20
+                                                        ? ' — CRITICAL HIT!'
+                                                        : ' — HIT!')
+                                                  : ' — MISS';
                                               setState(
                                                 () => _lastAttackWasCritical =
-                                                    isNat20,
+                                                    isNat20 && didHit,
                                               );
-                                              if (isNat20) {
-                                                hitNote =
-                                                    ' — CRITICAL HIT (natural 20)!';
-                                              }
-                                              if (masteryProp == 'Vex') {
+                                              if (didHit &&
+                                                  masteryProp == 'Vex') {
                                                 setState(
                                                   () => _hasAdvantageFromVex =
                                                       true,
@@ -1212,110 +1183,1011 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                 );
                                               }
                                             }
+                                          } else {
+                                            setState(
+                                              () => _lastAttackWasCritical =
+                                                  isNat20,
+                                            );
+                                            if (isNat20) {
+                                              hitNote =
+                                                  ' — CRITICAL HIT (natural 20)!';
+                                            }
+                                            if (masteryProp == 'Vex') {
+                                              setState(
+                                                () =>
+                                                    _hasAdvantageFromVex = true,
+                                              );
+                                              masteryNote =
+                                                  ' — Vex: Advantage granted on your next attack vs this target';
+                                            } else if (hasAdvantage) {
+                                              setState(
+                                                () => _hasAdvantageFromVex =
+                                                    false,
+                                              );
+                                            }
+                                          }
 
-                                            setState(() {
-                                              _lastRollResult =
-                                                  '${w.name} — Attack roll: ${result.rolls.first} $attackText = ${result.total}$hitNote$advantageNote$ammoNote$masteryNote';
-                                              _lastAttackRollForCorrection =
-                                                  result.total;
-                                            });
-                                          },
-                                          child: Text(
-                                            'Roll to Hit ($attackText)',
-                                          ),
+                                          setState(() {
+                                            _lastRollResult =
+                                                '${w.name} — Attack roll: ${result.rolls.first} $attackText = ${result.total}$hitNote$advantageNote$ammoNote$masteryNote';
+                                            _lastAttackRollForCorrection =
+                                                result.total;
+                                          });
+                                        },
+                                        child: Text(
+                                          'Roll to Hit ($attackText)',
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () async {
-                                            final isCrit =
-                                                _lastAttackWasCritical;
-                                            final baseResult = usesGwf
-                                                ? rollDamageWithReroll(
-                                                    info.damageDice,
-                                                    0,
-                                                    isCritical: isCrit,
-                                                  )
-                                                : rollDamage(
-                                                    info.damageDice,
-                                                    0,
-                                                    isCritical: isCrit,
-                                                  );
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () async {
+                                          final isCrit = _lastAttackWasCritical;
+                                          final baseResult = usesGwf
+                                              ? rollDamageWithReroll(
+                                                  info.damageDice,
+                                                  0,
+                                                  isCritical: isCrit,
+                                                )
+                                              : rollDamage(
+                                                  info.damageDice,
+                                                  0,
+                                                  isCritical: isCrit,
+                                                );
 
-                                            final parts = <String>[
-                                              '${baseResult.rolls.join('+')} (dice)',
-                                            ];
-                                            var grandTotal = baseResult.total;
+                                          final parts = <String>[
+                                            '${baseResult.rolls.join('+')} (dice)',
+                                          ];
+                                          var grandTotal = baseResult.total;
 
-                                            if (info.damageModifier != 0) {
+                                          if (info.damageModifier != 0) {
+                                            parts.add(
+                                              '${info.damageModifier >= 0 ? "+" : ""}${info.damageModifier} (mod)',
+                                            );
+                                            grandTotal += info.damageModifier;
+                                          }
+
+                                          if (widget
+                                                  .character
+                                                  .characterClass
+                                                  .id ==
+                                              'cleric') {
+                                            final blessedChoice = widget
+                                                .character
+                                                .classSelections['cleric_blessed_strikes']
+                                                ?.firstOrNull;
+                                            if (blessedChoice ==
+                                                'divine_strike') {
+                                              final extraDice =
+                                                  widget.character.level >= 14
+                                                  ? '2d8'
+                                                  : '1d8';
+                                              final extra = rollDamage(
+                                                extraDice,
+                                                0,
+                                                isCritical: isCrit,
+                                              );
                                               parts.add(
-                                                '${info.damageModifier >= 0 ? "+" : ""}${info.damageModifier} (mod)',
+                                                '+${extra.total} (Divine Strike)',
                                               );
-                                              grandTotal += info.damageModifier;
+                                              grandTotal += extra.total;
                                             }
+                                          }
 
-                                            if (widget
-                                                    .character
-                                                    .characterClass
-                                                    .id ==
-                                                'cleric') {
-                                              final blessedChoice = widget
-                                                  .character
-                                                  .classSelections['cleric_blessed_strikes']
-                                                  ?.firstOrNull;
-                                              if (blessedChoice ==
-                                                  'divine_strike') {
-                                                final extraDice =
-                                                    widget.character.level >= 14
-                                                    ? '2d8'
-                                                    : '1d8';
-                                                final extra = rollDamage(
-                                                  extraDice,
-                                                  0,
-                                                  isCritical: isCrit,
+                                          if (widget
+                                                      .character
+                                                      .characterClass
+                                                      .id ==
+                                                  'barbarian' &&
+                                              _isRaging) {
+                                            final bonus = rageDamageBonus(
+                                              widget.character.level,
+                                            );
+                                            parts.add('+$bonus (Rage)');
+                                            grandTotal += bonus;
+
+                                            final subclass = widget
+                                                .character
+                                                .classSelections['barbarian_subclass']
+                                                ?.firstOrNull;
+                                            if (subclass == 'berserker') {
+                                              final extra = rollDamage(
+                                                frenzyExtraDice(
+                                                  widget.character.level,
+                                                ),
+                                                0,
+                                                isCritical: isCrit,
+                                              );
+                                              parts.add(
+                                                '+${extra.total} (Frenzy)',
+                                              );
+                                              grandTotal += extra.total;
+                                            }
+                                          }
+
+                                          String targetNote = '';
+                                          if (characterId != null &&
+                                              _selectedEnemyId != null) {
+                                            final enemies =
+                                                ref
+                                                    .read(
+                                                      combatEnemiesProvider(
+                                                        characterId,
+                                                      ),
+                                                    )
+                                                    .value ??
+                                                [];
+                                            final target = enemies
+                                                .where(
+                                                  (e) =>
+                                                      e.id == _selectedEnemyId,
+                                                )
+                                                .firstOrNull;
+                                            if (target != null) {
+                                              final newHp =
+                                                  (target.currentHp -
+                                                          grandTotal)
+                                                      .clamp(0, target.maxHp);
+                                              if (newHp <= 0) {
+                                                await ref
+                                                    .read(appDatabaseProvider)
+                                                    .removeEnemy(target.id);
+                                                targetNote =
+                                                    ' — ${target.name} defeated!';
+                                                setState(
+                                                  () => _selectedEnemyId = null,
                                                 );
-                                                parts.add(
-                                                  '+${extra.total} (Divine Strike)',
-                                                );
-                                                grandTotal += extra.total;
+                                              } else {
+                                                await ref
+                                                    .read(appDatabaseProvider)
+                                                    .updateEnemyHp(
+                                                      target.id,
+                                                      newHp,
+                                                    );
+                                                targetNote =
+                                                    ' — ${target.name}: $newHp/${target.maxHp} HP left';
                                               }
                                             }
+                                          }
 
-                                            if (widget
-                                                        .character
-                                                        .characterClass
-                                                        .id ==
-                                                    'barbarian' &&
-                                                _isRaging) {
-                                              final bonus = rageDamageBonus(
-                                                widget.character.level,
-                                              );
-                                              parts.add('+$bonus (Rage)');
-                                              grandTotal += bonus;
+                                          setState(() {
+                                            _lastRollResult =
+                                                '${w.name} — Damage: ${parts.join(' ')} = $grandTotal ${info.damageType}$targetNote';
+                                            _lastAttackWasCritical = false;
+                                          });
+                                        },
 
-                                              final subclass = widget
-                                                  .character
-                                                  .classSelections['barbarian_subclass']
-                                                  ?.firstOrNull;
-                                              if (subclass == 'berserker') {
-                                                final extra = rollDamage(
-                                                  frenzyExtraDice(
-                                                    widget.character.level,
+                                        child: Text(
+                                          'Roll Damage (${info.damageDice})',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Builder(
+                                  builder: (context) {
+                                    if (masteryProp == null ||
+                                        masteryProp == 'Vex') {
+                                      return const SizedBox.shrink();
+                                    }
+
+                                    Future<CombatEnemy?> currentTarget() async {
+                                      if (characterId == null ||
+                                          _selectedEnemyId == null)
+                                        return null;
+                                      final enemies =
+                                          ref
+                                              .read(
+                                                combatEnemiesProvider(
+                                                  characterId,
+                                                ),
+                                              )
+                                              .value ??
+                                          [];
+                                      return enemies
+                                          .where(
+                                            (e) => e.id == _selectedEnemyId,
+                                          )
+                                          .firstOrNull;
+                                    }
+
+                                    Future<void> applyCondition(
+                                      String label,
+                                    ) async {
+                                      final target = await currentTarget();
+                                      if (target == null) {
+                                        setState(
+                                          () => _lastRollResult =
+                                              '$masteryProp: no target selected.',
+                                        );
+                                        return;
+                                      }
+                                      final current = target.conditionsJson;
+                                      final list = (jsonDecode(current) as List)
+                                          .cast<String>();
+                                      if (!list.contains(label))
+                                        list.add(label);
+                                      await ref
+                                          .read(appDatabaseProvider)
+                                          .updateEnemyConditions(
+                                            target.id,
+                                            list,
+                                          );
+                                      setState(
+                                        () => _lastRollResult =
+                                            '${target.name}: $label applied.',
+                                      );
+                                    }
+
+                                    switch (masteryProp) {
+                                      case 'Graze':
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () async {
+                                                String targetNote = '';
+                                                final target =
+                                                    await currentTarget();
+                                                if (target != null) {
+                                                  final newHp =
+                                                      (target.currentHp -
+                                                              info.damageModifier)
+                                                          .clamp(
+                                                            0,
+                                                            target.maxHp,
+                                                          );
+                                                  if (newHp <= 0) {
+                                                    await ref
+                                                        .read(
+                                                          appDatabaseProvider,
+                                                        )
+                                                        .removeEnemy(target.id);
+                                                    targetNote =
+                                                        ' — ${target.name} defeated!';
+                                                    setState(
+                                                      () => _selectedEnemyId =
+                                                          null,
+                                                    );
+                                                  } else {
+                                                    await ref
+                                                        .read(
+                                                          appDatabaseProvider,
+                                                        )
+                                                        .updateEnemyHp(
+                                                          target.id,
+                                                          newHp,
+                                                        );
+                                                    targetNote =
+                                                        ' — ${target.name}: $newHp/${target.maxHp} HP left';
+                                                  }
+                                                }
+                                                setState(() {
+                                                  _lastRollResult =
+                                                      '${w.name} — Graze (missed hit): ${info.damageModifier} ${info.damageType} damage anyway$targetNote';
+                                                });
+                                              },
+                                              icon: const Icon(Icons.bolt),
+                                              label: Text(
+                                                'Missed? Apply Graze damage (${info.damageModifier})',
+                                              ),
+                                            ),
+                                          ),
+                                        );
+
+                                      case 'Push':
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () => applyCondition(
+                                                'Pushed 10 ft (Large or smaller)',
+                                              ),
+                                              icon: const Icon(
+                                                Icons.arrow_forward,
+                                              ),
+                                              label: const Text(
+                                                'Push target 10 ft (on hit)',
+                                              ),
+                                            ),
+                                          ),
+                                        );
+
+                                      case 'Sap':
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () => applyCondition(
+                                                'Disadvantage on next attack',
+                                              ),
+                                              icon: const Icon(
+                                                Icons.trending_down,
+                                              ),
+                                              label: const Text(
+                                                'Sap: target has Disadvantage (on hit)',
+                                              ),
+                                            ),
+                                          ),
+                                        );
+
+                                      case 'Slow':
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () async {
+                                                final target =
+                                                    await currentTarget();
+                                                if (target == null) {
+                                                  setState(
+                                                    () => _lastRollResult =
+                                                        'Slow: no target selected.',
+                                                  );
+                                                  return;
+                                                }
+                                                final reducedSpeed =
+                                                    (target.speed - 10).clamp(
+                                                      0,
+                                                      999,
+                                                    );
+                                                await ref
+                                                    .read(appDatabaseProvider)
+                                                    .updateEnemySpeed(
+                                                      target.id,
+                                                      reducedSpeed,
+                                                    );
+                                                await applyCondition(
+                                                  'Slowed (-10 ft Speed)',
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                Icons.slow_motion_video,
+                                              ),
+                                              label: const Text(
+                                                'Slow: reduce Speed by 10 ft (on hit)',
+                                              ),
+                                            ),
+                                          ),
+                                        );
+
+                                      case 'Topple':
+                                        final dc =
+                                            8 + info.damageModifier + profBonus;
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Topple: target makes a Constitution save (DC $dc) or falls Prone.',
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall,
+                                              ),
+                                              SizedBox(
+                                                width: double.infinity,
+                                                child: OutlinedButton.icon(
+                                                  onPressed: () =>
+                                                      applyCondition('Prone'),
+                                                  icon: const Icon(
+                                                    Icons.arrow_downward,
                                                   ),
-                                                  0,
-                                                  isCritical: isCrit,
-                                                );
-                                                parts.add(
-                                                  '+${extra.total} (Frenzy)',
-                                                );
-                                                grandTotal += extra.total;
-                                              }
-                                            }
+                                                  label: const Text(
+                                                    'Target failed save → apply Prone',
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
 
-                                            String targetNote = '';
-                                            if (characterId != null &&
-                                                _selectedEnemyId != null) {
+                                      case 'Cleave':
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () async {
+                                                if (characterId == null) return;
+                                                final enemies =
+                                                    ref
+                                                        .read(
+                                                          combatEnemiesProvider(
+                                                            characterId,
+                                                          ),
+                                                        )
+                                                        .value ??
+                                                    [];
+                                                final others = enemies
+                                                    .where(
+                                                      (e) =>
+                                                          e.id !=
+                                                          _selectedEnemyId,
+                                                    )
+                                                    .toList();
+                                                if (others.isEmpty) {
+                                                  setState(
+                                                    () => _lastRollResult =
+                                                        'Cleave: no second target available.',
+                                                  );
+                                                  return;
+                                                }
+                                                final secondTarget =
+                                                    await showDialog<
+                                                      CombatEnemy
+                                                    >(
+                                                      context: context,
+                                                      builder: (ctx) => SimpleDialog(
+                                                        title: const Text(
+                                                          'Choose second target (Cleave)',
+                                                        ),
+                                                        children: others
+                                                            .map(
+                                                              (
+                                                                e,
+                                                              ) => SimpleDialogOption(
+                                                                onPressed: () =>
+                                                                    Navigator.of(
+                                                                      ctx,
+                                                                    ).pop(e),
+                                                                child: Text(
+                                                                  '${e.name} (${e.currentHp}/${e.maxHp} HP)',
+                                                                ),
+                                                              ),
+                                                            )
+                                                            .toList(),
+                                                      ),
+                                                    );
+                                                if (secondTarget == null)
+                                                  return;
+                                                final cleaveModifier =
+                                                    info.damageModifier < 0
+                                                    ? info.damageModifier
+                                                    : 0;
+                                                final result = rollDamage(
+                                                  info.damageDice,
+                                                  cleaveModifier,
+                                                );
+                                                final newHp =
+                                                    (secondTarget.currentHp -
+                                                            result.total)
+                                                        .clamp(
+                                                          0,
+                                                          secondTarget.maxHp,
+                                                        );
+                                                if (newHp <= 0) {
+                                                  await ref
+                                                      .read(appDatabaseProvider)
+                                                      .removeEnemy(
+                                                        secondTarget.id,
+                                                      );
+                                                  setState(
+                                                    () => _lastRollResult =
+                                                        'Cleave — ${secondTarget.name}: ${result.total} damage, defeated!',
+                                                  );
+                                                } else {
+                                                  await ref
+                                                      .read(appDatabaseProvider)
+                                                      .updateEnemyHp(
+                                                        secondTarget.id,
+                                                        newHp,
+                                                      );
+                                                  setState(
+                                                    () => _lastRollResult =
+                                                        'Cleave — ${secondTarget.name}: ${result.total} damage, $newHp/${secondTarget.maxHp} HP left',
+                                                  );
+                                                }
+                                              },
+                                              icon: const Icon(
+                                                Icons.call_split,
+                                              ),
+                                              label: const Text(
+                                                'Cleave: attack second target (on hit)',
+                                              ),
+                                            ),
+                                          ),
+                                        );
+
+                                      case 'Nick':
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 4,
+                                          ),
+                                          child: Text(
+                                            'Nick: your off-hand attack can be made as part of the Attack action instead of a Bonus Action.',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                          ),
+                                        );
+
+                                      default:
+                                        return const SizedBox.shrink();
+                                    }
+                                  },
+                                ),
+                                if (w.ammunitionItemId != null) ...[
+                                  const SizedBox(height: 8),
+                                  Builder(
+                                    builder: (context) {
+                                      final ammoRow = inventoryRows
+                                          .where(
+                                            (r) =>
+                                                r.itemId == w.ammunitionItemId,
+                                          )
+                                          .firstOrNull;
+                                      final ammoItem = allItems
+                                          .where(
+                                            (i) => i.id == w.ammunitionItemId,
+                                          )
+                                          .firstOrNull;
+                                      final remaining = ammoRow?.quantity ?? 0;
+                                      return Row(
+                                        children: [
+                                          Icon(
+                                            Icons.inventory_2_outlined,
+                                            size: 16,
+                                            color: remaining > 0
+                                                ? Colors.grey
+                                                : Colors.red,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${ammoItem?.name ?? w.ammunitionItemId}: $remaining left',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: remaining > 0
+                                                      ? null
+                                                      : Colors.red,
+                                                ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+
+                    const SizedBox(height: 24),
+                    Text(
+                      'Unarmed Strike',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Builder(
+                      builder: (context) {
+                        final info = stats.unarmedStrikeInfo(profBonus);
+                        final attackText = info.attackBonus >= 0
+                            ? '+${info.attackBonus}'
+                            : '${info.attackBonus}';
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      final result = rollAttack(
+                                        info.attackBonus,
+                                      );
+                                      final isNat20 = result.rolls.first == 20;
+                                      setState(() {
+                                        _lastAttackWasCritical = isNat20;
+                                        _lastAttackRollForCorrection =
+                                            result.total;
+                                        _lastRollResult =
+                                            'Unarmed Strike — Attack roll: ${result.rolls.first} $attackText = ${result.total}${isNat20 ? " — CRITICAL HIT!" : ""}';
+                                      });
+                                    },
+                                    child: Text('Roll to Hit ($attackText)'),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      final isCrit = _lastAttackWasCritical;
+                                      final result = rollDamage(
+                                        info.damageDice,
+                                        info.damageModifier,
+                                        isCritical: isCrit,
+                                      );
+                                      setState(() {
+                                        _lastRollResult =
+                                            'Unarmed Strike — Damage: ${result.total} ${info.damageType}';
+                                        _lastAttackWasCritical = false;
+                                      });
+                                    },
+                                    child: const Text('Roll Damage'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    Builder(
+                      builder: (context) {
+                        final offHandInfo = stats.offHandAttackInfo(profBonus);
+                        final offHandWeapon = stats.offHandWeapon;
+                        if (offHandInfo == null || offHandWeapon == null)
+                          return const SizedBox.shrink();
+                        final attackText = offHandInfo.attackBonus >= 0
+                            ? '+${offHandInfo.attackBonus}'
+                            : '${offHandInfo.attackBonus}';
+                        return Column(
+                          children: [
+                            const SizedBox(height: 24),
+                            Text(
+                              'Off-Hand Attack (Bonus Action)',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Using ${offHandWeapon.name}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          final result = rollAttack(
+                                            offHandInfo.attackBonus,
+                                          );
+                                          setState(() {
+                                            _lastRollResult =
+                                                'Off-Hand (${offHandWeapon.name}) — Attack roll: ${result.rolls.first} $attackText = ${result.total}';
+                                          });
+                                        },
+                                        child: Text(
+                                          'Roll to Hit ($attackText)',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          final result = rollDamage(
+                                            offHandInfo.damageDice,
+                                            offHandInfo.damageModifier,
+                                          );
+                                          setState(() {
+                                            _lastRollResult =
+                                                'Off-Hand (${offHandWeapon.name}) — Damage: ${result.total} ${offHandInfo.damageType}';
+                                          });
+                                        },
+                                        child: Text(
+                                          'Roll Damage (${offHandInfo.damageDice})',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+
+                    if (widget.character.characterClass.id == 'cleric' &&
+                        characterId != null) ...[
+                      const SizedBox(height: 24),
+                      Text(
+                        'Cleric Features',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Builder(
+                        builder: (context) {
+                          final partyAsync = ref.watch(
+                            partyMembersProvider(characterId),
+                          );
+                          return partyAsync.when(
+                            loading: () => const SizedBox.shrink(),
+                            error: (e, st) => const SizedBox.shrink(),
+                            data: (members) {
+                              return Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.favorite, size: 18),
+                                      const SizedBox(width: 8),
+                                      const Text('Heal target: '),
+                                      DropdownButton<int?>(
+                                        value: _healTargetPartyMemberId,
+                                        items: [
+                                          const DropdownMenuItem(
+                                            value: null,
+                                            child: Text('Myself'),
+                                          ),
+                                          ...members.map(
+                                            (m) => DropdownMenuItem(
+                                              value: m.id,
+                                              child: Text(
+                                                '${m.name} (${m.currentHp}/${m.maxHp} HP)',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        onChanged: (v) => setState(
+                                          () => _healTargetPartyMemberId = v,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Divine Spark',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              Text(
+                                'Heal a target, or force a Constitution save (fail: full damage, success: half).',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () async {
+                                        final isLife = domain == 'life';
+                                        final hasSupreme =
+                                            isLife &&
+                                            widget.character.level >= 17;
+                                        final result = rollDivineSpark(
+                                          widget.character,
+                                        );
+                                        final healTotal = hasSupreme
+                                            ? maxHealingRoll(
+                                                    '${divineSparkDiceCount(widget.character.level)}d8',
+                                                  ) +
+                                                  result.modifier
+                                            : result.total;
+
+                                        if (_healTargetPartyMemberId == null) {
+                                          final maxHp =
+                                              widget.character.totalHitPoints;
+                                          final currentStored = await ref.read(
+                                            currentHpProvider(
+                                              characterId,
+                                            ).future,
+                                          );
+                                          final currentHp =
+                                              currentStored ?? maxHp;
+
+                                          if (currentHp >= maxHp) {
+                                            setState(() {
+                                              _lastRollResult =
+                                                  'Divine Spark: your HP already at maximum ($currentHp/$maxHp) — no healing applied.';
+                                            });
+                                            return;
+                                          }
+
+                                          var newHp = (currentHp + healTotal)
+                                              .clamp(0, maxHp);
+                                          String selfHealNote = '';
+                                          if (isLife &&
+                                              widget.character.level >= 6) {
+                                            newHp =
+                                                (newHp +
+                                                        blessedHealerSelfHeal())
+                                                    .clamp(0, maxHp);
+                                            selfHealNote =
+                                                ' (+ ${blessedHealerSelfHeal()} self-heal, Blessed Healer)';
+                                          }
+                                          await ref
+                                              .read(appDatabaseProvider)
+                                              .setCurrentHp(characterId, newHp);
+                                          setState(() {
+                                            _lastRollResult =
+                                                'Divine Spark (self-heal): ${hasSupreme ? "MAX " : ""}${result.rolls.join('+')} + ${result.modifier} = $healTotal HP$selfHealNote → now $newHp/$maxHp HP';
+                                          });
+                                        } else {
+                                          final members =
+                                              ref
+                                                  .read(
+                                                    partyMembersProvider(
+                                                      characterId,
+                                                    ),
+                                                  )
+                                                  .value ??
+                                              [];
+                                          final target = members
+                                              .where(
+                                                (m) =>
+                                                    m.id ==
+                                                    _healTargetPartyMemberId,
+                                              )
+                                              .firstOrNull;
+                                          if (target == null) return;
+
+                                          if (target.currentHp >=
+                                              target.maxHp) {
+                                            setState(() {
+                                              _lastRollResult =
+                                                  'Divine Spark: ${target.name} already at maximum HP (${target.currentHp}/${target.maxHp}) — no healing applied.';
+                                            });
+                                            return;
+                                          }
+
+                                          var newHp =
+                                              (target.currentHp + healTotal)
+                                                  .clamp(0, target.maxHp);
+                                          String selfHealNote = '';
+                                          if (isLife &&
+                                              widget.character.level >= 6) {
+                                            final maxHp =
+                                                widget.character.totalHitPoints;
+                                            final currentStored = await ref
+                                                .read(
+                                                  currentHpProvider(
+                                                    characterId,
+                                                  ).future,
+                                                );
+                                            final currentSelfHp =
+                                                currentStored ?? maxHp;
+                                            final selfHeal =
+                                                blessedHealerSelfHeal();
+                                            final newSelfHp =
+                                                (currentSelfHp + selfHeal)
+                                                    .clamp(0, maxHp);
+                                            await ref
+                                                .read(appDatabaseProvider)
+                                                .setCurrentHp(
+                                                  characterId,
+                                                  newSelfHp,
+                                                );
+                                            selfHealNote =
+                                                ' (+ $selfHeal self-heal, Blessed Healer)';
+                                          }
+                                          await ref
+                                              .read(appDatabaseProvider)
+                                              .updatePartyMemberHp(
+                                                target.id,
+                                                newHp,
+                                              );
+                                          setState(() {
+                                            _lastRollResult =
+                                                'Divine Spark (${target.name}): ${hasSupreme ? "MAX " : ""}${result.rolls.join('+')} + ${result.modifier} = $healTotal HP$selfHealNote → now $newHp/${target.maxHp} HP';
+                                          });
+                                        }
+                                      },
+                                      child: const Text('Heal'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () async {
+                                        final result = rollDivineSpark(
+                                          widget.character,
+                                        );
+                                        String targetNote = '';
+                                        if (_selectedEnemyId != null) {
+                                          final enemies =
+                                              ref
+                                                  .read(
+                                                    combatEnemiesProvider(
+                                                      characterId,
+                                                    ),
+                                                  )
+                                                  .value ??
+                                              [];
+                                          final target = enemies
+                                              .where(
+                                                (e) => e.id == _selectedEnemyId,
+                                              )
+                                              .firstOrNull;
+                                          if (target != null) {
+                                            final newHp =
+                                                (target.currentHp -
+                                                        result.total)
+                                                    .clamp(0, target.maxHp);
+                                            if (newHp <= 0) {
+                                              await ref
+                                                  .read(appDatabaseProvider)
+                                                  .removeEnemy(target.id);
+                                              targetNote =
+                                                  ' — ${target.name} defeated!';
+                                            } else {
+                                              await ref
+                                                  .read(appDatabaseProvider)
+                                                  .updateEnemyHp(
+                                                    target.id,
+                                                    newHp,
+                                                  );
+                                              targetNote =
+                                                  ' — ${target.name}: $newHp/${target.maxHp} HP left';
+                                            }
+                                          }
+                                        }
+                                        setState(() {
+                                          _lastRollResult =
+                                              'Divine Spark (damage, target fails save): ${result.total}$targetNote';
+                                        });
+                                      },
+                                      child: const Text('Damage (fail)'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Turn Undead',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              Text(
+                                'Undead within 30 ft make a Wisdom save or are Frightened + Incapacitated for 1 minute.',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: _selectedEnemyId == null
+                                          ? null
+                                          : () async {
                                               final enemies =
                                                   ref
                                                       .read(
@@ -1332,812 +2204,41 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                         _selectedEnemyId,
                                                   )
                                                   .firstOrNull;
-                                              if (target != null) {
-                                                final newHp =
-                                                    (target.currentHp -
-                                                            grandTotal)
-                                                        .clamp(0, target.maxHp);
-                                                if (newHp <= 0) {
-                                                  await ref
-                                                      .read(appDatabaseProvider)
-                                                      .removeEnemy(target.id);
-                                                  targetNote =
-                                                      ' — ${target.name} defeated!';
-                                                  setState(
-                                                    () =>
-                                                        _selectedEnemyId = null,
-                                                  );
-                                                } else {
-                                                  await ref
-                                                      .read(appDatabaseProvider)
-                                                      .updateEnemyHp(
-                                                        target.id,
-                                                        newHp,
-                                                      );
-                                                  targetNote =
-                                                      ' — ${target.name}: $newHp/${target.maxHp} HP left';
-                                                }
+                                              if (target == null) return;
+                                              final current =
+                                                  (jsonDecode(
+                                                            target
+                                                                .conditionsJson,
+                                                          )
+                                                          as List)
+                                                      .cast<String>();
+                                              if (!current.contains(
+                                                'Frightened + Incapacitated (Turn Undead)',
+                                              )) {
+                                                current.add(
+                                                  'Frightened + Incapacitated (Turn Undead)',
+                                                );
                                               }
-                                            }
-
-                                            setState(() {
-                                              _lastRollResult =
-                                                  '${w.name} — Damage: ${parts.join(' ')} = $grandTotal ${info.damageType}$targetNote';
-                                              _lastAttackWasCritical = false;
-                                            });
-                                          },
-
-                                          child: Text(
-                                            'Roll Damage (${info.damageDice})',
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Builder(
-                                    builder: (context) {
-                                      if (masteryProp == null ||
-                                          masteryProp == 'Vex') {
-                                        return const SizedBox.shrink();
-                                      }
-
-                                      Future<CombatEnemy?>
-                                      currentTarget() async {
-                                        if (characterId == null ||
-                                            _selectedEnemyId == null)
-                                          return null;
-                                        final enemies =
-                                            ref
-                                                .read(
-                                                  combatEnemiesProvider(
-                                                    characterId,
-                                                  ),
-                                                )
-                                                .value ??
-                                            [];
-                                        return enemies
-                                            .where(
-                                              (e) => e.id == _selectedEnemyId,
-                                            )
-                                            .firstOrNull;
-                                      }
-
-                                      Future<void> applyCondition(
-                                        String label,
-                                      ) async {
-                                        final target = await currentTarget();
-                                        if (target == null) {
-                                          setState(
-                                            () => _lastRollResult =
-                                                '$masteryProp: no target selected.',
-                                          );
-                                          return;
-                                        }
-                                        final current = target.conditionsJson;
-                                        final list =
-                                            (jsonDecode(current) as List)
-                                                .cast<String>();
-                                        if (!list.contains(label))
-                                          list.add(label);
-                                        await ref
-                                            .read(appDatabaseProvider)
-                                            .updateEnemyConditions(
-                                              target.id,
-                                              list,
-                                            );
-                                        setState(
-                                          () => _lastRollResult =
-                                              '${target.name}: $label applied.',
-                                        );
-                                      }
-
-                                      switch (masteryProp) {
-                                        case 'Graze':
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 8,
-                                            ),
-                                            child: SizedBox(
-                                              width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () async {
-                                                  String targetNote = '';
-                                                  final target =
-                                                      await currentTarget();
-                                                  if (target != null) {
-                                                    final newHp =
-                                                        (target.currentHp -
-                                                                info.damageModifier)
-                                                            .clamp(
-                                                              0,
-                                                              target.maxHp,
-                                                            );
-                                                    if (newHp <= 0) {
-                                                      await ref
-                                                          .read(
-                                                            appDatabaseProvider,
-                                                          )
-                                                          .removeEnemy(
-                                                            target.id,
-                                                          );
-                                                      targetNote =
-                                                          ' — ${target.name} defeated!';
-                                                      setState(
-                                                        () => _selectedEnemyId =
-                                                            null,
-                                                      );
-                                                    } else {
-                                                      await ref
-                                                          .read(
-                                                            appDatabaseProvider,
-                                                          )
-                                                          .updateEnemyHp(
-                                                            target.id,
-                                                            newHp,
-                                                          );
-                                                      targetNote =
-                                                          ' — ${target.name}: $newHp/${target.maxHp} HP left';
-                                                    }
-                                                  }
-                                                  setState(() {
-                                                    _lastRollResult =
-                                                        '${w.name} — Graze (missed hit): ${info.damageModifier} ${info.damageType} damage anyway$targetNote';
-                                                  });
-                                                },
-                                                icon: const Icon(Icons.bolt),
-                                                label: Text(
-                                                  'Missed? Apply Graze damage (${info.damageModifier})',
-                                                ),
-                                              ),
-                                            ),
-                                          );
-
-                                        case 'Push':
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 8,
-                                            ),
-                                            child: SizedBox(
-                                              width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () => applyCondition(
-                                                  'Pushed 10 ft (Large or smaller)',
-                                                ),
-                                                icon: const Icon(
-                                                  Icons.arrow_forward,
-                                                ),
-                                                label: const Text(
-                                                  'Push target 10 ft (on hit)',
-                                                ),
-                                              ),
-                                            ),
-                                          );
-
-                                        case 'Sap':
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 8,
-                                            ),
-                                            child: SizedBox(
-                                              width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () => applyCondition(
-                                                  'Disadvantage on next attack',
-                                                ),
-                                                icon: const Icon(
-                                                  Icons.trending_down,
-                                                ),
-                                                label: const Text(
-                                                  'Sap: target has Disadvantage (on hit)',
-                                                ),
-                                              ),
-                                            ),
-                                          );
-
-                                        case 'Slow':
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 8,
-                                            ),
-                                            child: SizedBox(
-                                              width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () async {
-                                                  final target =
-                                                      await currentTarget();
-                                                  if (target == null) {
-                                                    setState(
-                                                      () => _lastRollResult =
-                                                          'Slow: no target selected.',
-                                                    );
-                                                    return;
-                                                  }
-                                                  final reducedSpeed =
-                                                      (target.speed - 10).clamp(
-                                                        0,
-                                                        999,
-                                                      );
-                                                  await ref
-                                                      .read(appDatabaseProvider)
-                                                      .updateEnemySpeed(
-                                                        target.id,
-                                                        reducedSpeed,
-                                                      );
-                                                  await applyCondition(
-                                                    'Slowed (-10 ft Speed)',
+                                              await ref
+                                                  .read(appDatabaseProvider)
+                                                  .updateEnemyConditions(
+                                                    target.id,
+                                                    current,
                                                   );
-                                                },
-                                                icon: const Icon(
-                                                  Icons.slow_motion_video,
-                                                ),
-                                                label: const Text(
-                                                  'Slow: reduce Speed by 10 ft (on hit)',
-                                                ),
-                                              ),
-                                            ),
-                                          );
-
-                                        case 'Topple':
-                                          final dc =
-                                              8 +
-                                              info.damageModifier +
-                                              profBonus;
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 8,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Topple: target makes a Constitution save (DC $dc) or falls Prone.',
-                                                  style: Theme.of(
-                                                    context,
-                                                  ).textTheme.bodySmall,
-                                                ),
-                                                SizedBox(
-                                                  width: double.infinity,
-                                                  child: OutlinedButton.icon(
-                                                    onPressed: () =>
-                                                        applyCondition('Prone'),
-                                                    icon: const Icon(
-                                                      Icons.arrow_downward,
-                                                    ),
-                                                    label: const Text(
-                                                      'Target failed save → apply Prone',
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-
-                                        case 'Cleave':
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 8,
-                                            ),
-                                            child: SizedBox(
-                                              width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () async {
-                                                  if (characterId == null)
-                                                    return;
-                                                  final enemies =
-                                                      ref
-                                                          .read(
-                                                            combatEnemiesProvider(
-                                                              characterId,
-                                                            ),
-                                                          )
-                                                          .value ??
-                                                      [];
-                                                  final others = enemies
-                                                      .where(
-                                                        (e) =>
-                                                            e.id !=
-                                                            _selectedEnemyId,
-                                                      )
-                                                      .toList();
-                                                  if (others.isEmpty) {
-                                                    setState(
-                                                      () => _lastRollResult =
-                                                          'Cleave: no second target available.',
-                                                    );
-                                                    return;
-                                                  }
-                                                  final secondTarget = await showDialog<CombatEnemy>(
-                                                    context: context,
-                                                    builder: (ctx) => SimpleDialog(
-                                                      title: const Text(
-                                                        'Choose second target (Cleave)',
-                                                      ),
-                                                      children: others
-                                                          .map(
-                                                            (
-                                                              e,
-                                                            ) => SimpleDialogOption(
-                                                              onPressed: () =>
-                                                                  Navigator.of(
-                                                                    ctx,
-                                                                  ).pop(e),
-                                                              child: Text(
-                                                                '${e.name} (${e.currentHp}/${e.maxHp} HP)',
-                                                              ),
-                                                            ),
-                                                          )
-                                                          .toList(),
-                                                    ),
-                                                  );
-                                                  if (secondTarget == null)
-                                                    return;
-                                                  final cleaveModifier =
-                                                      info.damageModifier < 0
-                                                      ? info.damageModifier
-                                                      : 0;
-                                                  final result = rollDamage(
-                                                    info.damageDice,
-                                                    cleaveModifier,
-                                                  );
-                                                  final newHp =
-                                                      (secondTarget.currentHp -
-                                                              result.total)
-                                                          .clamp(
-                                                            0,
-                                                            secondTarget.maxHp,
-                                                          );
-                                                  if (newHp <= 0) {
-                                                    await ref
-                                                        .read(
-                                                          appDatabaseProvider,
-                                                        )
-                                                        .removeEnemy(
-                                                          secondTarget.id,
-                                                        );
-                                                    setState(
-                                                      () => _lastRollResult =
-                                                          'Cleave — ${secondTarget.name}: ${result.total} damage, defeated!',
-                                                    );
-                                                  } else {
-                                                    await ref
-                                                        .read(
-                                                          appDatabaseProvider,
-                                                        )
-                                                        .updateEnemyHp(
-                                                          secondTarget.id,
-                                                          newHp,
-                                                        );
-                                                    setState(
-                                                      () => _lastRollResult =
-                                                          'Cleave — ${secondTarget.name}: ${result.total} damage, $newHp/${secondTarget.maxHp} HP left',
-                                                    );
-                                                  }
-                                                },
-                                                icon: const Icon(
-                                                  Icons.call_split,
-                                                ),
-                                                label: const Text(
-                                                  'Cleave: attack second target (on hit)',
-                                                ),
-                                              ),
-                                            ),
-                                          );
-
-                                        case 'Nick':
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 4,
-                                            ),
-                                            child: Text(
-                                              'Nick: your off-hand attack can be made as part of the Attack action instead of a Bonus Action.',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
-                                            ),
-                                          );
-
-                                        default:
-                                          return const SizedBox.shrink();
-                                      }
-                                    },
-                                  ),
-                                  if (w.ammunitionItemId != null) ...[
-                                    const SizedBox(height: 8),
-                                    Builder(
-                                      builder: (context) {
-                                        final ammoRow = inventoryRows
-                                            .where(
-                                              (r) =>
-                                                  r.itemId ==
-                                                  w.ammunitionItemId,
-                                            )
-                                            .firstOrNull;
-                                        final ammoItem = allItems
-                                            .where(
-                                              (i) => i.id == w.ammunitionItemId,
-                                            )
-                                            .firstOrNull;
-                                        final remaining =
-                                            ammoRow?.quantity ?? 0;
-                                        return Row(
-                                          children: [
-                                            Icon(
-                                              Icons.inventory_2_outlined,
-                                              size: 16,
-                                              color: remaining > 0
-                                                  ? Colors.grey
-                                                  : Colors.red,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              '${ammoItem?.name ?? w.ammunitionItemId}: $remaining left',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
-                                                    color: remaining > 0
-                                                        ? null
-                                                        : Colors.red,
-                                                  ),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-                        }),
-
-                      const SizedBox(height: 24),
-                      Text(
-                        'Unarmed Strike',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Builder(
-                        builder: (context) {
-                          final info = stats.unarmedStrikeInfo(profBonus);
-                          final attackText = info.attackBonus >= 0
-                              ? '+${info.attackBonus}'
-                              : '${info.attackBonus}';
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        final result = rollAttack(
-                                          info.attackBonus,
-                                        );
-                                        final isNat20 =
-                                            result.rolls.first == 20;
-                                        setState(() {
-                                          _lastAttackWasCritical = isNat20;
-                                          _lastAttackRollForCorrection =
-                                              result.total;
-                                          _lastRollResult =
-                                              'Unarmed Strike — Attack roll: ${result.rolls.first} $attackText = ${result.total}${isNat20 ? " — CRITICAL HIT!" : ""}';
-                                        });
-                                      },
-                                      child: Text('Roll to Hit ($attackText)'),
+                                              setState(
+                                                () => _lastRollResult =
+                                                    '${target.name}: failed save, Turned.',
+                                              );
+                                            },
+                                      child: const Text('Target failed save'),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        final isCrit = _lastAttackWasCritical;
-                                        final result = rollDamage(
-                                          info.damageDice,
-                                          info.damageModifier,
-                                          isCritical: isCrit,
-                                        );
-                                        setState(() {
-                                          _lastRollResult =
-                                              'Unarmed Strike — Damage: ${result.total} ${info.damageType}';
-                                          _lastAttackWasCritical = false;
-                                        });
-                                      },
-                                      child: const Text('Roll Damage'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      Builder(
-                        builder: (context) {
-                          final offHandInfo = stats.offHandAttackInfo(
-                            profBonus,
-                          );
-                          final offHandWeapon = stats.offHandWeapon;
-                          if (offHandInfo == null || offHandWeapon == null)
-                            return const SizedBox.shrink();
-                          final attackText = offHandInfo.attackBonus >= 0
-                              ? '+${offHandInfo.attackBonus}'
-                              : '${offHandInfo.attackBonus}';
-                          return Column(
-                            children: [
-                              const SizedBox(height: 24),
-                              Text(
-                                'Off-Hand Attack (Bonus Action)',
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Using ${offHandWeapon.name}',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              const SizedBox(height: 8),
-                              Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () {
-                                            final result = rollAttack(
-                                              offHandInfo.attackBonus,
-                                            );
-                                            setState(() {
-                                              _lastRollResult =
-                                                  'Off-Hand (${offHandWeapon.name}) — Attack roll: ${result.rolls.first} $attackText = ${result.total}';
-                                            });
-                                          },
-                                          child: Text(
-                                            'Roll to Hit ($attackText)',
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () {
-                                            final result = rollDamage(
-                                              offHandInfo.damageDice,
-                                              offHandInfo.damageModifier,
-                                            );
-                                            setState(() {
-                                              _lastRollResult =
-                                                  'Off-Hand (${offHandWeapon.name}) — Damage: ${result.total} ${offHandInfo.damageType}';
-                                            });
-                                          },
-                                          child: Text(
-                                            'Roll Damage (${offHandInfo.damageDice})',
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-
-                      if (widget.character.characterClass.id == 'cleric' &&
-                          characterId != null) ...[
-                        const SizedBox(height: 24),
-                        Text(
-                          'Cleric Features',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Builder(
-                          builder: (context) {
-                            final partyAsync = ref.watch(
-                              partyMembersProvider(characterId),
-                            );
-                            return partyAsync.when(
-                              loading: () => const SizedBox.shrink(),
-                              error: (e, st) => const SizedBox.shrink(),
-                              data: (members) {
-                                return Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.favorite, size: 18),
-                                        const SizedBox(width: 8),
-                                        const Text('Heal target: '),
-                                        DropdownButton<int?>(
-                                          value: _healTargetPartyMemberId,
-                                          items: [
-                                            const DropdownMenuItem(
-                                              value: null,
-                                              child: Text('Myself'),
-                                            ),
-                                            ...members.map(
-                                              (m) => DropdownMenuItem(
-                                                value: m.id,
-                                                child: Text(
-                                                  '${m.name} (${m.currentHp}/${m.maxHp} HP)',
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                          onChanged: (v) => setState(
-                                            () => _healTargetPartyMemberId = v,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Divine Spark',
-                                  style: Theme.of(context).textTheme.titleSmall,
-                                ),
-                                Text(
-                                  'Heal a target, or force a Constitution save (fail: full damage, success: half).',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
+                                  if (widget.character.level >= 5)
                                     Expanded(
                                       child: OutlinedButton(
                                         onPressed: () async {
-                                          final isLife = domain == 'life';
-                                          final hasSupreme =
-                                              isLife &&
-                                              widget.character.level >= 17;
-                                          final result = rollDivineSpark(
-                                            widget.character,
-                                          );
-                                          final healTotal = hasSupreme
-                                              ? maxHealingRoll(
-                                                      '${divineSparkDiceCount(widget.character.level)}d8',
-                                                    ) +
-                                                    result.modifier
-                                              : result.total;
-
-                                          if (_healTargetPartyMemberId ==
-                                              null) {
-                                            final maxHp =
-                                                widget.character.totalHitPoints;
-                                            final currentStored = await ref
-                                                .read(
-                                                  currentHpProvider(
-                                                    characterId,
-                                                  ).future,
-                                                );
-                                            final currentHp =
-                                                currentStored ?? maxHp;
-
-                                            if (currentHp >= maxHp) {
-                                              setState(() {
-                                                _lastRollResult =
-                                                    'Divine Spark: your HP already at maximum ($currentHp/$maxHp) — no healing applied.';
-                                              });
-                                              return;
-                                            }
-
-                                            var newHp = (currentHp + healTotal)
-                                                .clamp(0, maxHp);
-                                            String selfHealNote = '';
-                                            if (isLife &&
-                                                widget.character.level >= 6) {
-                                              newHp =
-                                                  (newHp +
-                                                          blessedHealerSelfHeal())
-                                                      .clamp(0, maxHp);
-                                              selfHealNote =
-                                                  ' (+ ${blessedHealerSelfHeal()} self-heal, Blessed Healer)';
-                                            }
-                                            await ref
-                                                .read(appDatabaseProvider)
-                                                .setCurrentHp(
-                                                  characterId,
-                                                  newHp,
-                                                );
-                                            setState(() {
-                                              _lastRollResult =
-                                                  'Divine Spark (self-heal): ${hasSupreme ? "MAX " : ""}${result.rolls.join('+')} + ${result.modifier} = $healTotal HP$selfHealNote → now $newHp/$maxHp HP';
-                                            });
-                                          } else {
-                                            final members =
-                                                ref
-                                                    .read(
-                                                      partyMembersProvider(
-                                                        characterId,
-                                                      ),
-                                                    )
-                                                    .value ??
-                                                [];
-                                            final target = members
-                                                .where(
-                                                  (m) =>
-                                                      m.id ==
-                                                      _healTargetPartyMemberId,
-                                                )
-                                                .firstOrNull;
-                                            if (target == null) return;
-
-                                            if (target.currentHp >=
-                                                target.maxHp) {
-                                              setState(() {
-                                                _lastRollResult =
-                                                    'Divine Spark: ${target.name} already at maximum HP (${target.currentHp}/${target.maxHp}) — no healing applied.';
-                                              });
-                                              return;
-                                            }
-
-                                            var newHp =
-                                                (target.currentHp + healTotal)
-                                                    .clamp(0, target.maxHp);
-                                            String selfHealNote = '';
-                                            if (isLife &&
-                                                widget.character.level >= 6) {
-                                              final maxHp = widget
-                                                  .character
-                                                  .totalHitPoints;
-                                              final currentStored = await ref
-                                                  .read(
-                                                    currentHpProvider(
-                                                      characterId,
-                                                    ).future,
-                                                  );
-                                              final currentSelfHp =
-                                                  currentStored ?? maxHp;
-                                              final selfHeal =
-                                                  blessedHealerSelfHeal();
-                                              final newSelfHp =
-                                                  (currentSelfHp + selfHeal)
-                                                      .clamp(0, maxHp);
-                                              await ref
-                                                  .read(appDatabaseProvider)
-                                                  .setCurrentHp(
-                                                    characterId,
-                                                    newSelfHp,
-                                                  );
-                                              selfHealNote =
-                                                  ' (+ $selfHeal self-heal, Blessed Healer)';
-                                            }
-                                            await ref
-                                                .read(appDatabaseProvider)
-                                                .updatePartyMemberHp(
-                                                  target.id,
-                                                  newHp,
-                                                );
-                                            setState(() {
-                                              _lastRollResult =
-                                                  'Divine Spark (${target.name}): ${hasSupreme ? "MAX " : ""}${result.rolls.join('+')} + ${result.modifier} = $healTotal HP$selfHealNote → now $newHp/${target.maxHp} HP';
-                                            });
-                                          }
-                                        },
-                                        child: const Text('Heal'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () async {
-                                          final result = rollDivineSpark(
+                                          final result = rollSearUndead(
                                             widget.character,
                                           );
                                           String targetNote = '';
@@ -2182,13 +2283,292 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                           }
                                           setState(() {
                                             _lastRollResult =
-                                                'Divine Spark (damage, target fails save): ${result.total}$targetNote';
+                                                'Sear Undead: ${result.total} Radiant$targetNote';
                                           });
                                         },
-                                        child: const Text('Damage (fail)'),
+                                        child: const Text('Sear Undead'),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (domain == 'war') ...[
+                        const SizedBox(height: 8),
+                        resourceUsesAsync.when(
+                          loading: () => const SizedBox.shrink(),
+                          error: (e, st) => const SizedBox.shrink(),
+                          data: (usesRows) {
+                            final wisMod = wisdomModifier(
+                              widget.character,
+                            ).clamp(1, 20);
+                            final row = usesRows
+                                .where((r) => r.resourceId == 'war_priest')
+                                .firstOrNull;
+                            final spent = row?.usesSpent ?? 0;
+                            final remaining = (wisMod - spent).clamp(0, wisMod);
+                            return Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'War Priest',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleSmall,
+                                    ),
+                                    Text(
+                                      'Bonus Action weapon/Unarmed Strike attack. Uses: $remaining / $wisMod (recharge on Short or Long Rest)',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed: remaining > 0
+                                            ? () => ref
+                                                  .read(appDatabaseProvider)
+                                                  .useResource(
+                                                    characterId,
+                                                    'war_priest',
+                                                    wisMod,
+                                                  )
+                                            : null,
+                                        child: const Text(
+                                          'Use bonus action attack',
+                                        ),
                                       ),
                                     ),
                                   ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Guided Strike',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                Text(
+                                  _lastAttackRollForCorrection != null
+                                      ? 'Last attack roll: $_lastAttackRollForCorrection'
+                                      : 'No recent attack roll to correct.',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    onPressed:
+                                        _lastAttackRollForCorrection == null
+                                        ? null
+                                        : () {
+                                            final corrected = applyGuidedStrike(
+                                              _lastAttackRollForCorrection!,
+                                            );
+                                            setState(() {
+                                              _lastRollResult =
+                                                  'Guided Strike: $_lastAttackRollForCorrection + 10 = $corrected';
+                                            });
+                                          },
+                                    child: const Text(
+                                      'Apply +10 to missed roll',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (domain == 'life') ...[
+                        const SizedBox(height: 8),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Preserve Life',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                Text(
+                                  'Total pool: ${preserveLifePool(widget.character.level)} HP, split among Bloodied allies within 30 ft (max half their HP max each).',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                const SizedBox(height: 8),
+                                Builder(
+                                  builder: (context) {
+                                    final partyAsync = ref.watch(
+                                      partyMembersProvider(characterId),
+                                    );
+                                    return partyAsync.when(
+                                      loading: () => const SizedBox.shrink(),
+                                      error: (e, st) => const SizedBox.shrink(),
+                                      data: (members) {
+                                        if (members.isEmpty) {
+                                          return const Text(
+                                            'No party members added yet. Add allies from the Party screen first.',
+                                            style: TextStyle(
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          );
+                                        }
+                                        return Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const Text('Target: '),
+                                                DropdownButton<int?>(
+                                                  value: _preserveLifeTargetId,
+                                                  hint: const Text(
+                                                    'Choose ally',
+                                                  ),
+                                                  items: members
+                                                      .map(
+                                                        (m) => DropdownMenuItem(
+                                                          value: m.id,
+                                                          child: Text(
+                                                            '${m.name} (${m.currentHp}/${m.maxHp} HP)',
+                                                          ),
+                                                        ),
+                                                      )
+                                                      .toList(),
+                                                  onChanged: (v) => setState(
+                                                    () =>
+                                                        _preserveLifeTargetId =
+                                                            v,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: TextField(
+                                                    controller:
+                                                        _preserveLifeController,
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    decoration: const InputDecoration(
+                                                      labelText:
+                                                          'HP to give this ally',
+                                                      isDense: true,
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                ElevatedButton(
+                                                  onPressed: () async {
+                                                    final amount = int.tryParse(
+                                                      _preserveLifeController
+                                                          .text,
+                                                    );
+                                                    if (amount == null ||
+                                                        _preserveLifeTargetId ==
+                                                            null)
+                                                      return;
+                                                    final target = members
+                                                        .where(
+                                                          (m) =>
+                                                              m.id ==
+                                                              _preserveLifeTargetId,
+                                                        )
+                                                        .firstOrNull;
+                                                    if (target == null) return;
+                                                    final cap =
+                                                        target.maxHp ~/ 2;
+                                                    final actualHeal =
+                                                        amount > cap
+                                                        ? cap
+                                                        : amount;
+                                                    final newHp =
+                                                        (target.currentHp +
+                                                                actualHeal)
+                                                            .clamp(
+                                                              0,
+                                                              target.maxHp,
+                                                            );
+                                                    await ref
+                                                        .read(
+                                                          appDatabaseProvider,
+                                                        )
+                                                        .updatePartyMemberHp(
+                                                          target.id,
+                                                          newHp,
+                                                        );
+                                                    setState(() {
+                                                      _lastRollResult =
+                                                          'Preserve Life: ${target.name} healed $actualHeal HP (capped at half max) → $newHp/${target.maxHp}';
+                                                      _preserveLifeController
+                                                          .clear();
+                                                    });
+                                                  },
+                                                  child: const Text('Apply'),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (domain == 'light') ...[
+                        const SizedBox(height: 8),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Radiance of the Dawn',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                Text(
+                                  '2d10 + Cleric level Radiant, 30 ft emanation, Con save for half (apply per enemy manually).',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      final result = rollRadianceOfTheDawn(
+                                        widget.character,
+                                      );
+                                      setState(() {
+                                        _lastRollResult =
+                                            'Radiance of the Dawn: ${result.rolls.join('+')} + ${widget.character.level} = ${result.total} (half on successful save)';
+                                      });
+                                    },
+                                    child: const Text('Roll damage'),
+                                  ),
                                 ),
                               ],
                             ),
@@ -2202,626 +2582,178 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Turn Undead',
+                                  'Warding Flare',
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 Text(
-                                  'Undead within 30 ft make a Wisdom save or are Frightened + Incapacitated for 1 minute.',
+                                  'Reaction: impose Disadvantage on an incoming attack. Uses available: ${wardingFlareUses(widget.character)} (min 1, recharge on Long Rest).',
                                   style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: _selectedEnemyId == null
-                                            ? null
-                                            : () async {
-                                                final enemies =
-                                                    ref
-                                                        .read(
-                                                          combatEnemiesProvider(
-                                                            characterId,
-                                                          ),
-                                                        )
-                                                        .value ??
-                                                    [];
-                                                final target = enemies
-                                                    .where(
-                                                      (e) =>
-                                                          e.id ==
-                                                          _selectedEnemyId,
-                                                    )
-                                                    .firstOrNull;
-                                                if (target == null) return;
-                                                final current =
-                                                    (jsonDecode(
-                                                              target
-                                                                  .conditionsJson,
-                                                            )
-                                                            as List)
-                                                        .cast<String>();
-                                                if (!current.contains(
-                                                  'Frightened + Incapacitated (Turn Undead)',
-                                                )) {
-                                                  current.add(
-                                                    'Frightened + Incapacitated (Turn Undead)',
-                                                  );
-                                                }
-                                                await ref
-                                                    .read(appDatabaseProvider)
-                                                    .updateEnemyConditions(
-                                                      target.id,
-                                                      current,
-                                                    );
-                                                setState(
-                                                  () => _lastRollResult =
-                                                      '${target.name}: failed save, Turned.',
-                                                );
-                                              },
-                                        child: const Text('Target failed save'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    if (widget.character.level >= 5)
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () async {
-                                            final result = rollSearUndead(
-                                              widget.character,
-                                            );
-                                            String targetNote = '';
-                                            if (_selectedEnemyId != null) {
-                                              final enemies =
-                                                  ref
-                                                      .read(
-                                                        combatEnemiesProvider(
-                                                          characterId,
-                                                        ),
-                                                      )
-                                                      .value ??
-                                                  [];
-                                              final target = enemies
-                                                  .where(
-                                                    (e) =>
-                                                        e.id ==
-                                                        _selectedEnemyId,
-                                                  )
-                                                  .firstOrNull;
-                                              if (target != null) {
-                                                final newHp =
-                                                    (target.currentHp -
-                                                            result.total)
-                                                        .clamp(0, target.maxHp);
-                                                if (newHp <= 0) {
-                                                  await ref
-                                                      .read(appDatabaseProvider)
-                                                      .removeEnemy(target.id);
-                                                  targetNote =
-                                                      ' — ${target.name} defeated!';
-                                                } else {
-                                                  await ref
-                                                      .read(appDatabaseProvider)
-                                                      .updateEnemyHp(
-                                                        target.id,
-                                                        newHp,
-                                                      );
-                                                  targetNote =
-                                                      ' — ${target.name}: $newHp/${target.maxHp} HP left';
-                                                }
-                                              }
-                                            }
-                                            setState(() {
-                                              _lastRollResult =
-                                                  'Sear Undead: ${result.total} Radiant$targetNote';
-                                            });
-                                          },
-                                          child: const Text('Sear Undead'),
-                                        ),
-                                      ),
-                                  ],
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        if (domain == 'war') ...[
-                          const SizedBox(height: 8),
-                          resourceUsesAsync.when(
-                            loading: () => const SizedBox.shrink(),
-                            error: (e, st) => const SizedBox.shrink(),
-                            data: (usesRows) {
-                              final wisMod = wisdomModifier(
-                                widget.character,
-                              ).clamp(1, 20);
-                              final row = usesRows
-                                  .where((r) => r.resourceId == 'war_priest')
-                                  .firstOrNull;
-                              final spent = row?.usesSpent ?? 0;
-                              final remaining = (wisMod - spent).clamp(
-                                0,
-                                wisMod,
-                              );
-                              return Card(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'War Priest',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.titleSmall,
-                                      ),
-                                      Text(
-                                        'Bonus Action weapon/Unarmed Strike attack. Uses: $remaining / $wisMod (recharge on Short or Long Rest)',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton(
-                                          onPressed: remaining > 0
-                                              ? () => ref
-                                                    .read(appDatabaseProvider)
-                                                    .useResource(
-                                                      characterId,
-                                                      'war_priest',
-                                                      wisMod,
-                                                    )
-                                              : null,
-                                          child: const Text(
-                                            'Use bonus action attack',
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Guided Strike',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  Text(
-                                    _lastAttackRollForCorrection != null
-                                        ? 'Last attack roll: $_lastAttackRollForCorrection'
-                                        : 'No recent attack roll to correct.',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: OutlinedButton(
-                                      onPressed:
-                                          _lastAttackRollForCorrection == null
-                                          ? null
-                                          : () {
-                                              final corrected = applyGuidedStrike(
-                                                _lastAttackRollForCorrection!,
-                                              );
-                                              setState(() {
-                                                _lastRollResult =
-                                                    'Guided Strike: $_lastAttackRollForCorrection + 10 = $corrected';
-                                              });
-                                            },
-                                      child: const Text(
-                                        'Apply +10 to missed roll',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (domain == 'life') ...[
-                          const SizedBox(height: 8),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Preserve Life',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  Text(
-                                    'Total pool: ${preserveLifePool(widget.character.level)} HP, split among Bloodied allies within 30 ft (max half their HP max each).',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Builder(
-                                    builder: (context) {
-                                      final partyAsync = ref.watch(
-                                        partyMembersProvider(characterId),
-                                      );
-                                      return partyAsync.when(
-                                        loading: () => const SizedBox.shrink(),
-                                        error: (e, st) =>
-                                            const SizedBox.shrink(),
-                                        data: (members) {
-                                          if (members.isEmpty) {
-                                            return const Text(
-                                              'No party members added yet. Add allies from the Party screen first.',
-                                              style: TextStyle(
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                            );
-                                          }
-                                          return Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  const Text('Target: '),
-                                                  DropdownButton<int?>(
-                                                    value:
-                                                        _preserveLifeTargetId,
-                                                    hint: const Text(
-                                                      'Choose ally',
-                                                    ),
-                                                    items: members
-                                                        .map(
-                                                          (
-                                                            m,
-                                                          ) => DropdownMenuItem(
-                                                            value: m.id,
-                                                            child: Text(
-                                                              '${m.name} (${m.currentHp}/${m.maxHp} HP)',
-                                                            ),
-                                                          ),
-                                                        )
-                                                        .toList(),
-                                                    onChanged: (v) => setState(
-                                                      () =>
-                                                          _preserveLifeTargetId =
-                                                              v,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: TextField(
-                                                      controller:
-                                                          _preserveLifeController,
-                                                      keyboardType:
-                                                          TextInputType.number,
-                                                      decoration: const InputDecoration(
-                                                        labelText:
-                                                            'HP to give this ally',
-                                                        isDense: true,
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  ElevatedButton(
-                                                    onPressed: () async {
-                                                      final amount = int.tryParse(
-                                                        _preserveLifeController
-                                                            .text,
-                                                      );
-                                                      if (amount == null ||
-                                                          _preserveLifeTargetId ==
-                                                              null)
-                                                        return;
-                                                      final target = members
-                                                          .where(
-                                                            (m) =>
-                                                                m.id ==
-                                                                _preserveLifeTargetId,
-                                                          )
-                                                          .firstOrNull;
-                                                      if (target == null)
-                                                        return;
-                                                      final cap =
-                                                          target.maxHp ~/ 2;
-                                                      final actualHeal =
-                                                          amount > cap
-                                                          ? cap
-                                                          : amount;
-                                                      final newHp =
-                                                          (target.currentHp +
-                                                                  actualHeal)
-                                                              .clamp(
-                                                                0,
-                                                                target.maxHp,
-                                                              );
-                                                      await ref
-                                                          .read(
-                                                            appDatabaseProvider,
-                                                          )
-                                                          .updatePartyMemberHp(
-                                                            target.id,
-                                                            newHp,
-                                                          );
-                                                      setState(() {
-                                                        _lastRollResult =
-                                                            'Preserve Life: ${target.name} healed $actualHeal HP (capped at half max) → $newHp/${target.maxHp}';
-                                                        _preserveLifeController
-                                                            .clear();
-                                                      });
-                                                    },
-                                                    child: const Text('Apply'),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (domain == 'light') ...[
-                          const SizedBox(height: 8),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Radiance of the Dawn',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  Text(
-                                    '2d10 + Cleric level Radiant, 30 ft emanation, Con save for half (apply per enemy manually).',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        final result = rollRadianceOfTheDawn(
-                                          widget.character,
-                                        );
-                                        setState(() {
-                                          _lastRollResult =
-                                              'Radiance of the Dawn: ${result.rolls.join('+')} + ${widget.character.level} = ${result.total} (half on successful save)';
-                                        });
-                                      },
-                                      child: const Text('Roll damage'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Warding Flare',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  Text(
-                                    'Reaction: impose Disadvantage on an incoming attack. Uses available: ${wardingFlareUses(widget.character)} (min 1, recharge on Long Rest).',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (domain == 'trickery') ...[
-                          const SizedBox(height: 8),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Blessing of the Trickster',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  Text(
-                                    'Grant Advantage on Dexterity (Stealth) checks to yourself or a willing creature within 30 ft, until you finish a Long Rest or use this again.',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Invoke Duplicity',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
-                                  ),
-                                  Text(
-                                    'Channel Divinity: create an illusory duplicate of yourself for 1 minute (Cast Spells / Distract / Move benefits). Track manually at the table.',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
-
-                      if (availableResources.isNotEmpty) ...[
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Class Resources',
-                              style: Theme.of(context).textTheme.titleMedium,
+                      if (domain == 'trickery') ...[
+                        const SizedBox(height: 8),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Blessing of the Trickster',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                Text(
+                                  'Grant Advantage on Dexterity (Stealth) checks to yourself or a willing creature within 30 ft, until you finish a Long Rest or use this again.',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
                             ),
-                            if (characterId != null)
-                              PopupMenuButton<RestType>(
-                                child: const Chip(label: Text('Rest')),
-                                onSelected: (restType) async {
-                                  await ref
-                                      .read(appDatabaseProvider)
-                                      .applyRest(
-                                        characterId,
-                                        restType,
-                                        availableResources,
-                                      );
-                                  if (restType == RestType.long) {
-                                    final swapInfo = swapInfoFor(
-                                      widget.character.race.id,
-                                      widget.character.raceSelections,
-                                    );
-                                    if (swapInfo != null && context.mounted) {
-                                      final chosen = await showDialog<String>(
-                                        context: context,
-                                        builder: (ctx) => SimpleDialog(
-                                          title: const Text(
-                                            'Swap racial cantrip? (Long Rest)',
-                                          ),
-                                          children: swapInfo
-                                              .availableCantrips
-                                              .entries
-                                              .map(
-                                                (e) => SimpleDialogOption(
-                                                  onPressed: () => Navigator.of(
-                                                    ctx,
-                                                  ).pop(e.key),
-                                                  child: Text(e.value),
-                                                ),
-                                              )
-                                              .toList(),
-                                        ),
-                                      );
-                                      if (chosen != null) {
-                                        await ref
-                                            .read(appDatabaseProvider)
-                                            .setRacialCantripOverride(
-                                              characterId,
-                                              chosen,
-                                            );
-                                      }
-                                    }
-                                  }
-                                },
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem(
-                                    value: RestType.short,
-                                    child: Text('Short Rest'),
-                                  ),
-                                  PopupMenuItem(
-                                    value: RestType.long,
-                                    child: Text('Long Rest'),
-                                  ),
-                                ],
-                              ),
-                          ],
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        resourceUsesAsync.when(
-                          loading: () => const CircularProgressIndicator(),
-                          error: (e, st) => Text('Error: $e'),
-                          data: (usesRows) {
-                            return Column(
-                              children: availableResources
-                                  .where(
-                                    (r) =>
-                                        r.id != 'war_priest' && r.id != 'rage',
-                                  )
-                                  .map((resource) {
-                                    final maxUses = resource.maxUses(
-                                      widget.character.level,
-                                    );
-                                    final row = usesRows
-                                        .where(
-                                          (r) => r.resourceId == resource.id,
-                                        )
-                                        .firstOrNull;
-                                    final spent = row?.usesSpent ?? 0;
-                                    final remaining = (maxUses - spent).clamp(
-                                      0,
-                                      maxUses,
-                                    );
-                                    return Card(
-                                      child: ListTile(
-                                        title: Text(resource.name),
-                                        subtitle: Text(
-                                          '$remaining / $maxUses remaining',
-                                        ),
-                                        trailing: ElevatedButton(
-                                          onPressed:
-                                              remaining > 0 &&
-                                                  characterId != null
-                                              ? () => ref
-                                                    .read(appDatabaseProvider)
-                                                    .useResource(
-                                                      characterId,
-                                                      resource.id,
-                                                      maxUses,
-                                                    )
-                                              : null,
-                                          child: const Text('Use'),
-                                        ),
-                                      ),
-                                    );
-                                  })
-                                  .toList(),
-                            );
-                          },
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Invoke Duplicity',
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                Text(
+                                  'Channel Divinity: create an illusory duplicate of yourself for 1 minute (Cast Spells / Distract / Move benefits). Track manually at the table.',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
+                    ],
+
+                    if (availableResources.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Class Resources',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (characterId != null)
+                            PopupMenuButton<RestType>(
+                              child: const Chip(label: Text('Rest')),
+                              onSelected: (restType) async {
+                                await ref
+                                    .read(appDatabaseProvider)
+                                    .applyRest(
+                                      characterId,
+                                      restType,
+                                      availableResources,
+                                    );
+                                if (restType == RestType.long) {
+                                  final swapInfo = swapInfoFor(
+                                    widget.character.race.id,
+                                    widget.character.raceSelections,
+                                  );
+                                  if (swapInfo != null && context.mounted) {
+                                    final chosen = await showDialog<String>(
+                                      context: context,
+                                      builder: (ctx) => SimpleDialog(
+                                        title: const Text(
+                                          'Swap racial cantrip? (Long Rest)',
+                                        ),
+                                        children: swapInfo
+                                            .availableCantrips
+                                            .entries
+                                            .map(
+                                              (e) => SimpleDialogOption(
+                                                onPressed: () => Navigator.of(
+                                                  ctx,
+                                                ).pop(e.key),
+                                                child: Text(e.value),
+                                              ),
+                                            )
+                                            .toList(),
+                                      ),
+                                    );
+                                    if (chosen != null) {
+                                      await ref
+                                          .read(appDatabaseProvider)
+                                          .setRacialCantripOverride(
+                                            characterId,
+                                            chosen,
+                                          );
+                                    }
+                                  }
+                                }
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem(
+                                  value: RestType.short,
+                                  child: Text('Short Rest'),
+                                ),
+                                PopupMenuItem(
+                                  value: RestType.long,
+                                  child: Text('Long Rest'),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      resourceUsesAsync.when(
+                        loading: () => const CircularProgressIndicator(),
+                        error: (e, st) => Text('Error: $e'),
+                        data: (usesRows) {
+                          return Column(
+                            children: availableResources
+                                .where(
+                                  (r) => r.id != 'war_priest' && r.id != 'rage',
+                                )
+                                .map((resource) {
+                                  final maxUses = resource.maxUses(
+                                    widget.character.level,
+                                  );
+                                  final row = usesRows
+                                      .where((r) => r.resourceId == resource.id)
+                                      .firstOrNull;
+                                  final spent = row?.usesSpent ?? 0;
+                                  final remaining = (maxUses - spent).clamp(
+                                    0,
+                                    maxUses,
+                                  );
+                                  return Card(
+                                    child: ListTile(
+                                      title: Text(resource.name),
+                                      subtitle: Text(
+                                        '$remaining / $maxUses remaining',
+                                      ),
+                                      trailing: ElevatedButton(
+                                        onPressed:
+                                            remaining > 0 && characterId != null
+                                            ? () => ref
+                                                  .read(appDatabaseProvider)
+                                                  .useResource(
+                                                    characterId,
+                                                    resource.id,
+                                                    maxUses,
+                                                  )
+                                            : null,
+                                        child: const Text('Use'),
+                                      ),
+                                    ),
+                                  );
+                                })
+                                .toList(),
+                          );
+                        },
+                      ),
                     ],
                   ],
                 ),
