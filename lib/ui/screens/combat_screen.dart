@@ -61,6 +61,10 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _lastSkillRollForCorrection;
   String? _lastSkillRolledName;
   int? _lifeGivingForceTargetId;
+  int _tempHp = 0;
+  bool _fanaticalFocusUsedThisRage = false;
+  int? _lastSaveModifier;
+  String? _lastSaveAbilityShort;
 
   @override
   void dispose() {
@@ -387,6 +391,22 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                         ),
                                       ],
                                     ),
+                                    if (_tempHp > 0)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          '+ $_tempHp Temporary HP (Vitality Surge)',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                        ),
+                                      ),
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
@@ -414,38 +434,41 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                     _hpAdjustController.text,
                                                   );
                                                   if (delta == null) return;
-                                                  final newHp =
-                                                      (currentHp + delta).clamp(
-                                                        0,
-                                                        maxHp,
-                                                      );
-                                                  await ref
-                                                      .read(appDatabaseProvider)
-                                                      .setCurrentHp(
-                                                        characterId,
-                                                        newHp,
-                                                      );
-                                                  final isBerserkerRaging =
-                                                      widget
-                                                              .character
-                                                              .characterClass
-                                                              .id ==
-                                                          'barbarian' &&
-                                                      widget
-                                                              .character
-                                                              .classSelections['barbarian_subclass']
-                                                              ?.firstOrNull ==
-                                                          'berserker' &&
-                                                      widget.character.level >=
-                                                          10 &&
-                                                      _isRaging;
                                                   if (delta < 0 &&
-                                                      isBerserkerRaging) {
+                                                      _tempHp > 0) {
+                                                    final absorbed = (-delta)
+                                                        .clamp(0, _tempHp);
                                                     setState(
-                                                      () =>
-                                                          _retaliationAvailable =
-                                                              true,
+                                                      () => _tempHp -= absorbed,
                                                     );
+                                                    final remaining =
+                                                        delta + absorbed;
+                                                    if (remaining < 0) {
+                                                      final newHp =
+                                                          (currentHp +
+                                                                  remaining)
+                                                              .clamp(0, maxHp);
+                                                      await ref
+                                                          .read(
+                                                            appDatabaseProvider,
+                                                          )
+                                                          .setCurrentHp(
+                                                            characterId,
+                                                            newHp,
+                                                          );
+                                                    }
+                                                  } else {
+                                                    final newHp =
+                                                        (currentHp + delta)
+                                                            .clamp(0, maxHp);
+                                                    await ref
+                                                        .read(
+                                                          appDatabaseProvider,
+                                                        )
+                                                        .setCurrentHp(
+                                                          characterId,
+                                                          newHp,
+                                                        );
                                                   }
                                                   _hpAdjustController.clear();
                                                 },
@@ -618,6 +641,8 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                               setState(() {
                                 _lastRollResult =
                                     '${_abilityShort(a)} Save: ${result.rolls.first} $bonusText = ${result.total}$advantageNote';
+                                _lastSaveModifier = bonus;
+                                _lastSaveAbilityShort = _abilityShort(a);
                               });
                             },
                             child: Text('Roll ($bonusText)'),
@@ -908,9 +933,27 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                           'rage',
                                                           maxUses,
                                                         );
-                                                    setState(
-                                                      () => _isRaging = true,
-                                                    );
+                                                    final subclass = widget
+                                                        .character
+                                                        .classSelections['barbarian_subclass']
+                                                        ?.firstOrNull;
+                                                    setState(() {
+                                                      _isRaging = true;
+                                                      _fanaticalFocusUsedThisRage =
+                                                          false;
+                                                      if (subclass ==
+                                                          'world_tree') {
+                                                        _tempHp =
+                                                            _tempHp >
+                                                                widget
+                                                                    .character
+                                                                    .level
+                                                            ? _tempHp
+                                                            : widget
+                                                                  .character
+                                                                  .level;
+                                                      }
+                                                    });
                                                   }
                                                 : null),
                                       child: Text(
@@ -1242,8 +1285,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                                 _selectedEnemyId,
                                                           )
                                                           .firstOrNull;
-                                                      if (target == null)
+                                                      if (target == null) {
                                                         return;
+                                                      }
                                                       final current =
                                                           (jsonDecode(
                                                                     target
@@ -1253,10 +1297,11 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                               .cast<String>();
                                                       if (!current.contains(
                                                         'Prone (Ram)',
-                                                      ))
+                                                      )) {
                                                         current.add(
                                                           'Prone (Ram)',
                                                         );
+                                                      }
                                                       await ref
                                                           .read(
                                                             appDatabaseProvider,
@@ -1322,10 +1367,11 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                       error: (e, st) =>
                                                           const SizedBox.shrink(),
                                                       data: (members) {
-                                                        if (members.isEmpty)
+                                                        if (members.isEmpty) {
                                                           return const Text(
                                                             'Add allies from the Party screen.',
                                                           );
+                                                        }
                                                         return Column(
                                                           children: [
                                                             DropdownButton<
@@ -1375,8 +1421,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                                             )
                                                                             .firstOrNull;
                                                                         if (target ==
-                                                                            null)
+                                                                            null) {
                                                                           return;
+                                                                        }
                                                                         final result = rollDamage(
                                                                           lifeGivingForceDice(
                                                                             widget.character.level,
@@ -1465,8 +1512,10 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                                       _selectedEnemyId,
                                                                 )
                                                                 .firstOrNull;
-                                                            if (target == null)
+                                                            if (target ==
+                                                                null) {
                                                               return;
+                                                            }
                                                             await ref
                                                                 .read(
                                                                   appDatabaseProvider,
@@ -1599,6 +1648,207 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                         ),
                                                       ),
                                                     ),
+                                                    if (widget
+                                                            .character
+                                                            .level >=
+                                                        6)
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              top: 8,
+                                                            ),
+                                                        child: Card(
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  12,
+                                                                ),
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text(
+                                                                  'Fanatical Focus',
+                                                                  style: Theme.of(
+                                                                    context,
+                                                                  ).textTheme.titleSmall,
+                                                                ),
+                                                                Text(
+                                                                  _fanaticalFocusUsedThisRage
+                                                                      ? 'Already used this Rage.'
+                                                                      : (_lastSaveModifier !=
+                                                                                null
+                                                                            ? 'Reroll your last save ($_lastSaveAbilityShort) with +${rageDamageBonus(widget.character.level)}.'
+                                                                            : 'Roll a Saving Throw above first.'),
+                                                                  style: Theme.of(
+                                                                    context,
+                                                                  ).textTheme.bodySmall,
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 8,
+                                                                ),
+                                                                SizedBox(
+                                                                  width: double
+                                                                      .infinity,
+                                                                  child: OutlinedButton(
+                                                                    onPressed:
+                                                                        (_isRaging &&
+                                                                            !_fanaticalFocusUsedThisRage &&
+                                                                            _lastSaveModifier !=
+                                                                                null)
+                                                                        ? () {
+                                                                            final bonus = rageDamageBonus(
+                                                                              widget.character.level,
+                                                                            );
+                                                                            final result = rollAttack(
+                                                                              _lastSaveModifier! +
+                                                                                  bonus,
+                                                                            );
+                                                                            setState(() {
+                                                                              _fanaticalFocusUsedThisRage = true;
+                                                                              _lastRollResult = 'Fanatical Focus: $_lastSaveAbilityShort reroll: ${result.rolls.first} +${_lastSaveModifier! + bonus} = ${result.total}';
+                                                                            });
+                                                                          }
+                                                                        : null,
+                                                                    child: const Text(
+                                                                      'Reroll failed save',
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                if (widget
+                                                                        .character
+                                                                        .level >=
+                                                                    10)
+                                                                  Padding(
+                                                                    padding:
+                                                                        const EdgeInsets.only(
+                                                                          top:
+                                                                              8,
+                                                                        ),
+                                                                    child: resourceUsesAsync.when(
+                                                                      loading: () =>
+                                                                          const SizedBox.shrink(),
+                                                                      error:
+                                                                          (
+                                                                            e,
+                                                                            st,
+                                                                          ) =>
+                                                                              const SizedBox.shrink(),
+                                                                      data:
+                                                                          (
+                                                                            usesRows,
+                                                                          ) {
+                                                                            final row = usesRows
+                                                                                .where(
+                                                                                  (
+                                                                                    r,
+                                                                                  ) =>
+                                                                                      r.resourceId ==
+                                                                                      'zealous_presence',
+                                                                                )
+                                                                                .firstOrNull;
+                                                                            final spent =
+                                                                                row?.usesSpent ??
+                                                                                0;
+                                                                            final freeUseAvailable =
+                                                                                spent <
+                                                                                1;
+                                                                            return Card(
+                                                                              child: Padding(
+                                                                                padding: const EdgeInsets.all(
+                                                                                  12,
+                                                                                ),
+                                                                                child: Column(
+                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                  children: [
+                                                                                    Text(
+                                                                                      'Zealous Presence',
+                                                                                      style: Theme.of(
+                                                                                        context,
+                                                                                      ).textTheme.titleSmall,
+                                                                                    ),
+                                                                                    Text(
+                                                                                      'Bonus Action: up to 10 allies within 60 ft gain Advantage on attacks and saves until the start of your next turn.',
+                                                                                      style: Theme.of(
+                                                                                        context,
+                                                                                      ).textTheme.bodySmall,
+                                                                                    ),
+                                                                                    const SizedBox(
+                                                                                      height: 8,
+                                                                                    ),
+                                                                                    Wrap(
+                                                                                      spacing: 8,
+                                                                                      children: [
+                                                                                        OutlinedButton(
+                                                                                          onPressed: freeUseAvailable
+                                                                                              ? () async {
+                                                                                                  await ref
+                                                                                                      .read(
+                                                                                                        appDatabaseProvider,
+                                                                                                      )
+                                                                                                      .useResource(
+                                                                                                        characterId,
+                                                                                                        'zealous_presence',
+                                                                                                        1,
+                                                                                                      );
+                                                                                                  setState(
+                                                                                                    () => _lastRollResult = 'Zealous Presence activated (free use)!',
+                                                                                                  );
+                                                                                                }
+                                                                                              : null,
+                                                                                          child: const Text(
+                                                                                            'Use (free, 1/Long Rest)',
+                                                                                          ),
+                                                                                        ),
+                                                                                        OutlinedButton(
+                                                                                          onPressed: _isRaging
+                                                                                              ? () async {
+                                                                                                  final rageResource =
+                                                                                                      (classResources['barbarian'] ??
+                                                                                                              [])
+                                                                                                          .firstWhere(
+                                                                                                            (
+                                                                                                              r,
+                                                                                                            ) =>
+                                                                                                                r.id ==
+                                                                                                                'rage',
+                                                                                                          );
+                                                                                                  final maxUses = rageResource.maxUses(
+                                                                                                    widget.character.level,
+                                                                                                  );
+                                                                                                  await ref
+                                                                                                      .read(
+                                                                                                        appDatabaseProvider,
+                                                                                                      )
+                                                                                                      .useResource(
+                                                                                                        characterId,
+                                                                                                        'rage',
+                                                                                                        maxUses,
+                                                                                                      );
+                                                                                                  setState(
+                                                                                                    () => _lastRollResult = 'Zealous Presence activated (spent a Rage use)!',
+                                                                                                  );
+                                                                                                }
+                                                                                              : null,
+                                                                                          child: const Text(
+                                                                                            'Use (spend Rage use)',
+                                                                                          ),
+                                                                                        ),
+                                                                                      ],
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ),
+                                                                            );
+                                                                          },
+                                                                    ),
+                                                                  ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
                                                   ],
                                                 ),
                                               ),
