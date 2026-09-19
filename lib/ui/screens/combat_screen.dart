@@ -1542,7 +1542,6 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                   ],
                                 );
                               }
-
                               if (subclass == 'zealot') {
                                 return Column(
                                   children: [
@@ -1648,207 +1647,185 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                                         ),
                                                       ),
                                                     ),
-                                                    if (widget
-                                                            .character
-                                                            .level >=
-                                                        6)
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets.only(
-                                                              top: 8,
-                                                            ),
-                                                        child: Card(
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets.all(
-                                                                  12,
-                                                                ),
-                                                            child: Column(
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Text(
-                                                                  'Fanatical Focus',
-                                                                  style: Theme.of(
-                                                                    context,
-                                                                  ).textTheme.titleSmall,
-                                                                ),
-                                                                Text(
-                                                                  _fanaticalFocusUsedThisRage
-                                                                      ? 'Already used this Rage.'
-                                                                      : (_lastSaveModifier !=
-                                                                                null
-                                                                            ? 'Reroll your last save ($_lastSaveAbilityShort) with +${rageDamageBonus(widget.character.level)}.'
-                                                                            : 'Roll a Saving Throw above first.'),
-                                                                  style: Theme.of(
-                                                                    context,
-                                                                  ).textTheme.bodySmall,
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 8,
-                                                                ),
-                                                                SizedBox(
-                                                                  width: double
-                                                                      .infinity,
-                                                                  child: OutlinedButton(
-                                                                    onPressed:
-                                                                        (_isRaging &&
-                                                                            !_fanaticalFocusUsedThisRage &&
-                                                                            _lastSaveModifier !=
-                                                                                null)
-                                                                        ? () {
-                                                                            final bonus = rageDamageBonus(
-                                                                              widget.character.level,
-                                                                            );
-                                                                            final result = rollAttack(
-                                                                              _lastSaveModifier! +
-                                                                                  bonus,
-                                                                            );
-                                                                            setState(() {
-                                                                              _fanaticalFocusUsedThisRage = true;
-                                                                              _lastRollResult = 'Fanatical Focus: $_lastSaveAbilityShort reroll: ${result.rolls.first} +${_lastSaveModifier! + bonus} = ${result.total}';
-                                                                            });
-                                                                          }
-                                                                        : null,
-                                                                    child: const Text(
-                                                                      'Reroll failed save',
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                                if (widget
-                                                                        .character
-                                                                        .level >=
-                                                                    10)
-                                                                  Padding(
-                                                                    padding:
-                                                                        const EdgeInsets.only(
-                                                                          top:
-                                                                              8,
-                                                                        ),
-                                                                    child: resourceUsesAsync.when(
-                                                                      loading: () =>
-                                                                          const SizedBox.shrink(),
-                                                                      error:
-                                                                          (
-                                                                            e,
-                                                                            st,
-                                                                          ) =>
-                                                                              const SizedBox.shrink(),
-                                                                      data:
-                                                                          (
-                                                                            usesRows,
-                                                                          ) {
-                                                                            final row = usesRows
-                                                                                .where(
-                                                                                  (
-                                                                                    r,
-                                                                                  ) =>
-                                                                                      r.resourceId ==
-                                                                                      'zealous_presence',
-                                                                                )
-                                                                                .firstOrNull;
-                                                                            final spent =
-                                                                                row?.usesSpent ??
-                                                                                0;
-                                                                            final freeUseAvailable =
-                                                                                spent <
-                                                                                1;
-                                                                            return Card(
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.all(
-                                                                                  12,
-                                                                                ),
-                                                                                child: Column(
-                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                  children: [
-                                                                                    Text(
-                                                                                      'Zealous Presence',
-                                                                                      style: Theme.of(
-                                                                                        context,
-                                                                                      ).textTheme.titleSmall,
-                                                                                    ),
-                                                                                    Text(
-                                                                                      'Bonus Action: up to 10 allies within 60 ft gain Advantage on attacks and saves until the start of your next turn.',
-                                                                                      style: Theme.of(
-                                                                                        context,
-                                                                                      ).textTheme.bodySmall,
-                                                                                    ),
-                                                                                    const SizedBox(
-                                                                                      height: 8,
-                                                                                    ),
-                                                                                    Wrap(
-                                                                                      spacing: 8,
-                                                                                      children: [
-                                                                                        OutlinedButton(
-                                                                                          onPressed: freeUseAvailable
-                                                                                              ? () async {
-                                                                                                  await ref
-                                                                                                      .read(
-                                                                                                        appDatabaseProvider,
-                                                                                                      )
-                                                                                                      .useResource(
-                                                                                                        characterId,
-                                                                                                        'zealous_presence',
-                                                                                                        1,
-                                                                                                      );
-                                                                                                  setState(
-                                                                                                    () => _lastRollResult = 'Zealous Presence activated (free use)!',
-                                                                                                  );
-                                                                                                }
-                                                                                              : null,
-                                                                                          child: const Text(
-                                                                                            'Use (free, 1/Long Rest)',
-                                                                                          ),
-                                                                                        ),
-                                                                                        OutlinedButton(
-                                                                                          onPressed: _isRaging
-                                                                                              ? () async {
-                                                                                                  final rageResource =
-                                                                                                      (classResources['barbarian'] ??
-                                                                                                              [])
-                                                                                                          .firstWhere(
-                                                                                                            (
-                                                                                                              r,
-                                                                                                            ) =>
-                                                                                                                r.id ==
-                                                                                                                'rage',
-                                                                                                          );
-                                                                                                  final maxUses = rageResource.maxUses(
-                                                                                                    widget.character.level,
-                                                                                                  );
-                                                                                                  await ref
-                                                                                                      .read(
-                                                                                                        appDatabaseProvider,
-                                                                                                      )
-                                                                                                      .useResource(
-                                                                                                        characterId,
-                                                                                                        'rage',
-                                                                                                        maxUses,
-                                                                                                      );
-                                                                                                  setState(
-                                                                                                    () => _lastRollResult = 'Zealous Presence activated (spent a Rage use)!',
-                                                                                                  );
-                                                                                                }
-                                                                                              : null,
-                                                                                          child: const Text(
-                                                                                            'Use (spend Rage use)',
-                                                                                          ),
-                                                                                        ),
-                                                                                      ],
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                    ),
-                                                                  ),
-                                                              ],
-                                                            ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    if (widget.character.level >= 6)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Card(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Fanatical Focus',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.titleSmall,
+                                                ),
+                                                Text(
+                                                  _fanaticalFocusUsedThisRage
+                                                      ? 'Already used this Rage.'
+                                                      : (_lastSaveModifier !=
+                                                                null
+                                                            ? 'Reroll your last save ($_lastSaveAbilityShort) with +${rageDamageBonus(widget.character.level)}.'
+                                                            : 'Roll a Saving Throw above first.'),
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: OutlinedButton(
+                                                    onPressed:
+                                                        (_isRaging &&
+                                                            !_fanaticalFocusUsedThisRage &&
+                                                            _lastSaveModifier !=
+                                                                null)
+                                                        ? () {
+                                                            final bonus =
+                                                                rageDamageBonus(
+                                                                  widget
+                                                                      .character
+                                                                      .level,
+                                                                );
+                                                            final result =
+                                                                rollAttack(
+                                                                  _lastSaveModifier! +
+                                                                      bonus,
+                                                                );
+                                                            setState(() {
+                                                              _fanaticalFocusUsedThisRage =
+                                                                  true;
+                                                              _lastRollResult =
+                                                                  'Fanatical Focus: $_lastSaveAbilityShort reroll: ${result.rolls.first} +${_lastSaveModifier! + bonus} = ${result.total}';
+                                                            });
+                                                          }
+                                                        : null,
+                                                    child: const Text(
+                                                      'Reroll failed save',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    if (widget.character.level >= 10)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: resourceUsesAsync.when(
+                                          loading: () =>
+                                              const SizedBox.shrink(),
+                                          error: (e, st) =>
+                                              const SizedBox.shrink(),
+                                          data: (usesRows) {
+                                            final row = usesRows
+                                                .where(
+                                                  (r) =>
+                                                      r.resourceId ==
+                                                      'zealous_presence',
+                                                )
+                                                .firstOrNull;
+                                            final spent = row?.usesSpent ?? 0;
+                                            final freeUseAvailable = spent < 1;
+                                            return Card(
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(
+                                                  12,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Zealous Presence',
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.titleSmall,
+                                                    ),
+                                                    Text(
+                                                      'Bonus Action: up to 10 allies within 60 ft gain Advantage on attacks and saves until the start of your next turn.',
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.bodySmall,
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    Wrap(
+                                                      spacing: 8,
+                                                      children: [
+                                                        OutlinedButton(
+                                                          onPressed:
+                                                              freeUseAvailable
+                                                              ? () async {
+                                                                  await ref
+                                                                      .read(
+                                                                        appDatabaseProvider,
+                                                                      )
+                                                                      .useResource(
+                                                                        characterId!,
+                                                                        'zealous_presence',
+                                                                        1,
+                                                                      );
+                                                                  setState(
+                                                                    () => _lastRollResult =
+                                                                        'Zealous Presence activated (free use)!',
+                                                                  );
+                                                                }
+                                                              : null,
+                                                          child: const Text(
+                                                            'Use (free, 1/Long Rest)',
                                                           ),
                                                         ),
-                                                      ),
+                                                        OutlinedButton(
+                                                          onPressed: _isRaging
+                                                              ? () async {
+                                                                  final rageResource =
+                                                                      (classResources['barbarian'] ??
+                                                                              [])
+                                                                          .firstWhere(
+                                                                            (
+                                                                              r,
+                                                                            ) =>
+                                                                                r.id ==
+                                                                                'rage',
+                                                                          );
+                                                                  final maxUses =
+                                                                      rageResource.maxUses(
+                                                                        widget
+                                                                            .character
+                                                                            .level,
+                                                                      );
+                                                                  await ref
+                                                                      .read(
+                                                                        appDatabaseProvider,
+                                                                      )
+                                                                      .useResource(
+                                                                        characterId!,
+                                                                        'rage',
+                                                                        maxUses,
+                                                                      );
+                                                                  setState(
+                                                                    () => _lastRollResult =
+                                                                        'Zealous Presence activated (spent a Rage use)!',
+                                                                  );
+                                                                }
+                                                              : null,
+                                                          child: const Text(
+                                                            'Use (spend Rage use)',
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ],
                                                 ),
                                               ),
@@ -1859,7 +1836,6 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                   ],
                                 );
                               }
-
                               return const SizedBox.shrink();
                             },
                           ),
