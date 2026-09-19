@@ -3641,8 +3641,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                           );
                         },
                       ),
-                    ],
-                  ],
+                    ]
                 ),
               ),
             ],
