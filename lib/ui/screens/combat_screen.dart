@@ -1224,10 +1224,12 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                       ),
                                     ),
                                   ],
+                                  
                                 ],
                               ),
                             ),
                           ),
+                        ],
                           Builder(
                             builder: (context) {
                               final subclass = widget
