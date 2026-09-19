@@ -3595,7 +3595,11 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                           return Column(
                             children: availableResources
                                 .where(
-                                  (r) => r.id != 'war_priest' && r.id != 'rage',
+                                  (r) =>
+                                      r.id != 'war_priest' &&
+                                      r.id != 'rage' &&
+                                      r.id != 'warrior_of_the_gods_pool' &&
+                                      r.id != 'zealous_presence',
                                 )
                                 .map((resource) {
                                   final maxUses = resource.maxUses(
