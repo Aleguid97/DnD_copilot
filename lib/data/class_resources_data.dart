@@ -73,5 +73,13 @@ final Map<String, List<ClassResource>> classResources = {
       availableFromLevel: 10,
       fullRecoveryOn: RestType.long,
     ),
+
+    ClassResource(
+      id: 'intimidating_presence',
+      name: 'Intimidating Presence',
+      maxUses: (level) => 1,
+      availableFromLevel: 14,
+      fullRecoveryOn: RestType.long,
+    ),
   ],
 };

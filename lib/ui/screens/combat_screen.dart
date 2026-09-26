@@ -65,6 +65,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   bool _fanaticalFocusUsedThisRage = false;
   int? _lastSaveModifier;
   String? _lastSaveAbilityShort;
+  int _relentlessRageUsesSinceRest = 0;
 
   @override
   void dispose() {
@@ -1173,6 +1174,47 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                         child: const Text('Forceful Blow'),
                                       ),
                                     ),
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: _selectedEnemyId == null
+                                            ? null
+                                            : () async {
+                                                final enemies =
+                                                    ref
+                                                        .read(
+                                                          combatEnemiesProvider(
+                                                            characterId!,
+                                                          ),
+                                                        )
+                                                        .value ??
+                                                    [];
+                                                final target = enemies
+                                                    .where(
+                                                      (e) =>
+                                                          e.id ==
+                                                          _selectedEnemyId,
+                                                    )
+                                                    .firstOrNull;
+                                                if (target == null) return;
+                                                final newSpeed =
+                                                    (target.speed - 15).clamp(
+                                                      0,
+                                                      999,
+                                                    );
+                                                await ref
+                                                    .read(appDatabaseProvider)
+                                                    .updateEnemySpeed(
+                                                      target.id,
+                                                      newSpeed,
+                                                    );
+                                                setState(
+                                                  () => _lastRollResult =
+                                                      '${target.name}: Speed reduced by 15 ft (Hamstring Blow).',
+                                                );
+                                              },
+                                        child: const Text('Hamstring Blow'),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -1228,6 +1270,203 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                               ),
                             ),
                           ),
+                          if (widget.character.level >= 14)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: resourceUsesAsync.when(
+                                loading: () => const SizedBox.shrink(),
+                                error: (e, st) => const SizedBox.shrink(),
+                                data: (usesRows) {
+                                  final row = usesRows
+                                      .where(
+                                        (r) =>
+                                            r.resourceId ==
+                                            'intimidating_presence',
+                                      )
+                                      .firstOrNull;
+                                  final spent = row?.usesSpent ?? 0;
+                                  final freeUseAvailable = spent < 1;
+                                  return Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Intimidating Presence',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleSmall,
+                                          ),
+                                          Text(
+                                            'Bonus Action, 30 ft: Wisdom save (DC ${8 + rageDamageBonus(widget.character.level) + profBonus}) or Frightened 1 minute.',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Wrap(
+                                            spacing: 8,
+                                            children: [
+                                              OutlinedButton(
+                                                onPressed:
+                                                    (freeUseAvailable &&
+                                                        _selectedEnemyId !=
+                                                            null)
+                                                    ? () async {
+                                                        await ref
+                                                            .read(
+                                                              appDatabaseProvider,
+                                                            )
+                                                            .useResource(
+                                                              characterId!,
+                                                              'intimidating_presence',
+                                                              1,
+                                                            );
+                                                        final enemies =
+                                                            ref
+                                                                .read(
+                                                                  combatEnemiesProvider(
+                                                                    characterId!,
+                                                                  ),
+                                                                )
+                                                                .value ??
+                                                            [];
+                                                        final target = enemies
+                                                            .where(
+                                                              (e) =>
+                                                                  e.id ==
+                                                                  _selectedEnemyId,
+                                                            )
+                                                            .firstOrNull;
+                                                        if (target != null) {
+                                                          final current =
+                                                              (jsonDecode(
+                                                                        target
+                                                                            .conditionsJson,
+                                                                      )
+                                                                      as List)
+                                                                  .cast<
+                                                                    String
+                                                                  >();
+                                                          if (!current.contains(
+                                                            'Frightened (Intimidating Presence)',
+                                                          )) {
+                                                            current.add(
+                                                              'Frightened (Intimidating Presence)',
+                                                            );
+                                                          }
+                                                          await ref
+                                                              .read(
+                                                                appDatabaseProvider,
+                                                              )
+                                                              .updateEnemyConditions(
+                                                                target.id,
+                                                                current,
+                                                              );
+                                                        }
+                                                        setState(
+                                                          () => _lastRollResult =
+                                                              'Intimidating Presence used (free use).',
+                                                        );
+                                                      }
+                                                    : null,
+                                                child: const Text(
+                                                  'Use (free, 1/Long Rest)',
+                                                ),
+                                              ),
+                                              OutlinedButton(
+                                                onPressed:
+                                                    (_isRaging &&
+                                                        _selectedEnemyId !=
+                                                            null)
+                                                    ? () async {
+                                                        final rageResource =
+                                                            (classResources['barbarian'] ??
+                                                                    [])
+                                                                .firstWhere(
+                                                                  (r) =>
+                                                                      r.id ==
+                                                                      'rage',
+                                                                );
+                                                        final maxUses =
+                                                            rageResource
+                                                                .maxUses(
+                                                                  widget
+                                                                      .character
+                                                                      .level,
+                                                                );
+                                                        await ref
+                                                            .read(
+                                                              appDatabaseProvider,
+                                                            )
+                                                            .useResource(
+                                                              characterId!,
+                                                              'rage',
+                                                              maxUses,
+                                                            );
+                                                        final enemies =
+                                                            ref
+                                                                .read(
+                                                                  combatEnemiesProvider(
+                                                                    characterId!,
+                                                                  ),
+                                                                )
+                                                                .value ??
+                                                            [];
+                                                        final target = enemies
+                                                            .where(
+                                                              (e) =>
+                                                                  e.id ==
+                                                                  _selectedEnemyId,
+                                                            )
+                                                            .firstOrNull;
+                                                        if (target != null) {
+                                                          final current =
+                                                              (jsonDecode(
+                                                                        target
+                                                                            .conditionsJson,
+                                                                      )
+                                                                      as List)
+                                                                  .cast<
+                                                                    String
+                                                                  >();
+                                                          if (!current.contains(
+                                                            'Frightened (Intimidating Presence)',
+                                                          )) {
+                                                            current.add(
+                                                              'Frightened (Intimidating Presence)',
+                                                            );
+                                                          }
+                                                          await ref
+                                                              .read(
+                                                                appDatabaseProvider,
+                                                              )
+                                                              .updateEnemyConditions(
+                                                                target.id,
+                                                                current,
+                                                              );
+                                                        }
+                                                        setState(
+                                                          () => _lastRollResult =
+                                                              'Intimidating Presence used (spent a Rage use).',
+                                                        );
+                                                      }
+                                                    : null,
+                                                child: const Text(
+                                                  'Use (spend Rage use)',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                         ],
                         Builder(
                           builder: (context) {
