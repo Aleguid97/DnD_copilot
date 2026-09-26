@@ -1215,6 +1215,64 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                         child: const Text('Hamstring Blow'),
                                       ),
                                     ),
+                                    if (widget.character.level >= 11)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Card(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Relentless Rage',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.titleSmall,
+                                                ),
+                                                Text(
+                                                  'If you drop to 0 HP while raging, Constitution save (DC ${relentlessRageDc(_relentlessRageUsesSinceRest)}) to drop to ${2 * widget.character.level} HP instead.',
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: OutlinedButton(
+                                                    onPressed: _isRaging
+                                                        ? () {
+                                                            final dc =
+                                                                relentlessRageDc(
+                                                                  _relentlessRageUsesSinceRest,
+                                                                );
+                                                            final result =
+                                                                rollAttack(0);
+                                                            final success =
+                                                                result.total >=
+                                                                dc;
+                                                            setState(() {
+                                                              if (success) {
+                                                                _relentlessRageUsesSinceRest++;
+                                                              }
+                                                              _lastRollResult =
+                                                                  success
+                                                                  ? 'Relentless Rage: CON save ${result.rolls.first} vs DC $dc — SUCCESS! HP set to ${2 * widget.character.level}.'
+                                                                  : 'Relentless Rage: CON save ${result.rolls.first} vs DC $dc — FAILED. You drop to 0 HP.';
+                                                            });
+                                                          }
+                                                        : null,
+                                                    child: const Text(
+                                                      'Attempt Relentless Rage (rolled CON save)',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ],
@@ -3762,6 +3820,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                                       restType,
                                       availableResources,
                                     );
+                                setState(
+                                  () => _relentlessRageUsesSinceRest = 0,
+                                );
                                 if (restType == RestType.long) {
                                   final swapInfo = swapInfoFor(
                                     widget.character.race.id,
