@@ -34,7 +34,9 @@ che restituisce `List<Widget>`:
 
 | File | Contenuto |
 |---|---|
-| `combat_core_sections.dart` | AC/Iniziativa/Velocità, HP, dadi, tiri salvezza, prove di abilità, bersaglio |
+| `combat_core_sections.dart` | AC/Iniziativa/Velocità, HP, dadi, tiri salvezza e prove di abilità (richiudibili), bersaglio |
+| `combat_helpers.dart` | Helper condivisi: risorse, slot, card, danno al bersaglio, cura |
+| `spellcasting_section.dart` | Incantatori: slot, Concentrazione, trucchetti, preparati, Cast (scala lo slot, upcast) |
 | `fighter_section.dart` | Guerriero (Tactical Mind) |
 | `barbarian_section.dart` | Barbaro e sottoclassi |
 | `weapons_section.dart` | Armi equipaggiate, Weapon Mastery, Unarmed Strike |
@@ -54,6 +56,10 @@ Regole:
   pulsanti e verificano risorse/PF; setup comune in `test/helpers/combat_harness.dart`.
 - Slot incantesimo: `lib/data/spell_slots_data.dart` (tabella full caster) espone
   risorse `spell_slot_N`; il Druido le usa, gli altri incantatori potranno riusarle.
+- Incantesimi: catalogo in `lib/data/spells_data.dart` (livello, scuola, C/R/M dalle
+  liste del cap. 3 PHB). Per abilitare una classe: aggiungere la sua lista a
+  `classSpellLists` e le sue regole (trucchetti, preparati, CD) in `_casterRules`.
+  Gli effetti (danni/cure) richiedono il cap. 7 del PHB: non ancora modellati.
 
 ## Convenzioni di lavoro
 
@@ -85,7 +91,8 @@ bersaglio, colpito/mancato vs CA, critici, 8 proprietà Weapon Mastery, party pe
 1. ~~Refactor `combat_screen.dart`~~ (fatto: sezioni in `combat/`).
 2. Estendere le 8 classi rimanenti al livello 20 (fatto: Druido).
 3. Specializzare strumenti/set generici nei background (Artisan, Entertainer, Guard, Noble, Soldier).
-4. Sistema Incantesimi funzionale (dati, slot, lancio) – sblocca Eldritch Knight, Potent Spellcasting, Divine Intervention…
+4. Sistema Incantesimi: fatti slot, preparati, lancio e Concentrazione (Druido). Mancano
+   effetti dei singoli incantesimi (cap. 7 PHB) e le liste delle altre classi.
 5. Epic Boon Feats al 19° (categoria a sé, alcuni alzano fino a 30).
 6. Convertire le ultime scelte testuali in vere `Choice`.
 7. Crafting/oggetti custom.

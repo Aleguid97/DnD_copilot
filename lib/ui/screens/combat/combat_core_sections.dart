@@ -366,61 +366,61 @@ extension _CoreSections on _CombatScreenState {
     final stats = d.stats;
     final saves = d.saves;
     return [
-      const SizedBox(height: 24),
-      Text('Saving Throws', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 8),
-      ...Ability.values.map((a) {
-        final abilityName = _abilityFullName(a);
-        final isProficient = widget.character.characterClass.savingThrows
-            .contains(abilityName);
-        // Improved Circle Forms (Moon 6): + Wisdom modifier to Con saves in
-        // Wild Shape.
-        final moonConBonus =
-            a == Ability.constitution &&
-                _wildShapeActive &&
-                druidSubclass(widget.character) == 'moon' &&
-                widget.character.level >= 6
-            ? druidWisdomModifier(widget.character)
-            : 0;
-        final bonus = saves[a]! + moonConBonus;
-        final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
-        return Card(
-          child: ListTile(
-            leading: Icon(
-              isProficient ? Icons.check_circle : Icons.circle_outlined,
-              color: isProficient
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.grey,
-            ),
-            title: Text('${_abilityShort(a)} Save'),
+      const SizedBox(height: 16),
+      _collapsibleGroup(context, 'Saving Throws', [
+        ...Ability.values.map((a) {
+          final abilityName = _abilityFullName(a);
+          final isProficient = widget.character.characterClass.savingThrows
+              .contains(abilityName);
+          // Improved Circle Forms (Moon 6): + Wisdom modifier to Con saves in
+          // Wild Shape.
+          final moonConBonus =
+              a == Ability.constitution &&
+                  _wildShapeActive &&
+                  druidSubclass(widget.character) == 'moon' &&
+                  widget.character.level >= 6
+              ? druidWisdomModifier(widget.character)
+              : 0;
+          final bonus = saves[a]! + moonConBonus;
+          final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
+          return Card(
+            child: ListTile(
+              leading: Icon(
+                isProficient ? Icons.check_circle : Icons.circle_outlined,
+                color: isProficient
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey,
+              ),
+              title: Text('${_abilityShort(a)} Save'),
 
-            trailing: OutlinedButton(
-              onPressed: () {
-                final hasAdvantage =
-                    stats.hasDangerSense && a == Ability.dexterity;
-                final firstRoll = rollAttack(bonus);
-                DiceRollResult result = firstRoll;
-                String advantageNote = '';
-                if (hasAdvantage) {
-                  final secondRoll = rollAttack(bonus);
-                  if (secondRoll.total > firstRoll.total) {
-                    result = secondRoll;
+              trailing: OutlinedButton(
+                onPressed: () {
+                  final hasAdvantage =
+                      stats.hasDangerSense && a == Ability.dexterity;
+                  final firstRoll = rollAttack(bonus);
+                  DiceRollResult result = firstRoll;
+                  String advantageNote = '';
+                  if (hasAdvantage) {
+                    final secondRoll = rollAttack(bonus);
+                    if (secondRoll.total > firstRoll.total) {
+                      result = secondRoll;
+                    }
+                    advantageNote =
+                        ' (Advantage - Danger Sense: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
                   }
-                  advantageNote =
-                      ' (Advantage - Danger Sense: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
-                }
-                _update(() {
-                  _lastRollResult =
-                      '${_abilityShort(a)} Save: ${result.rolls.first} $bonusText = ${result.total}$advantageNote';
-                  _lastSaveModifier = bonus;
-                  _lastSaveAbilityShort = _abilityShort(a);
-                });
-              },
-              child: Text('Roll ($bonusText)'),
+                  _update(() {
+                    _lastRollResult =
+                        '${_abilityShort(a)} Save: ${result.rolls.first} $bonusText = ${result.total}$advantageNote';
+                    _lastSaveModifier = bonus;
+                    _lastSaveAbilityShort = _abilityShort(a);
+                  });
+                },
+                child: Text('Roll ($bonusText)'),
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ]),
     ];
   }
 
@@ -428,59 +428,78 @@ extension _CoreSections on _CombatScreenState {
   List<Widget> _buildSkillChecks(BuildContext context, _CombatData d) {
     final profBonus = d.profBonus;
     return [
-      const SizedBox(height: 24),
-      Text('Skill Checks', style: Theme.of(context).textTheme.titleMedium),
-      const SizedBox(height: 8),
-      Builder(
-        builder: (context) {
-          final proficient = proficientSkills(widget.character);
-          final sortedSkills = allSkillNames.toList()..sort();
-          return Column(
-            children: sortedSkills.map((skill) {
-              final ability = skillAbilityMap[skill]!;
-              final abilityMod = widget.character.abilityScores.modifierFor(
-                ability,
-                bonuses: widget.character.totalAbilityBonuses,
-              );
-              final isProficient = proficient.contains(skill);
-              // Primal Order — Magician: + Wisdom modifier (min 1) to
-              // Intelligence (Arcana or Nature).
-              final magicianBonus =
-                  druidIsMagician(widget.character) &&
-                      (skill == 'Arcana' || skill == 'Nature')
-                  ? magicianLoreBonus(widget.character)
-                  : 0;
-              final bonus =
-                  abilityMod + (isProficient ? profBonus : 0) + magicianBonus;
-              final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
-              return Card(
-                child: ListTile(
-                  leading: Icon(
-                    isProficient ? Icons.check_circle : Icons.circle_outlined,
-                    color: isProficient
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey,
+      _collapsibleGroup(context, 'Skill Checks', [
+        Builder(
+          builder: (context) {
+            final proficient = proficientSkills(widget.character);
+            final sortedSkills = allSkillNames.toList()..sort();
+            return Column(
+              children: sortedSkills.map((skill) {
+                final ability = skillAbilityMap[skill]!;
+                final abilityMod = widget.character.abilityScores.modifierFor(
+                  ability,
+                  bonuses: widget.character.totalAbilityBonuses,
+                );
+                final isProficient = proficient.contains(skill);
+                // Primal Order — Magician: + Wisdom modifier (min 1) to
+                // Intelligence (Arcana or Nature).
+                final magicianBonus =
+                    druidIsMagician(widget.character) &&
+                        (skill == 'Arcana' || skill == 'Nature')
+                    ? magicianLoreBonus(widget.character)
+                    : 0;
+                final bonus =
+                    abilityMod + (isProficient ? profBonus : 0) + magicianBonus;
+                final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
+                return Card(
+                  child: ListTile(
+                    leading: Icon(
+                      isProficient ? Icons.check_circle : Icons.circle_outlined,
+                      color: isProficient
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey,
+                    ),
+                    title: Text(skill),
+                    trailing: OutlinedButton(
+                      onPressed: () {
+                        final result = rollAttack(bonus);
+                        _update(() {
+                          _lastRollResult =
+                              '$skill: ${result.rolls.first} $bonusText = ${result.total}';
+                          _lastSkillRollForCorrection = result.total;
+                          _lastSkillRolledName = skill;
+                        });
+                      },
+                      child: Text('Roll ($bonusText)'),
+                    ),
                   ),
-                  title: Text(skill),
-                  trailing: OutlinedButton(
-                    onPressed: () {
-                      final result = rollAttack(bonus);
-                      _update(() {
-                        _lastRollResult =
-                            '$skill: ${result.rolls.first} $bonusText = ${result.total}';
-                        _lastSkillRollForCorrection = result.total;
-                        _lastSkillRolledName = skill;
-                      });
-                    },
-                    child: Text('Roll ($bonusText)'),
-                  ),
-                ),
-              );
-            }).toList(),
-          );
-        },
-      ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ]),
     ];
+  }
+
+  /// Collapsed-by-default group, so long lists don't push the useful
+  /// sections down. The open/closed state survives rebuilds.
+  Widget _collapsibleGroup(
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ExpansionTile(
+        key: PageStorageKey('combat_group_$title'),
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+        children: children,
+      ),
+    );
   }
 
   /// Enemy target dropdown.

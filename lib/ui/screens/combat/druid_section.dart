@@ -27,11 +27,6 @@ extension _DruidSection on _CombatScreenState {
     return [
       const SizedBox(height: 24),
       Text('Druid Features', style: Theme.of(context).textTheme.titleMedium),
-      Text(
-        'Spell save DC ${druidSpellSaveDc(widget.character, d.profBonus)} · '
-        'Spell attack +${druidSpellAttackBonus(widget.character, d.profBonus)}',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
       const SizedBox(height: 8),
       d.resourceUsesAsync.when(
         loading: () => const SizedBox.shrink(),
@@ -39,11 +34,10 @@ extension _DruidSection on _CombatScreenState {
         data: (rows) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _druidSpellSlotsCard(context, characterId, rows),
             if (level >= 2) _wildShapeCard(context, characterId, rows),
             if (level >= 7) _elementalFuryCard(context, characterId, d),
             if (level >= 3 && subclass == null)
-              _druidCard(
+              _featureCard(
                 context,
                 'Druid Circle',
                 'Choose your Druid Circle in Level Up to unlock its features.',
@@ -63,128 +57,12 @@ extension _DruidSection on _CombatScreenState {
     ];
   }
 
-  // ---------------------------------------------------------------- helpers
-
-  int _druidRemaining(List<CharacterResourceUse> rows, String id, int max) {
-    final spent =
-        rows.where((r) => r.resourceId == id).firstOrNull?.usesSpent ?? 0;
-    return (max - spent).clamp(0, max);
-  }
-
-  int _slotMax(int spellLevel) =>
-      fullCasterSlots(widget.character.level, spellLevel);
-
-  int _slotRemaining(List<CharacterResourceUse> rows, int spellLevel) =>
-      _druidRemaining(
-        rows,
-        spellSlotResourceId(spellLevel),
-        _slotMax(spellLevel),
-      );
+  // ----------------------------------------------------------------- helpers
 
   int get _wildShapeMax => wildShapeUses(widget.character.level);
 
-  Future<void> _druidSpend(int characterId, String id, int max) =>
-      ref.read(appDatabaseProvider).useResource(characterId, id, max);
-
-  Future<void> _druidRegain(int characterId, String id, {int amount = 1}) => ref
-      .read(appDatabaseProvider)
-      .regainResource(characterId, id, amount: amount);
-
-  Future<void> _spendSlot(int characterId, int spellLevel) => _druidSpend(
-    characterId,
-    spellSlotResourceId(spellLevel),
-    _slotMax(spellLevel),
-  );
-
   Future<void> _spendWildShape(int characterId) =>
-      _druidSpend(characterId, 'wild_shape', _wildShapeMax);
-
-  void _druidMessage(String text) => _update(() => _lastRollResult = text);
-
-  Widget _druidCard(
-    BuildContext context,
-    String title,
-    String subtitle,
-    List<Widget> children,
-  ) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleSmall),
-            if (subtitle.isNotEmpty)
-              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-            if (children.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: children,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Asks which spell slot level to expend, among those with slots left.
-  Future<int?> _pickSlotLevel(
-    BuildContext context,
-    List<CharacterResourceUse> rows, {
-    int minLevel = 1,
-    String title = 'Expend which spell slot?',
-  }) {
-    final options = [
-      for (var l = minLevel; l <= 9; l++)
-        if (_slotRemaining(rows, l) > 0) l,
-    ];
-    if (options.isEmpty) {
-      _druidMessage('No spell slots of level $minLevel+ left.');
-      return Future.value(null);
-    }
-    return showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(title),
-        children: [
-          for (final l in options)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(ctx).pop(l),
-              child: Text(
-                'Level $l (${_slotRemaining(rows, l)}/${_slotMax(l)} left)',
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  /// Damages the selected enemy; returns a note for the roll banner.
-  Future<String> _druidDamageTarget(int characterId, int amount) async {
-    final enemies = ref.read(combatEnemiesProvider(characterId)).value ?? [];
-    final target = enemies.where((e) => e.id == _selectedEnemyId).firstOrNull;
-    if (target == null) return ' (no target selected)';
-    final newHp = (target.currentHp - amount).clamp(0, target.maxHp);
-    if (newHp <= 0) {
-      await ref.read(appDatabaseProvider).removeEnemy(target.id);
-      return ' — ${target.name} defeated!';
-    }
-    await ref.read(appDatabaseProvider).updateEnemyHp(target.id, newHp);
-    return ' — ${target.name}: $newHp/${target.maxHp} HP left';
-  }
-
-  Future<String> _druidHealSelf(int characterId, int amount) async {
-    final maxHp = widget.character.totalHitPoints;
-    final current =
-        await ref.read(currentHpProvider(characterId).future) ?? maxHp;
-    final newHp = (current + amount).clamp(0, maxHp);
-    await ref.read(appDatabaseProvider).setCurrentHp(characterId, newHp);
-    return ' → you: $newHp/$maxHp HP';
-  }
+      _spendResource(characterId, 'wild_shape', _wildShapeMax);
 
   /// Archdruid — Evergreen Wild Shape, called when Initiative is rolled.
   void _evergreenWildShape(
@@ -192,57 +70,9 @@ extension _DruidSection on _CombatScreenState {
     AsyncValue<List<CharacterResourceUse>> usesAsync,
   ) {
     final rows = usesAsync.value ?? const <CharacterResourceUse>[];
-    if (_druidRemaining(rows, 'wild_shape', _wildShapeMax) == 0) {
-      _druidRegain(characterId, 'wild_shape');
+    if (_resourceRemaining(rows, 'wild_shape', _wildShapeMax) == 0) {
+      _regainResource(characterId, 'wild_shape');
     }
-  }
-
-  // ------------------------------------------------------------- spell slots
-
-  Widget _druidSpellSlotsCard(
-    BuildContext context,
-    int characterId,
-    List<CharacterResourceUse> rows,
-  ) {
-    return _druidCard(
-      context,
-      'Spell Slots',
-      'Tap − to expend a slot, + to restore one. All slots return on a Long Rest.',
-      [
-        for (var l = 1; l <= 9; l++)
-          if (_slotMax(l) > 0)
-            Container(
-              padding: const EdgeInsets.only(left: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('L$l  ${_slotRemaining(rows, l)}/${_slotMax(l)}'),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(Icons.remove),
-                    tooltip: 'Expend a level $l slot',
-                    onPressed: _slotRemaining(rows, l) > 0
-                        ? () => _spendSlot(characterId, l)
-                        : null,
-                  ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(Icons.add),
-                    tooltip: 'Restore a level $l slot',
-                    onPressed: _slotRemaining(rows, l) < _slotMax(l)
-                        ? () =>
-                              _druidRegain(characterId, spellSlotResourceId(l))
-                        : null,
-                  ),
-                ],
-              ),
-            ),
-      ],
-    );
   }
 
   // -------------------------------------------------------------- Wild Shape
@@ -254,12 +84,12 @@ extension _DruidSection on _CombatScreenState {
   ) {
     final level = widget.character.level;
     final isMoon = druidSubclass(widget.character) == 'moon';
-    final remaining = _druidRemaining(rows, 'wild_shape', _wildShapeMax);
+    final remaining = _resourceRemaining(rows, 'wild_shape', _wildShapeMax);
     final limits = beastShapeLimits(level, circleOfTheMoon: isMoon);
     final tempHp = wildShapeTempHp(level, circleOfTheMoon: isMoon);
     final hours = level ~/ 2;
-    final resurgenceLeft = _druidRemaining(rows, 'wild_resurgence_slot', 1);
-    final natureMagicianLeft = _druidRemaining(rows, 'nature_magician', 1);
+    final resurgenceLeft = _resourceRemaining(rows, 'wild_resurgence_slot', 1);
+    final natureMagicianLeft = _resourceRemaining(rows, 'nature_magician', 1);
 
     final details = [
       '$remaining/$_wildShapeMax uses · ${limits.knownForms} known forms · '
@@ -273,7 +103,7 @@ extension _DruidSection on _CombatScreenState {
       if (_wildShapeActive) 'Currently in Wild Shape.',
     ].join('\n');
 
-    return _druidCard(context, 'Wild Shape', details, [
+    return _featureCard(context, 'Wild Shape', details, [
       if (!_wildShapeActive)
         ElevatedButton(
           onPressed: remaining > 0
@@ -304,7 +134,7 @@ extension _DruidSection on _CombatScreenState {
         onPressed: remaining > 0
             ? () async {
                 await _spendWildShape(characterId);
-                _druidMessage(
+                _showRoll(
                   'Wild Companion: Find Familiar cast with a Wild Shape use (Fey familiar until your next Long Rest).',
                 );
               }
@@ -316,7 +146,7 @@ extension _DruidSection on _CombatScreenState {
           final slot = await _pickSlotLevel(context, rows);
           if (slot == null) return;
           await _spendSlot(characterId, slot);
-          _druidMessage(
+          _showRoll(
             'Wild Companion: Find Familiar cast with a level $slot slot.',
           );
         },
@@ -333,8 +163,8 @@ extension _DruidSection on _CombatScreenState {
                   );
                   if (slot == null) return;
                   await _spendSlot(characterId, slot);
-                  await _druidRegain(characterId, 'wild_shape');
-                  _druidMessage(
+                  await _regainResource(characterId, 'wild_shape');
+                  _showRoll(
                     'Wild Resurgence: expended a level $slot slot, regained 1 Wild Shape use (once per turn).',
                   );
                 }
@@ -348,9 +178,9 @@ extension _DruidSection on _CombatScreenState {
                   _slotRemaining(rows, 1) < _slotMax(1)
               ? () async {
                   await _spendWildShape(characterId);
-                  await _druidSpend(characterId, 'wild_resurgence_slot', 1);
-                  await _druidRegain(characterId, spellSlotResourceId(1));
-                  _druidMessage(
+                  await _spendResource(characterId, 'wild_resurgence_slot', 1);
+                  await _regainResource(characterId, spellSlotResourceId(1));
+                  _showRoll(
                     'Wild Resurgence: spent a Wild Shape use, regained a level 1 slot (once per Long Rest).',
                   );
                 }
@@ -384,15 +214,15 @@ extension _DruidSection on _CombatScreenState {
                   for (var i = 0; i < uses; i++) {
                     await _spendWildShape(characterId);
                   }
-                  await _druidSpend(characterId, 'nature_magician', 1);
+                  await _spendResource(characterId, 'nature_magician', 1);
                   final slotLevel = 2 * uses;
                   final hadSpent =
                       _slotRemaining(rows, slotLevel) < _slotMax(slotLevel);
-                  await _druidRegain(
+                  await _regainResource(
                     characterId,
                     spellSlotResourceId(slotLevel),
                   );
-                  _druidMessage(
+                  _showRoll(
                     'Nature Magician: $uses Wild Shape use(s) → a level $slotLevel spell slot'
                     '${hadSpent ? "" : " (all level $slotLevel slots were full: track the extra slot yourself)"}.',
                   );
@@ -415,7 +245,7 @@ extension _DruidSection on _CombatScreenState {
     switch (druidElementalFury(widget.character)) {
       case 'primal_strike':
         final dice = primalStrikeDice(level);
-        return _druidCard(
+        return _featureCard(
           context,
           'Elemental Fury: Primal Strike',
           'Once per turn on a weapon or Beast-form hit: extra $dice damage.',
@@ -435,7 +265,7 @@ extension _DruidSection on _CombatScreenState {
                   0,
                   isCritical: _lastAttackWasCritical,
                 );
-                _druidMessage(
+                _showRoll(
                   'Primal Strike ($_primalStrikeType): ${r.rolls.join('+')} = ${r.total}',
                 );
               },
@@ -450,11 +280,11 @@ extension _DruidSection on _CombatScreenState {
                         0,
                         isCritical: _lastAttackWasCritical,
                       );
-                      final note = await _druidDamageTarget(
+                      final note = await _damageSelectedEnemy(
                         characterId,
                         r.total,
                       );
-                      _druidMessage(
+                      _showRoll(
                         'Primal Strike ($_primalStrikeType): ${r.rolls.join('+')} = ${r.total}$note',
                       );
                     },
@@ -463,7 +293,7 @@ extension _DruidSection on _CombatScreenState {
           ],
         );
       case 'potent_spellcasting':
-        return _druidCard(
+        return _featureCard(
           context,
           'Elemental Fury: Potent Spellcasting',
           'Add +$wis to the damage of your Druid cantrips.'
@@ -471,7 +301,7 @@ extension _DruidSection on _CombatScreenState {
           const [],
         );
       default:
-        return _druidCard(
+        return _featureCard(
           context,
           'Elemental Fury',
           'Choose Potent Spellcasting or Primal Strike in Level Up.',
@@ -490,19 +320,19 @@ extension _DruidSection on _CombatScreenState {
   ) {
     final level = widget.character.level;
     final land = druidLandType(widget.character);
-    final wildShapeLeft = _druidRemaining(rows, 'wild_shape', _wildShapeMax);
+    final wildShapeLeft = _resourceRemaining(rows, 'wild_shape', _wildShapeMax);
     final dc = druidSpellSaveDc(widget.character, d.profBonus);
     final dice = landsAidDice(level);
-    final spellLeft = _druidRemaining(rows, 'natural_recovery_spell', 1);
-    final slotsLeft = _druidRemaining(rows, 'natural_recovery_slots', 1);
+    final spellLeft = _resourceRemaining(rows, 'natural_recovery_spell', 1);
+    final slotsLeft = _resourceRemaining(rows, 'natural_recovery_slots', 1);
     return [
-      _druidCard(
+      _featureCard(
         context,
         'Circle Spells (${landTypeNames[land] ?? "choose a land type in Level Up"})',
         druidCircleSpells(widget.character).join(', '),
         const [],
       ),
-      _druidCard(
+      _featureCard(
         context,
         'Land\'s Aid',
         'Spend a Wild Shape use: 10-ft Sphere, Con save DC $dc or $dice Necrotic '
@@ -531,11 +361,11 @@ extension _DruidSection on _CombatScreenState {
               onPressed: _selectedEnemyId == null
                   ? null
                   : () async {
-                      final note = await _druidDamageTarget(
+                      final note = await _damageSelectedEnemy(
                         characterId,
                         _landsAidDamage!,
                       );
-                      _druidMessage(
+                      _showRoll(
                         'Land\'s Aid: target failed save, $_landsAidDamage damage$note',
                       );
                     },
@@ -546,16 +376,17 @@ extension _DruidSection on _CombatScreenState {
                   ? null
                   : () async {
                       final half = _landsAidDamage! ~/ 2;
-                      final note = await _druidDamageTarget(characterId, half);
-                      _druidMessage(
-                        'Land\'s Aid: target saved, $half damage$note',
+                      final note = await _damageSelectedEnemy(
+                        characterId,
+                        half,
                       );
+                      _showRoll('Land\'s Aid: target saved, $half damage$note');
                     },
               child: const Text('Target saved (half)'),
             ),
             OutlinedButton(
               onPressed: () async {
-                final note = await _druidHealSelf(characterId, _landsAidHeal!);
+                final note = await _healSelf(characterId, _landsAidHeal!);
                 _update(() {
                   _lastRollResult =
                       'Land\'s Aid: you regain $_landsAidHeal HP$note';
@@ -568,7 +399,7 @@ extension _DruidSection on _CombatScreenState {
         ],
       ),
       if (level >= 6)
-        _druidCard(
+        _featureCard(
           context,
           'Natural Recovery',
           'Cast a level 1+ Circle spell without a slot ($spellLeft/1). '
@@ -577,12 +408,12 @@ extension _DruidSection on _CombatScreenState {
             OutlinedButton(
               onPressed: spellLeft > 0
                   ? () async {
-                      await _druidSpend(
+                      await _spendResource(
                         characterId,
                         'natural_recovery_spell',
                         1,
                       );
-                      _druidMessage(
+                      _showRoll(
                         'Natural Recovery: Circle spell cast without a slot.',
                       );
                     }
@@ -598,14 +429,14 @@ extension _DruidSection on _CombatScreenState {
           ],
         ),
       if (level >= 10)
-        _druidCard(
+        _featureCard(
           context,
           'Nature\'s Ward',
           'Immune to Poisoned; Resistance to ${natureWardResistance[land] ?? "your land type's damage"}.',
           const [],
         ),
       if (level >= 14)
-        _druidCard(
+        _featureCard(
           context,
           'Nature\'s Sanctuary',
           '15-ft Cube for 1 minute: Half Cover for you and allies; allies gain your Nature\'s Ward Resistance.',
@@ -614,7 +445,7 @@ extension _DruidSection on _CombatScreenState {
               onPressed: wildShapeLeft > 0
                   ? () async {
                       await _spendWildShape(characterId);
-                      _druidMessage('Nature\'s Sanctuary created (1 minute).');
+                      _showRoll('Nature\'s Sanctuary created (1 minute).');
                     }
                   : null,
               child: const Text('Use (spend Wild Shape)'),
@@ -692,15 +523,15 @@ extension _DruidSection on _CombatScreenState {
     if (result == null) return;
     for (final e in result.entries) {
       if (e.value > 0) {
-        await _druidRegain(
+        await _regainResource(
           characterId,
           spellSlotResourceId(e.key),
           amount: e.value,
         );
       }
     }
-    await _druidSpend(characterId, 'natural_recovery_slots', 1);
-    _druidMessage(
+    await _spendResource(characterId, 'natural_recovery_slots', 1);
+    _showRoll(
       'Natural Recovery: recovered ${result.entries.where((e) => e.value > 0).map((e) => "${e.value}× L${e.key}").join(", ")}.',
     );
   }
@@ -715,16 +546,16 @@ extension _DruidSection on _CombatScreenState {
   ) {
     final level = widget.character.level;
     final stepMax = druidWisdomUses(widget.character);
-    final stepLeft = _druidRemaining(rows, 'moonlight_step', stepMax);
+    final stepLeft = _resourceRemaining(rows, 'moonlight_step', stepMax);
     return [
-      _druidCard(
+      _featureCard(
         context,
         'Circle of the Moon Spells',
         '${druidCircleSpells(widget.character).join(', ')} — castable in Wild Shape.',
         const [],
       ),
       if (level >= 10)
-        _druidCard(
+        _featureCard(
           context,
           'Moonlight Step',
           'Bonus Action: teleport up to 30 ft, Advantage on your next attack this turn'
@@ -733,8 +564,12 @@ extension _DruidSection on _CombatScreenState {
             ElevatedButton(
               onPressed: stepLeft > 0
                   ? () async {
-                      await _druidSpend(characterId, 'moonlight_step', stepMax);
-                      _druidMessage(
+                      await _spendResource(
+                        characterId,
+                        'moonlight_step',
+                        stepMax,
+                      );
+                      _showRoll(
                         'Moonlight Step: teleported, Advantage on your next attack this turn.',
                       );
                     }
@@ -752,8 +587,8 @@ extension _DruidSection on _CombatScreenState {
                       );
                       if (slot == null) return;
                       await _spendSlot(characterId, slot);
-                      await _druidRegain(characterId, 'moonlight_step');
-                      _druidMessage(
+                      await _regainResource(characterId, 'moonlight_step');
+                      _showRoll(
                         'Moonlight Step: use restored with a level $slot slot.',
                       );
                     }
@@ -763,7 +598,7 @@ extension _DruidSection on _CombatScreenState {
           ],
         ),
       if (level >= 14)
-        _druidCard(
+        _featureCard(
           context,
           'Lunar Form',
           'Once per turn, a Wild Shape attack deals an extra 2d10 Radiant damage.',
@@ -775,7 +610,7 @@ extension _DruidSection on _CombatScreenState {
                   0,
                   isCritical: _lastAttackWasCritical,
                 );
-                _druidMessage(
+                _showRoll(
                   'Improved Lunar Radiance: ${r.rolls.join('+')} = ${r.total} Radiant',
                 );
               },
@@ -790,11 +625,11 @@ extension _DruidSection on _CombatScreenState {
                         0,
                         isCritical: _lastAttackWasCritical,
                       );
-                      final note = await _druidDamageTarget(
+                      final note = await _damageSelectedEnemy(
                         characterId,
                         r.total,
                       );
-                      _druidMessage(
+                      _showRoll(
                         'Improved Lunar Radiance: ${r.rolls.join('+')} = ${r.total} Radiant$note',
                       );
                     },
@@ -814,18 +649,18 @@ extension _DruidSection on _CombatScreenState {
     _CombatData d,
   ) {
     final level = widget.character.level;
-    final wildShapeLeft = _druidRemaining(rows, 'wild_shape', _wildShapeMax);
+    final wildShapeLeft = _resourceRemaining(rows, 'wild_shape', _wildShapeMax);
     final dc = druidSpellSaveDc(widget.character, d.profBonus);
     final dice = wrathOfTheSeaDice(widget.character);
     final size = level >= 6 ? 10 : 5;
     return [
-      _druidCard(
+      _featureCard(
         context,
         'Circle of the Sea Spells',
         druidCircleSpells(widget.character).join(', '),
         const [],
       ),
-      _druidCard(
+      _featureCard(
         context,
         'Wrath of the Sea${_wrathOfTheSeaActive ? " (active)" : ""}',
         '$size-ft Emanation for 10 minutes. Bonus Action: one creature in it makes a Con save '
@@ -867,7 +702,7 @@ extension _DruidSection on _CombatScreenState {
             OutlinedButton(
               onPressed: () {
                 final r = rollDamage(dice, 0);
-                _druidMessage(
+                _showRoll(
                   'Wrath of the Sea: ${r.rolls.join('+')} = ${r.total} Cold (DC $dc Con negates)',
                 );
               },
@@ -878,11 +713,11 @@ extension _DruidSection on _CombatScreenState {
                   ? null
                   : () async {
                       final r = rollDamage(dice, 0);
-                      final note = await _druidDamageTarget(
+                      final note = await _damageSelectedEnemy(
                         characterId,
                         r.total,
                       );
-                      _druidMessage(
+                      _showRoll(
                         'Wrath of the Sea: target failed save, ${r.total} Cold, pushed 15 ft$note',
                       );
                     },
@@ -912,9 +747,9 @@ extension _DruidSection on _CombatScreenState {
     final level = widget.character.level;
     final wis = druidWisdomModifier(widget.character);
     final wisUses = druidWisdomUses(widget.character);
-    final boltLeft = _druidRemaining(rows, 'star_map_guiding_bolt', wisUses);
-    final omenLeft = _druidRemaining(rows, 'cosmic_omen', wisUses);
-    final wildShapeLeft = _druidRemaining(rows, 'wild_shape', _wildShapeMax);
+    final boltLeft = _resourceRemaining(rows, 'star_map_guiding_bolt', wisUses);
+    final omenLeft = _resourceRemaining(rows, 'cosmic_omen', wisUses);
+    final wildShapeLeft = _resourceRemaining(rows, 'wild_shape', _wildShapeMax);
     final dice = starryFormDice(level);
     final attackBonus = druidSpellAttackBonus(widget.character, d.profBonus);
 
@@ -935,7 +770,7 @@ extension _DruidSection on _CombatScreenState {
     };
 
     return [
-      _druidCard(
+      _featureCard(
         context,
         'Star Map',
         'Guidance and Guiding Bolt always prepared; cast Guiding Bolt without a slot ($boltLeft/$wisUses).',
@@ -943,12 +778,12 @@ extension _DruidSection on _CombatScreenState {
           OutlinedButton(
             onPressed: boltLeft > 0
                 ? () async {
-                    await _druidSpend(
+                    await _spendResource(
                       characterId,
                       'star_map_guiding_bolt',
                       wisUses,
                     );
-                    _druidMessage(
+                    _showRoll(
                       'Star Map: Guiding Bolt cast without a spell slot.',
                     );
                   }
@@ -957,7 +792,7 @@ extension _DruidSection on _CombatScreenState {
           ),
         ],
       ),
-      _druidCard(
+      _featureCard(
         context,
         'Starry Form${_starryConstellation != null ? " (active)" : ""}',
         _starryConstellation == null
@@ -1010,9 +845,9 @@ extension _DruidSection on _CombatScreenState {
                   final dmg = rollDamage(dice, wis, isCritical: crit);
                   var note = '';
                   if (target != null && hit) {
-                    note = await _druidDamageTarget(characterId, dmg.total);
+                    note = await _damageSelectedEnemy(characterId, dmg.total);
                   }
-                  _druidMessage(
+                  _showRoll(
                     'Archer: $natural +$attackBonus = ${attack.total}'
                     '${target != null ? (hit ? " HIT" : " MISS vs AC ${target.armorClass}") : ""}'
                     '${hit ? " — ${dmg.rolls.join('+')} +$wis = ${dmg.total} Radiant$note" : ""}',
@@ -1024,8 +859,8 @@ extension _DruidSection on _CombatScreenState {
               OutlinedButton(
                 onPressed: () async {
                   final r = rollDamage(dice, wis);
-                  final note = await _druidHealSelf(characterId, r.total);
-                  _druidMessage(
+                  final note = await _healSelf(characterId, r.total);
+                  _showRoll(
                     'Chalice: ${r.rolls.join('+')} +$wis = ${r.total} HP$note',
                   );
                 },
@@ -1042,7 +877,7 @@ extension _DruidSection on _CombatScreenState {
         ],
       ),
       if (level >= 6)
-        _druidCard(
+        _featureCard(
           context,
           'Cosmic Omen${_cosmicOmen != null ? ": ${_cosmicOmen == "weal" ? "Weal (+1d6)" : "Woe (−1d6)"}" : ""}',
           'Roll after each Long Rest. Reaction: add (Weal) or subtract (Woe) 1d6 on a D20 Test within 30 ft ($omenLeft/$wisUses).',
@@ -1061,9 +896,9 @@ extension _DruidSection on _CombatScreenState {
             ElevatedButton(
               onPressed: omenLeft > 0 && _cosmicOmen != null
                   ? () async {
-                      await _druidSpend(characterId, 'cosmic_omen', wisUses);
+                      await _spendResource(characterId, 'cosmic_omen', wisUses);
                       final r = rollDamage('1d6', 0);
-                      _druidMessage(
+                      _showRoll(
                         'Cosmic Omen (${_cosmicOmen == "weal" ? "Weal" : "Woe"}): ${_cosmicOmen == "weal" ? "+" : "−"}${r.total} to the D20 Test',
                       );
                     }

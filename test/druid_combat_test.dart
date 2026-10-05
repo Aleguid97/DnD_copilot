@@ -44,6 +44,7 @@ void main() {
         },
       ),
     );
+    await tapAndSettle(tester, find.text('Saving Throws'));
     final conSave = find.descendant(
       of: find.widgetWithText(ListTile, 'CON Save'),
       matching: find.byType(OutlinedButton),
@@ -94,6 +95,7 @@ void main() {
         },
       ),
     );
+    await tapAndSettle(tester, find.text('Skill Checks'));
     for (final skill in ['Arcana', 'Nature']) {
       final label = tester
           .widget<Text>(
@@ -169,7 +171,7 @@ void main() {
         },
       ),
     );
-    expect(_textContaining('Cone of Cold'), findsOneWidget);
+    expect(_textContaining('Cone of Cold'), findsWidgets);
     expect(_textContaining('Resistance to Cold'), findsOneWidget);
 
     await tapAndSettle(tester, find.text('Use (spend Wild Shape)'));
@@ -205,6 +207,129 @@ void main() {
 
     expect(find.text('L4  3/3'), findsOneWidget);
     expect(_textContaining('2/4 uses'), findsOneWidget);
+    await disposeCombatScreen(tester, db);
+  });
+
+  testWidgets('saving throws and skill checks start collapsed', (tester) async {
+    final db = await pumpCombatScreen(tester, testCharacter('druid', 1));
+    expect(find.text('CON Save'), findsNothing);
+    expect(find.text('Arcana'), findsNothing);
+    await tapAndSettle(tester, find.text('Saving Throws'));
+    expect(find.text('CON Save'), findsOneWidget);
+    await disposeCombatScreen(tester, db);
+  });
+
+  testWidgets('casting a prepared spell expends a slot, upcasting allowed', (
+    tester,
+  ) async {
+    final db = await pumpCombatScreen(
+      tester,
+      testCharacter(
+        'druid',
+        5,
+        selections: {
+          'druid_cantrips': {'guidance', 'produce_flame'},
+          'druid_prepared_spells': {'cure_wounds', 'faerie_fire', 'moonbeam'},
+        },
+      ),
+    );
+    expect(find.text('Spellcasting'), findsOneWidget);
+    expect(find.text('Cantrips (2/3)'), findsOneWidget);
+    expect(_textContaining('Prepared Spells (3/9'), findsOneWidget);
+
+    Finder castButton(String spell) => find.descendant(
+      of: find.widgetWithText(ListTile, spell),
+      matching: find.widgetWithText(OutlinedButton, 'Cast'),
+    );
+
+    // Cure Wounds (level 1) cast with a level 2 slot.
+    await tapAndSettle(tester, castButton('Cure Wounds'));
+    await tapAndSettle(tester, find.text('Level 2 (3/3 left)'));
+    expect(find.text('L2  2/3'), findsOneWidget);
+    expect(find.text('L1  4/4'), findsOneWidget);
+    expect(
+      _textContaining('Cure Wounds using a level 2 slot (upcast)'),
+      findsOneWidget,
+    );
+
+    // Moonbeam (level 2, Concentration): level 1 slots are not offered.
+    await tapAndSettle(tester, castButton('Moonbeam'));
+    expect(find.text('Level 1 (4/4 left)'), findsNothing);
+    await tapAndSettle(tester, find.text('Level 2 (2/3 left)'));
+    expect(find.text('Concentrating on Moonbeam'), findsOneWidget);
+
+    // Another Concentration spell replaces it.
+    await tapAndSettle(tester, castButton('Faerie Fire'));
+    await tapAndSettle(tester, find.text('Level 1 (4/4 left)'));
+    expect(find.text('Concentrating on Faerie Fire'), findsOneWidget);
+    expect(_textContaining('Concentration on Moonbeam ended'), findsOneWidget);
+
+    // Cantrips cost nothing.
+    await tapAndSettle(
+      tester,
+      find.widgetWithText(ActionChip, 'Produce Flame'),
+    );
+    expect(find.text('L1  3/4'), findsOneWidget);
+
+    // Speak with Animals is always prepared (Druidic).
+    expect(find.widgetWithText(ListTile, 'Speak with Animals'), findsOneWidget);
+    await disposeCombatScreen(tester, db);
+  });
+
+  testWidgets('no spellcasting in Wild Shape before Beast Spells', (
+    tester,
+  ) async {
+    final db = await pumpCombatScreen(
+      tester,
+      testCharacter(
+        'druid',
+        5,
+        selections: {
+          'druid_prepared_spells': {'cure_wounds'},
+        },
+      ),
+    );
+    await tapAndSettle(tester, find.text('Shape-shift (spend use)'));
+    expect(
+      find.descendant(
+        of: find.widgetWithText(ListTile, 'Cure Wounds'),
+        matching: find.text('Not in Wild Shape'),
+      ),
+      findsOneWidget,
+    );
+    await disposeCombatScreen(tester, db);
+  });
+
+  testWidgets('changing prepared spells respects the table limit', (
+    tester,
+  ) async {
+    final db = await pumpCombatScreen(tester, testCharacter('druid', 1));
+    await tapAndSettle(
+      tester,
+      find.descendant(
+        of: find.ancestor(
+          of: _textContaining('Prepared Spells'),
+          matching: find.byType(Row),
+        ),
+        matching: find.text('Change'),
+      ),
+    );
+    for (final s in [
+      'Animal Friendship',
+      'Charm Person',
+      'Create or Destroy Water',
+      'Cure Wounds',
+    ]) {
+      await tapAndSettle(tester, find.widgetWithText(CheckboxListTile, s));
+    }
+    // Limit (4 at level 1) reached: other boxes are disabled.
+    final detectMagic = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Detect Magic'),
+    );
+    expect(detectMagic.onChanged, isNull);
+    await tapAndSettle(tester, find.text('Save'));
+    expect(_textContaining('Prepared Spells (4/4'), findsOneWidget);
+    expect(find.widgetWithText(ListTile, 'Charm Person'), findsOneWidget);
     await disposeCombatScreen(tester, db);
   });
 }

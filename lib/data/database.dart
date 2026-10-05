@@ -149,6 +149,31 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// Replaces one class selection (e.g. prepared spells) inside a saved
+  /// character's data. Does nothing if the character isn't saved.
+  Future<void> updateClassSelection(
+    int id,
+    String choiceId,
+    List<String> optionIds,
+  ) async {
+    final row = await (select(
+      savedCharacters,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    if (row == null) return;
+    final map = jsonDecode(row.dataJson) as Map<String, dynamic>;
+    final selections = Map<String, dynamic>.from(
+      map['classSelections'] as Map? ?? const {},
+    );
+    selections[choiceId] = optionIds;
+    map['classSelections'] = selections;
+    await (update(savedCharacters)..where((t) => t.id.equals(id))).write(
+      SavedCharactersCompanion(
+        dataJson: Value(jsonEncode(map)),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<SavedCharacter> getCharacterById(int id) =>
       (select(savedCharacters)..where((t) => t.id.equals(id))).getSingle();
 

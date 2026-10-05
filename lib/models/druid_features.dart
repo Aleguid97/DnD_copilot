@@ -166,3 +166,26 @@ List<String> druidCircleSpells(Character character) {
       if (e.key <= character.level) ...e.value,
   ];
 }
+
+/// Prepared Spells column of the Druid Features table (levels 1-20).
+const _druidPreparedSpells = [
+  4, 5, 6, 7, 9, 10, 11, 12, 14, 15, //
+  16, 16, 17, 17, 18, 18, 19, 20, 21, 22,
+];
+
+int druidPreparedSpellCount(int level) =>
+    _druidPreparedSpells[(level - 1).clamp(0, 19)];
+
+/// Cantrips column of the Druid Features table (+1 for the Magician order).
+int druidCantripCount(Character character) {
+  final level = character.level;
+  final base = level >= 10 ? 4 : (level >= 4 ? 3 : 2);
+  return base + (druidIsMagician(character) ? 1 : 0);
+}
+
+/// Spells the Druid always has prepared (they don't count against the
+/// prepared-spell limit): Speak with Animals (Druidic) and Circle spells.
+List<String> druidAlwaysPreparedNames(Character character) => [
+  'Speak with Animals',
+  ...druidCircleSpells(character),
+];

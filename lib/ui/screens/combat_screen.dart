@@ -14,6 +14,8 @@ import '../../models/cleric_features.dart';
 import '../../models/barbarian_features.dart';
 import '../../models/druid_features.dart';
 import '../../data/spell_slots_data.dart';
+import '../../data/spells_data.dart';
+import '../../models/spell.dart';
 
 import '../../state/database_provider.dart';
 import '../../state/resource_uses_provider.dart';
@@ -30,6 +32,8 @@ import '../../data/skills_data.dart';
 import '../../models/character_proficiencies.dart';
 
 part 'combat/combat_core_sections.dart';
+part 'combat/combat_helpers.dart';
+part 'combat/spellcasting_section.dart';
 part 'combat/fighter_section.dart';
 part 'combat/barbarian_section.dart';
 part 'combat/weapons_section.dart';
@@ -114,6 +118,10 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   String _primalStrikeType = 'Fire';
   int? _landsAidDamage;
   int? _landsAidHeal;
+  // Spellcasting
+  String? _concentrationSpell;
+  List<String>? _cantripsOverride;
+  List<String>? _preparedOverride;
 
   /// setState is protected, so the section extensions in combat/ go through this.
   void _update(VoidCallback fn) => setState(fn);
@@ -270,6 +278,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                     ..._buildSkillChecks(context, d),
                     ..._buildFighterSection(context, d),
                     ..._buildTargetSelector(context, d),
+                    ..._buildSpellcastingSection(context, d),
                     ..._buildBarbarianSection(context, d),
                     ..._buildWeaponsSection(context, d),
                     ..._buildUnarmedStrikeSection(context, d),
