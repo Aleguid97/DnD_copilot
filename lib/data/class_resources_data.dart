@@ -1,5 +1,7 @@
 import '../models/class_resource.dart';
 import '../models/barbarian_features.dart';
+import '../models/druid_features.dart';
+import 'spell_slots_data.dart';
 
 final Map<String, List<ClassResource>> classResources = {
   'fighter': [
@@ -79,6 +81,68 @@ final Map<String, List<ClassResource>> classResources = {
       name: 'Intimidating Presence',
       maxUses: (level) => 1,
       availableFromLevel: 14,
+      fullRecoveryOn: RestType.long,
+    ),
+  ],
+  'druid': [
+    ...fullCasterSlotResources,
+    ClassResource(
+      id: 'wild_shape',
+      name: 'Wild Shape',
+      maxUses: wildShapeUses,
+      availableFromLevel: 2,
+      fullRecoveryOn: RestType.long,
+      shortRestPartialRecovery: 1,
+    ),
+    ClassResource(
+      id: 'wild_resurgence_slot',
+      name: 'Wild Resurgence (Wild Shape → level 1 slot)',
+      maxUses: (level) => 1,
+      availableFromLevel: 5,
+      fullRecoveryOn: RestType.long,
+    ),
+    ClassResource(
+      id: 'nature_magician',
+      name: 'Archdruid: Nature Magician',
+      maxUses: (level) => 1,
+      availableFromLevel: 20,
+      fullRecoveryOn: RestType.long,
+    ),
+    // Subclass resources below are shown only in the Druid section, which
+    // filters them by circle and computes Wisdom-based maximums.
+    ClassResource(
+      id: 'natural_recovery_spell',
+      name: 'Natural Recovery (free Circle spell)',
+      maxUses: (level) => 1,
+      availableFromLevel: 6,
+      fullRecoveryOn: RestType.long,
+    ),
+    ClassResource(
+      id: 'natural_recovery_slots',
+      name: 'Natural Recovery (recover slots)',
+      maxUses: (level) => 1,
+      availableFromLevel: 6,
+      fullRecoveryOn: RestType.long,
+    ),
+    ClassResource(
+      id: 'moonlight_step',
+      name: 'Moonlight Step',
+      maxUses: (level) => 0, // Wisdom modifier (min 1), see druid_section.dart
+      availableFromLevel: 10,
+      fullRecoveryOn: RestType.long,
+    ),
+    ClassResource(
+      id: 'star_map_guiding_bolt',
+      name: 'Star Map: free Guiding Bolt',
+      maxUses: (level) => 0, // Wisdom modifier (min 1), see druid_section.dart
+      availableFromLevel: 3,
+      fullRecoveryOn: RestType.long,
+    ),
+    ClassResource(
+      id: 'cosmic_omen',
+      name: 'Cosmic Omen',
+      maxUses: (level) => 0, // Wisdom modifier (min 1), see druid_section.dart
+      availableFromLevel: 6,
       fullRecoveryOn: RestType.long,
     ),
   ],

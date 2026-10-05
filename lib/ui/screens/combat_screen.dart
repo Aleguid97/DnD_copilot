@@ -12,6 +12,8 @@ import '../../models/dice_roller.dart';
 import '../../models/class_resource.dart';
 import '../../models/cleric_features.dart';
 import '../../models/barbarian_features.dart';
+import '../../models/druid_features.dart';
+import '../../data/spell_slots_data.dart';
 
 import '../../state/database_provider.dart';
 import '../../state/resource_uses_provider.dart';
@@ -32,6 +34,7 @@ part 'combat/fighter_section.dart';
 part 'combat/barbarian_section.dart';
 part 'combat/weapons_section.dart';
 part 'combat/cleric_section.dart';
+part 'combat/druid_section.dart';
 part 'combat/class_resources_section.dart';
 
 /// Values computed once per build and shared by every combat section.
@@ -102,6 +105,15 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _lastSaveModifier;
   String? _lastSaveAbilityShort;
   int _relentlessRageUsesSinceRest = 0;
+  String _tempHpSource = '';
+  // Druid
+  bool _wildShapeActive = false;
+  String? _starryConstellation;
+  bool _wrathOfTheSeaActive = false;
+  String? _cosmicOmen;
+  String _primalStrikeType = 'Fire';
+  int? _landsAidDamage;
+  int? _landsAidHeal;
 
   /// setState is protected, so the section extensions in combat/ go through this.
   void _update(VoidCallback fn) => setState(fn);
@@ -262,6 +274,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                     ..._buildWeaponsSection(context, d),
                     ..._buildUnarmedStrikeSection(context, d),
                     ..._buildClericSection(context, d),
+                    ..._buildDruidSection(context, d),
                     ..._buildClassResourcesSection(context, d),
                   ],
                 ),

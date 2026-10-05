@@ -269,6 +269,26 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  /// Gives back [amount] spent uses of a resource (never below 0 spent).
+  Future<void> regainResource(
+    int characterId,
+    String resourceId, {
+    int amount = 1,
+  }) async {
+    final existing =
+        await (select(characterResourceUses)..where(
+              (t) =>
+                  t.characterId.equals(characterId) &
+                  t.resourceId.equals(resourceId),
+            ))
+            .getSingleOrNull();
+    if (existing == null) return;
+    final newSpent = (existing.usesSpent - amount).clamp(0, 999);
+    await (update(characterResourceUses)
+          ..where((t) => t.id.equals(existing.id)))
+        .write(CharacterResourceUsesCompanion(usesSpent: Value(newSpent)));
+  }
+
   Future<void> applyRest(
     int characterId,
     RestType restType,

@@ -39,6 +39,7 @@ che restituisce `List<Widget>`:
 | `barbarian_section.dart` | Barbaro e sottoclassi |
 | `weapons_section.dart` | Armi equipaggiate, Weapon Mastery, Unarmed Strike |
 | `cleric_section.dart` | Chierico e domini |
+| `druid_section.dart` | Druido: slot incantesimo, Wild Shape, Elemental Fury, cerchi |
 | `class_resources_section.dart` | Tracker generico risorse di classe |
 
 Regole:
@@ -49,10 +50,15 @@ Regole:
   classe/sottoclasse (liv. 1 e 20) e verifica che tutte le sezioni compaiano
   senza errori di layout. Aggiornare `_expectedSections` quando si aggiunge
   una sezione di classe.
+- Test di interazione per classe (es. `test/druid_combat_test.dart`) premono i
+  pulsanti e verificano risorse/PF; setup comune in `test/helpers/combat_harness.dart`.
+- Slot incantesimo: `lib/data/spell_slots_data.dart` (tabella full caster) espone
+  risorse `spell_slot_N`; il Druido le usa, gli altri incantatori potranno riusarle.
 
 ## Convenzioni di lavoro
 
-- Dati sempre verificati contro il PHB 2024 ufficiale, mai a memoria.
+- Dati sempre verificati contro il PHB 2024 ufficiale, mai a memoria. L'utente
+  fornisce estratti PDF dei capitoli: non vanno mai committati (`*.pdf` è in `.gitignore`).
 - Una classe alla volta, portata **completamente** fino al livello 20 prima della successiva.
 - Feature implementate **meccanicamente** (bottoni funzionanti) ovunque fattibile;
   testuali solo se dipendono da sistemi non ancora costruiti o sono puramente narrative.
@@ -65,7 +71,11 @@ Regole:
   Eldritch Knight/Psi Warrior parzialmente testuali), 6 Fighting Style, Weapon Mastery, Studied Attacks.
 - **Chierico**: 1–20, Life/Light/Trickery/War con meccaniche in Combat.
 - **Barbaro**: 1–20, Berserker/Wild Heart/World Tree/Zealot con meccaniche in Combat.
-- **Bardo, Druido, Monaco, Paladino, Ranger, Ladro, Stregone, Warlock, Mago**: solo livello 1.
+- **Druido**: 1–20, Land/Moon/Sea/Stars con meccaniche in Combat; slot incantesimo
+  tracciati; Wild Shape a contatore (forme solo come nomi: le statistiche delle
+  bestie richiedono l'Appendice B del PHB). Scelta incantesimi oltre il livello 1
+  in attesa del sistema Incantesimi.
+- **Bardo, Monaco, Paladino, Ranger, Ladro, Stregone, Warlock, Mago**: solo livello 1.
 
 Altro: 16 background con equipaggiamento, ~160 oggetti, combattimento con nemici,
 bersaglio, colpito/mancato vs CA, critici, 8 proprietà Weapon Mastery, party per curare alleati.
@@ -73,7 +83,7 @@ bersaglio, colpito/mancato vs CA, critici, 8 proprietà Weapon Mastery, party pe
 ## Backlog (priorità)
 
 1. ~~Refactor `combat_screen.dart`~~ (fatto: sezioni in `combat/`).
-2. Estendere le 9 classi rimanenti al livello 20.
+2. Estendere le 8 classi rimanenti al livello 20 (fatto: Druido).
 3. Specializzare strumenti/set generici nei background (Artisan, Entertainer, Guard, Noble, Soldier).
 4. Sistema Incantesimi funzionale (dati, slot, lancio) – sblocca Eldritch Knight, Potent Spellcasting, Divine Intervention…
 5. Epic Boon Feats al 19° (categoria a sé, alcuni alzano fino a 30).

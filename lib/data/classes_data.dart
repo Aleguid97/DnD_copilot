@@ -807,12 +807,12 @@ final List<CharacterClass> allClasses = [
       StartingEquipmentOption(
         id: 'druid_a',
         label:
-            'Leather Armor, Shield, Sickle, Druidic Focus, Explorer\'s Pack, Herbalism Kit, 9 GP',
+            'Leather Armor, Shield, Sickle, Druidic Focus (Quarterstaff), Explorer\'s Pack, Herbalism Kit, 9 GP',
         items: [
           ItemGrant('leather_armor'),
           ItemGrant('shield'),
           ItemGrant('sickle'),
-          ItemGrant('druidic_focus'),
+          ItemGrant('quarterstaff'),
           ItemGrant('explorers_pack'),
           ItemGrant('herbalism_kit'),
         ],
@@ -830,7 +830,9 @@ final List<CharacterClass> allClasses = [
       LevelFeature(
         level: 1,
         fixedTraits: [
+          'Spellcasting: Wisdom is your spellcasting ability; you can use a Druidic Focus as a Spellcasting Focus. Change your prepared spells on a Long Rest',
           'Druidic: you know the secret Druid language; you always have Speak with Animals prepared',
+          'Tool proficiency: Herbalism Kit',
         ],
         choices: [
           Choice(
@@ -841,14 +843,14 @@ final List<CharacterClass> allClasses = [
                 id: 'magician',
                 label: 'Magician',
                 description:
-                    'An extra cantrip from the Druid spell list; bonus to Intelligence (Arcana or Nature) checks.',
+                    'An extra cantrip from the Druid spell list; bonus to Intelligence (Arcana or Nature) checks equal to your Wisdom modifier (minimum +1).',
                 extraSelectionsForChoice: {'druid_cantrips': 1},
               ),
               ChoiceOption(
                 id: 'warden',
                 label: 'Warden',
                 description:
-                    'Proficiency with Martial weapons and Medium armor.',
+                    'Proficiency with Martial weapons and training with Medium armor.',
                 extraWeaponProficiencies: ['Martial'],
                 extraArmorProficiencies: ['Medium'],
               ),
@@ -856,30 +858,354 @@ final List<CharacterClass> allClasses = [
           ),
           Choice(
             id: 'druid_cantrips',
-            title: 'Choose 2 Druid cantrips',
+            title:
+                'Choose 2 Druid cantrips (Druidcraft and Produce Flame recommended)',
             minSelections: 2,
             maxSelections: 2,
             options: [
               ChoiceOption(id: 'druidcraft', label: 'Druidcraft'),
-              ChoiceOption(id: 'produce_flame', label: 'Produce Flame'),
+              ChoiceOption(id: 'elementalism', label: 'Elementalism'),
               ChoiceOption(id: 'guidance', label: 'Guidance'),
+              ChoiceOption(id: 'mending', label: 'Mending'),
+              ChoiceOption(id: 'message', label: 'Message'),
+              ChoiceOption(id: 'poison_spray', label: 'Poison Spray'),
+              ChoiceOption(id: 'produce_flame', label: 'Produce Flame'),
+              ChoiceOption(id: 'resistance', label: 'Resistance'),
+              ChoiceOption(id: 'shillelagh', label: 'Shillelagh'),
+              ChoiceOption(id: 'spare_the_dying', label: 'Spare the Dying'),
+              ChoiceOption(id: 'starry_wisp', label: 'Starry Wisp'),
               ChoiceOption(id: 'thorn_whip', label: 'Thorn Whip'),
+              ChoiceOption(id: 'thunderclap', label: 'Thunderclap'),
             ],
           ),
           Choice(
             id: 'druid_prepared_spells',
-            title: 'Choose 4 level 1 spells to prepare',
+            title:
+                'Choose 4 level 1 spells to prepare (Animal Friendship, Cure Wounds, Faerie Fire and Thunderwave recommended)',
             minSelections: 4,
             maxSelections: 4,
             options: [
+              // Speak with Animals is omitted: Druidic keeps it always prepared.
               ChoiceOption(id: 'animal_friendship', label: 'Animal Friendship'),
+              ChoiceOption(id: 'charm_person', label: 'Charm Person'),
+              ChoiceOption(
+                id: 'create_or_destroy_water',
+                label: 'Create or Destroy Water',
+              ),
               ChoiceOption(id: 'cure_wounds', label: 'Cure Wounds'),
-              ChoiceOption(id: 'faerie_fire', label: 'Faerie Fire'),
-              ChoiceOption(id: 'thunderwave', label: 'Thunderwave'),
+              ChoiceOption(id: 'detect_magic', label: 'Detect Magic'),
+              ChoiceOption(
+                id: 'detect_poison_and_disease',
+                label: 'Detect Poison and Disease',
+              ),
               ChoiceOption(id: 'entangle', label: 'Entangle'),
+              ChoiceOption(id: 'faerie_fire', label: 'Faerie Fire'),
+              ChoiceOption(id: 'fog_cloud', label: 'Fog Cloud'),
+              ChoiceOption(id: 'goodberry', label: 'Goodberry'),
               ChoiceOption(id: 'healing_word', label: 'Healing Word'),
+              ChoiceOption(id: 'ice_knife', label: 'Ice Knife'),
+              ChoiceOption(id: 'jump', label: 'Jump'),
+              ChoiceOption(id: 'longstrider', label: 'Longstrider'),
+              ChoiceOption(
+                id: 'protection_from_evil_and_good',
+                label: 'Protection from Evil and Good',
+              ),
+              ChoiceOption(
+                id: 'purify_food_and_drink',
+                label: 'Purify Food and Drink',
+              ),
+              ChoiceOption(id: 'thunderwave', label: 'Thunderwave'),
             ],
           ),
+        ],
+      ),
+      LevelFeature(
+        level: 2,
+        fixedTraits: [
+          'Wild Shape: Bonus Action to shape-shift into a known Beast form for hours = half Druid level; gain Temp HP = Druid level. 2 uses (3 at level 6, 4 at 17); regain 1 on a Short Rest, all on a Long Rest',
+          'Wild Shape forms: know 4 Beast forms (max CR 1/4, no Fly Speed); 6 forms CR 1/2 at level 4; 8 forms CR 1 with Fly Speed at level 8. Swap one form on a Long Rest',
+          'Wild Companion: Magic action, expend a spell slot or a Wild Shape use to cast Find Familiar without Material components (the familiar is Fey and leaves on a Long Rest)',
+        ],
+      ),
+      LevelFeature(
+        level: 3,
+        choices: [
+          Choice(
+            id: 'druid_subclass',
+            title: 'Choose your Druid Circle (subclass)',
+            options: [
+              ChoiceOption(
+                id: 'land',
+                label: 'Circle of the Land',
+                description:
+                    'Circle Spells by land type + Land\'s Aid: mystics who safeguard ancient knowledge (Level 3).',
+                levelFeatures: {
+                  3: LevelFeature(
+                    level: 3,
+                    fixedTraits: [
+                      'Circle of the Land Spells: always-prepared spells for your land type at Druid levels 3/5/7/9 (change land type on a Long Rest)',
+                      'Land\'s Aid: Magic action, expend a Wild Shape use; 10-ft-radius Sphere within 60 ft, Con save vs spell DC or 2d6 Necrotic (half on success), and one creature regains 2d6 HP (3d6 at level 10, 4d6 at 14)',
+                    ],
+                    choices: [
+                      Choice(
+                        id: 'druid_land_type',
+                        title: 'Circle of the Land: choose your land type',
+                        options: [
+                          ChoiceOption(
+                            id: 'arid',
+                            label: 'Arid',
+                            description:
+                                'Blur, Burning Hands, Fire Bolt; Fireball; Blight; Wall of Stone. Nature\'s Ward: Fire.',
+                          ),
+                          ChoiceOption(
+                            id: 'polar',
+                            label: 'Polar',
+                            description:
+                                'Fog Cloud, Hold Person, Ray of Frost; Sleet Storm; Ice Storm; Cone of Cold. Nature\'s Ward: Cold.',
+                          ),
+                          ChoiceOption(
+                            id: 'temperate',
+                            label: 'Temperate',
+                            description:
+                                'Misty Step, Shocking Grasp, Sleep; Lightning Bolt; Freedom of Movement; Tree Stride. Nature\'s Ward: Lightning.',
+                          ),
+                          ChoiceOption(
+                            id: 'tropical',
+                            label: 'Tropical',
+                            description:
+                                'Acid Splash, Ray of Sickness, Web; Stinking Cloud; Polymorph; Insect Plague. Nature\'s Ward: Poison.',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  6: LevelFeature(
+                    level: 6,
+                    fixedTraits: [
+                      'Natural Recovery: cast one prepared level 1+ Circle spell without a slot (once per Long Rest); on a Short Rest recover spell slots with combined level ≤ half Druid level (round up), none level 6+ (once per Long Rest)',
+                    ],
+                  ),
+                  10: LevelFeature(
+                    level: 10,
+                    fixedTraits: [
+                      'Nature\'s Ward: Immunity to the Poisoned condition and Resistance to your land type\'s damage (Arid Fire, Polar Cold, Temperate Lightning, Tropical Poison)',
+                    ],
+                  ),
+                  14: LevelFeature(
+                    level: 14,
+                    fixedTraits: [
+                      'Nature\'s Sanctuary: Magic action, expend a Wild Shape use; 15-ft Cube within 120 ft for 1 minute, you and allies have Half Cover there and allies gain your Nature\'s Ward Resistance. Bonus Action: move the Cube up to 60 ft',
+                    ],
+                  ),
+                },
+              ),
+              ChoiceOption(
+                id: 'moon',
+                label: 'Circle of the Moon',
+                description:
+                    'Circle Forms: stronger Wild Shape powered by lunar magic (Level 3).',
+                levelFeatures: {
+                  3: LevelFeature(
+                    level: 3,
+                    fixedTraits: [
+                      'Circle Forms: Wild Shape max CR = Druid level / 3 (round down); AC = 13 + Wisdom modifier if higher than the Beast\'s; Temp HP = 3 × Druid level',
+                      'Circle of the Moon Spells: Cure Wounds, Moonbeam, Starry Wisp (3); Conjure Animals (5); Fount of Moonlight (7); Mass Cure Wounds (9) — castable while in Wild Shape',
+                    ],
+                  ),
+                  6: LevelFeature(
+                    level: 6,
+                    fixedTraits: [
+                      'Improved Circle Forms: in Wild Shape your attacks can deal Radiant damage (Lunar Radiance) and you add your Wisdom modifier to Constitution saving throws',
+                    ],
+                  ),
+                  10: LevelFeature(
+                    level: 10,
+                    fixedTraits: [
+                      'Moonlight Step: Bonus Action, teleport up to 30 ft and gain Advantage on your next attack this turn. Uses = Wisdom modifier (min 1) per Long Rest; restore a use by expending a level 2+ spell slot',
+                    ],
+                  ),
+                  14: LevelFeature(
+                    level: 14,
+                    fixedTraits: [
+                      'Lunar Form: once per turn deal an extra 2d10 Radiant damage with a Wild Shape attack; Moonlight Step can also teleport one willing creature within 10 ft of you',
+                    ],
+                  ),
+                },
+              ),
+              ChoiceOption(
+                id: 'sea',
+                label: 'Circle of the Sea',
+                description:
+                    'Wrath of the Sea: wield the tempestuous forces of oceans and storms (Level 3).',
+                levelFeatures: {
+                  3: LevelFeature(
+                    level: 3,
+                    fixedTraits: [
+                      'Circle of the Sea Spells: Fog Cloud, Gust of Wind, Ray of Frost, Shatter, Thunderwave (3); Lightning Bolt, Water Breathing (5); Control Water, Ice Storm (7); Conjure Elemental, Hold Monster (9)',
+                      'Wrath of the Sea: Bonus Action, expend a Wild Shape use for a 5-ft Emanation (10 minutes). Bonus Action: a creature in it makes a Con save vs spell DC or takes Wisdom-modifier d6 Cold damage and is pushed 15 ft (Large or smaller)',
+                    ],
+                  ),
+                  6: LevelFeature(
+                    level: 6,
+                    fixedTraits: [
+                      'Aquatic Affinity: Wrath of the Sea Emanation becomes 10 ft; you gain a Swim Speed equal to your Speed',
+                    ],
+                  ),
+                  10: LevelFeature(
+                    level: 10,
+                    fixedTraits: [
+                      'Stormborn: while Wrath of the Sea is active you have a Fly Speed equal to your Speed and Resistance to Cold, Lightning, and Thunder damage',
+                    ],
+                  ),
+                  14: LevelFeature(
+                    level: 14,
+                    fixedTraits: [
+                      'Oceanic Gift: manifest Wrath of the Sea around a willing creature within 60 ft (it uses your spell DC and Wisdom modifier), or around both of you by expending two Wild Shape uses',
+                    ],
+                  ),
+                },
+              ),
+              ChoiceOption(
+                id: 'stars',
+                label: 'Circle of the Stars',
+                description:
+                    'Star Map + Starry Form: harness secrets hidden in constellations (Level 3).',
+                levelFeatures: {
+                  3: LevelFeature(
+                    level: 3,
+                    fixedTraits: [
+                      'Star Map: Tiny Spellcasting Focus; while holding it you have Guidance and Guiding Bolt prepared and can cast Guiding Bolt without a slot (Wisdom modifier times, min 1, per Long Rest)',
+                      'Starry Form: Bonus Action, expend a Wild Shape use for a 10-minute luminous form with a constellation: Archer (Bonus Action ranged spell attack, 1d8 + Wis Radiant), Chalice (when a slot spell heals, you or a creature within 30 ft regains 1d8 + Wis HP), Dragon (treat d20 rolls of 9 or lower as 10 on Int/Wis checks and Concentration Con saves)',
+                    ],
+                  ),
+                  6: LevelFeature(
+                    level: 6,
+                    fixedTraits: [
+                      'Cosmic Omen: on a Long Rest roll a die — Weal (even): Reaction to add 1d6 to a D20 Test within 30 ft; Woe (odd): Reaction to subtract 1d6. Uses = Wisdom modifier (min 1) per Long Rest',
+                    ],
+                  ),
+                  10: LevelFeature(
+                    level: 10,
+                    fixedTraits: [
+                      'Twinkling Constellations: Archer and Chalice dice become 2d8; Dragon grants a Fly Speed of 20 ft (hover); change constellation at the start of each of your turns',
+                    ],
+                  ),
+                  14: LevelFeature(
+                    level: 14,
+                    fixedTraits: [
+                      'Full of Stars: in Starry Form you have Resistance to Bludgeoning, Piercing, and Slashing damage',
+                    ],
+                  ),
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+      LevelFeature(
+        level: 4,
+        fixedTraits: [
+          'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
+          'Cantrips: learn one more Druid cantrip (3 total)',
+        ],
+        grantsAbilityScoreImprovement: true,
+      ),
+      LevelFeature(
+        level: 5,
+        fixedTraits: [
+          'Wild Resurgence: once per turn, if you have no Wild Shape uses, expend a spell slot to regain one; once per Long Rest, expend a Wild Shape use to regain a level 1 spell slot',
+        ],
+      ),
+      LevelFeature(level: 6),
+      LevelFeature(
+        level: 7,
+        choices: [
+          Choice(
+            id: 'druid_elemental_fury',
+            title: 'Elemental Fury: choose your option',
+            options: [
+              ChoiceOption(
+                id: 'potent_spellcasting',
+                label: 'Potent Spellcasting',
+                description:
+                    'Add your Wisdom modifier to the damage you deal with any Druid cantrip.',
+                levelFeatures: {
+                  15: LevelFeature(
+                    level: 15,
+                    fixedTraits: [
+                      'Improved Elemental Fury (Potent Spellcasting): Druid cantrips with a range of 10 ft or greater gain +300 ft of range',
+                    ],
+                  ),
+                },
+              ),
+              ChoiceOption(
+                id: 'primal_strike',
+                label: 'Primal Strike',
+                description:
+                    'Once per turn on a weapon or Beast-form attack hit, deal an extra 1d8 Cold, Fire, Lightning, or Thunder damage.',
+                levelFeatures: {
+                  15: LevelFeature(
+                    level: 15,
+                    fixedTraits: [
+                      'Improved Elemental Fury (Primal Strike): the extra damage increases to 2d8',
+                    ],
+                  ),
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+      LevelFeature(
+        level: 8,
+        fixedTraits: [
+          'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
+        ],
+        grantsAbilityScoreImprovement: true,
+      ),
+      LevelFeature(level: 9),
+      LevelFeature(
+        level: 10,
+        fixedTraits: ['Cantrips: learn one more Druid cantrip (4 total)'],
+      ),
+      LevelFeature(level: 11),
+      LevelFeature(
+        level: 12,
+        fixedTraits: [
+          'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
+        ],
+        grantsAbilityScoreImprovement: true,
+      ),
+      LevelFeature(level: 13),
+      LevelFeature(level: 14),
+      LevelFeature(level: 15),
+      LevelFeature(
+        level: 16,
+        fixedTraits: [
+          'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
+        ],
+        grantsAbilityScoreImprovement: true,
+      ),
+      LevelFeature(level: 17),
+      LevelFeature(
+        level: 18,
+        fixedTraits: [
+          'Beast Spells: you can cast spells in Wild Shape, except spells with a costed or consumed Material component',
+        ],
+      ),
+      LevelFeature(
+        level: 19,
+        fixedTraits: [
+          'Epic Boon: gain an Epic Boon feat of your choice (Boon of Dimensional Travel recommended)',
+        ],
+        grantsAbilityScoreImprovement: true,
+      ),
+      LevelFeature(
+        level: 20,
+        fixedTraits: [
+          'Archdruid — Evergreen Wild Shape: when you roll Initiative with no Wild Shape uses left, regain one',
+          'Archdruid — Nature Magician: once per Long Rest, convert unexpended Wild Shape uses into one spell slot (2 spell levels per use)',
+          'Archdruid — Longevity: your body ages only one year every ten years',
         ],
       ),
     ],

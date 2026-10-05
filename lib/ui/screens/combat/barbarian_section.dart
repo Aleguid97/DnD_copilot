@@ -74,6 +74,7 @@ extension _BarbarianSection on _CombatScreenState {
                                         _isRaging = true;
                                         _fanaticalFocusUsedThisRage = false;
                                         if (subclass == 'world_tree') {
+                                          _tempHpSource = 'Vitality Surge';
                                           _tempHp =
                                               _tempHp > widget.character.level
                                               ? _tempHp

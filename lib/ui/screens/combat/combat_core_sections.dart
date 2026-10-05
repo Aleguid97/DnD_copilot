@@ -50,6 +50,13 @@ extension _CoreSections on _CombatScreenState {
                   advantageNote +=
                       ' — Persistent Rage: Rage uses restored to $maxUses';
                 }
+                if (widget.character.characterClass.id == 'druid' &&
+                    widget.character.level >= 20 &&
+                    characterId != null) {
+                  _evergreenWildShape(characterId, d.resourceUsesAsync);
+                  advantageNote +=
+                      ' — Evergreen Wild Shape: regain a use if you had none';
+                }
                 _update(() {
                   _lastRollResult =
                       'Initiative: ${result.rolls.first} ${total >= 0 ? "+$total" : total} = ${result.total}$advantageNote';
@@ -184,7 +191,7 @@ extension _CoreSections on _CombatScreenState {
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
-                            '+ $_tempHp Temporary HP (Vitality Surge)',
+                            '+ $_tempHp Temporary HP${_tempHpSource.isEmpty ? '' : ' ($_tempHpSource)'}',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
                                   color: Theme.of(context).colorScheme.primary,
@@ -366,7 +373,16 @@ extension _CoreSections on _CombatScreenState {
         final abilityName = _abilityFullName(a);
         final isProficient = widget.character.characterClass.savingThrows
             .contains(abilityName);
-        final bonus = saves[a]!;
+        // Improved Circle Forms (Moon 6): + Wisdom modifier to Con saves in
+        // Wild Shape.
+        final moonConBonus =
+            a == Ability.constitution &&
+                _wildShapeActive &&
+                druidSubclass(widget.character) == 'moon' &&
+                widget.character.level >= 6
+            ? druidWisdomModifier(widget.character)
+            : 0;
+        final bonus = saves[a]! + moonConBonus;
         final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
         return Card(
           child: ListTile(
@@ -427,7 +443,15 @@ extension _CoreSections on _CombatScreenState {
                 bonuses: widget.character.totalAbilityBonuses,
               );
               final isProficient = proficient.contains(skill);
-              final bonus = abilityMod + (isProficient ? profBonus : 0);
+              // Primal Order — Magician: + Wisdom modifier (min 1) to
+              // Intelligence (Arcana or Nature).
+              final magicianBonus =
+                  druidIsMagician(widget.character) &&
+                      (skill == 'Arcana' || skill == 'Nature')
+                  ? magicianLoreBonus(widget.character)
+                  : 0;
+              final bonus =
+                  abilityMod + (isProficient ? profBonus : 0) + magicianBonus;
               final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
               return Card(
                 child: ListTile(

@@ -77,7 +77,9 @@ extension _ClassResourcesSection on _CombatScreenState {
                         r.id != 'war_priest' &&
                         r.id != 'rage' &&
                         r.id != 'warrior_of_the_gods_pool' &&
-                        r.id != 'zealous_presence',
+                        r.id != 'zealous_presence' &&
+                        !isSpellSlotResource(r.id) &&
+                        !druidSectionResourceIds.contains(r.id),
                   )
                   .map((resource) {
                     final maxUses = resource.maxUses(widget.character.level);
