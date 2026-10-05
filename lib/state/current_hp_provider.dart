@@ -1,5 +1,4 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../data/database.dart';
 import 'database_provider.dart';
 
 part 'current_hp_provider.g.dart';
