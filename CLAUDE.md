@@ -100,6 +100,10 @@ bersaglio, colpito/mancato vs CA, critici, 8 proprietà Weapon Mastery, party pe
 
 ## Backlog (priorità)
 
+Il piano dettagliato con lo stato di ogni voce è in `ROADMAP.md`: aggiornarlo a
+ogni commit che chiude o avanza una voce.
+
+
 1. ~~Refactor `combat_screen.dart`~~ (fatto: sezioni in `combat/`).
 2. Estendere le 8 classi rimanenti al livello 20 (fatto: Druido).
 3. Specializzare strumenti/set generici nei background (Artisan, Entertainer, Guard, Noble, Soldier).
