@@ -52,9 +52,14 @@ class SpellEffect {
   /// (Moonbeam, Flaming Sphere, Call Lightning...).
   final bool repeatable;
 
-  /// Second damage type rolled together with the first (Ice Storm).
+  /// Second damage type rolled together with the first (Ice Storm,
+  /// Flame Strike), with its own per-slot increase.
   final String? extraDice;
   final String? extraDamageType;
+  final String? extraUpcastDice;
+
+  /// Dice used instead when the target is missing Hit Points (Toll the Dead).
+  final String? woundedDice;
 
   /// Melee spell attack (otherwise ranged).
   final bool melee;
@@ -82,12 +87,24 @@ class SpellEffect {
     this.repeatable = false,
     this.extraDice,
     this.extraDamageType,
+    this.extraUpcastDice,
+    this.woundedDice,
     this.melee = false,
     this.secondary,
     this.note = '',
   });
 
-  bool get dealsDamage => kind != SpellEffectKind.heal && dice != null;
+  bool get dealsDamage =>
+      kind != SpellEffectKind.heal && (dice != null || flat > 0);
+
+  /// Copy used to scale an alternative set of dice with the same rules.
+  SpellEffect withDice(String? newDice, {String? newUpcast}) => SpellEffect(
+    kind: kind,
+    dice: newDice,
+    upcastDice: newUpcast ?? upcastDice,
+    upcastAbove: upcastAbove,
+    cantripScaling: cantripScaling,
+  );
 }
 
 /// Cantrip damage dice gain one die at levels 5, 11 and 17.

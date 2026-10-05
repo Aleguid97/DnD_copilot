@@ -92,3 +92,40 @@ Future<void> disposeCombatScreen(WidgetTester tester, AppDatabase db) async {
   );
   await tester.pump(const Duration(seconds: 1));
 }
+
+Finder textContaining(String part) =>
+    find.byWidgetPredicate((w) => w is Text && (w.data ?? '').contains(part));
+
+/// The "Cast" button of a prepared spell row.
+Finder castButton(String spell) => find.descendant(
+  of: find.widgetWithText(ListTile, spell),
+  matching: find.widgetWithText(OutlinedButton, 'Cast'),
+);
+
+/// Runs a database call inside the widget test's clock (drift streams are
+/// bound to it), letting it complete while frames are pumped.
+Future<T> runDb<T>(WidgetTester tester, Future<T> Function() call) async {
+  final future = call();
+  await settleDatabase(tester);
+  return future;
+}
+
+/// Adds a 100 HP, AC 1 "Goblin" enemy and selects it as the target.
+Future<void> addAndTargetGoblin(
+  WidgetTester tester,
+  AppDatabase db, {
+  int currentHp = 100,
+}) async {
+  final id = await runDb(
+    tester,
+    () => db.addEnemy(1, 'Goblin', 100, armorClass: 1),
+  );
+  if (currentHp != 100) {
+    await runDb(tester, () => db.updateEnemyHp(id, currentHp));
+  }
+  await tapAndSettle(tester, find.byType(DropdownButton<int?>));
+  await tapAndSettle(tester, find.textContaining('Goblin (AC 1').last);
+}
+
+Future<CombatEnemy> reloadGoblin(WidgetTester tester, AppDatabase db) =>
+    runDb(tester, () => db.select(db.combatEnemies).getSingle());

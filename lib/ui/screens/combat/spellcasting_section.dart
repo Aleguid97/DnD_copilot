@@ -3,8 +3,9 @@ part of '../combat_screen.dart';
 /// Per-class spellcasting rules the section needs. Add a class here once its
 /// spell list is in spells_data.dart.
 class _CasterRules {
-  final int cantrips;
-  final int prepared;
+  /// Null while the class table hasn't been verified for this level.
+  final int? cantrips;
+  final int? prepared;
   final List<String> alwaysPreparedNames;
   final int saveDc;
   final int attackBonus;
@@ -32,6 +33,23 @@ extension _SpellcastingSection on _CombatScreenState {
           saveDc: druidSpellSaveDc(c, profBonus),
           attackBonus: druidSpellAttackBonus(c, profBonus),
           abilityMod: druidWisdomModifier(c),
+        );
+      case 'cleric':
+        // Level 1 counts come from the verified level 1 Cleric choices
+        // (3 cantrips, +1 for Thaumaturge; 4 prepared spells). The Cleric
+        // Features table for later levels and the domain spell lists still
+        // need the Cleric chapter of the PHB.
+        final wis = wisdomModifier(c);
+        final thaumaturge =
+            c.classSelections['cleric_divine_order']?.contains('thaumaturge') ==
+            true;
+        return _CasterRules(
+          cantrips: c.level == 1 ? 3 + (thaumaturge ? 1 : 0) : null,
+          prepared: c.level == 1 ? 4 : null,
+          alwaysPreparedNames: const [],
+          saveDc: 8 + profBonus + wis,
+          attackBonus: profBonus + wis,
+          abilityMod: wis,
         );
     }
     return null;
@@ -156,7 +174,7 @@ extension _SpellcastingSection on _CombatScreenState {
     ];
     return _featureCard(
       context,
-      'Cantrips (${known.length}/${rules.cantrips}${granted.isEmpty ? '' : ' + ${granted.length} always prepared'})',
+      'Cantrips (${known.length}/${rules.cantrips ?? "?"}${granted.isEmpty ? '' : ' + ${granted.length} always prepared'})',
       known.isEmpty && granted.isEmpty
           ? 'No cantrips chosen yet.'
           : 'Tap to cast (no slot).',
@@ -179,7 +197,7 @@ extension _SpellcastingSection on _CombatScreenState {
             characterId,
             title: 'Known cantrips',
             selectionKey: _cantripsKey,
-            limit: rules.cantrips,
+            limit: rules.cantrips ?? 99,
             candidates: [
               for (final id
                   in classSpellLists[widget.character.characterClass.id]!)
@@ -226,7 +244,7 @@ extension _SpellcastingSection on _CombatScreenState {
               children: [
                 Expanded(
                   child: Text(
-                    'Prepared Spells (${prepared.where((id) => !alwaysIds.contains(id)).length}/${rules.prepared} + always prepared)',
+                    'Prepared Spells (${prepared.where((id) => !alwaysIds.contains(id)).length}/${rules.prepared ?? "?"} + always prepared)',
                     style: theme.textTheme.titleSmall,
                   ),
                 ),
@@ -238,7 +256,7 @@ extension _SpellcastingSection on _CombatScreenState {
                     characterId,
                     title: 'Prepared spells',
                     selectionKey: _preparedKey,
-                    limit: rules.prepared,
+                    limit: rules.prepared ?? 99,
                     candidates: [
                       for (final id
                           in classSpellLists[widget

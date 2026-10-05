@@ -29,6 +29,7 @@ final Map<String, List<ClassResource>> classResources = {
     ),
   ],
   'cleric': [
+    ...fullCasterSlotResources,
     ClassResource(
       id: 'channel_divinity',
       name: 'Channel Divinity',

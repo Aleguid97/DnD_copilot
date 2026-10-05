@@ -23,7 +23,8 @@ List<String> _expectedSections(Character c) {
     if (c.characterClass.id == 'barbarian') 'Barbarian Features',
     if (c.characterClass.id == 'cleric') 'Cleric Features',
     if (c.characterClass.id == 'druid') 'Druid Features',
-    if (c.characterClass.id == 'druid') 'Spellcasting',
+    if (c.characterClass.id == 'druid' || c.characterClass.id == 'cleric')
+      'Spellcasting',
     if (hasResources) 'Class Resources',
   ];
 }

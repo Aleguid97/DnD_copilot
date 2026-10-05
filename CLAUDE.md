@@ -82,7 +82,12 @@ Regole:
 
 - **Guerriero**: 1–20, tutte le sottoclassi (meccaniche solo Champion/Battle Master;
   Eldritch Knight/Psi Warrior parzialmente testuali), 6 Fighting Style, Weapon Mastery, Studied Attacks.
-- **Chierico**: 1–20, Life/Light/Trickery/War con meccaniche in Combat.
+- **Chierico**: 1–20, Life/Light/Trickery/War con meccaniche in Combat. Incantesimi in
+  Combat: lista (116, dalle intestazioni del cap. 7) ed effetti; Disciple of Life,
+  Blessed Healer, Supreme Healing e Potent Spellcasting applicati alle cure/trucchetti.
+  **Da verificare col cap. 3 (Chierico)**: trucchetti/preparati per livello oltre il 1°
+  (ora mostrati come "?"), incantesimi di dominio sempre preparati, tabella slot
+  (ora quella da full caster del Druido).
 - **Barbaro**: 1–20, Berserker/Wild Heart/World Tree/Zealot con meccaniche in Combat.
 - **Druido**: 1–20, Land/Moon/Sea/Stars con meccaniche in Combat; slot incantesimo
   tracciati; Wild Shape a contatore (forme solo come nomi: le statistiche delle

@@ -98,11 +98,19 @@ extension _SpellEffectsEngine on _CombatScreenState {
       characterLevel: level,
     );
     // Potent Spellcasting (Druid Elemental Fury): + Wisdom to cantrip damage.
+    // Potent Spellcasting (Druid Elemental Fury, Cleric Blessed Strikes):
+    // + Wisdom to the damage of the class's cantrips.
+    final c = widget.character;
     final potent =
         spell.isCantrip &&
         effect.dealsDamage &&
-        widget.character.characterClass.id == 'druid' &&
-        druidElementalFury(widget.character) == 'potent_spellcasting';
+        ((c.characterClass.id == 'druid' &&
+                druidElementalFury(c) == 'potent_spellcasting') ||
+            (c.characterClass.id == 'cleric' &&
+                c.classSelections['cleric_blessed_strikes']?.contains(
+                      'potent_spellcasting',
+                    ) ==
+                    true));
     final damageMod = (effect.addModifier || potent) ? rules.abilityMod : 0;
     final type = effect.damageType ?? '';
     final note = effect.note.isEmpty ? '' : ' (${effect.note})';
@@ -114,17 +122,43 @@ extension _SpellEffectsEngine on _CombatScreenState {
           spellLevel: spell.level,
           slotLevel: slotLevel,
         );
-        final roll = dice == null
-            ? null
-            : rollDamage(
-                dice,
-                (effect.addModifier ? rules.abilityMod : 0) + flat,
-              );
-        final total = roll?.total ?? flat;
+        // Life Domain: Disciple of Life (+2 + slot level with a slot) and
+        // Supreme Healing (level 17: healing dice roll their maximum).
+        final life =
+            c.characterClass.id == 'cleric' &&
+            c.classSelections['cleric_subclass']?.contains('life') == true;
+        final disciple = life && slotLevel > 0
+            ? discipleOfLifeBonus(spellSlotLevel: slotLevel)
+            : 0;
+        final supreme = life && c.level >= 17;
+        final bonus =
+            (effect.addModifier ? rules.abilityMod : 0) + flat + disciple;
+        final roll = dice == null ? null : rollDamage(dice, bonus);
+        final total = roll == null
+            ? flat + disciple
+            : (supreme ? maxHealingRoll(dice!) + bonus : roll.total);
         if (!context.mounted) return;
-        final targetNote = await _healChosenTarget(context, characterId, total);
+        final (targetNote, healedOther) = await _healChosenTarget(
+          context,
+          characterId,
+          total,
+        );
+        // Blessed Healer (Life 6): healing another creature with a slot also
+        // heals you for 2 + the slot's level.
+        var selfNote = '';
+        if (life && c.level >= 6 && slotLevel > 0 && healedOther) {
+          selfNote =
+              ' (Blessed Healer${await _healSelf(characterId, blessedHealerSelfHeal(spellSlotLevel: slotLevel))})';
+        }
+        final rollText = roll == null
+            ? ''
+            : supreme
+            ? 'MAX ${maxHealingRoll(dice!)} +$bonus = '
+            : '${roll.rolls.join('+')}${roll.modifier != 0 ? " +${roll.modifier}" : ""} = ';
         _showRoll(
-          '$prefix${spell.name}: ${roll != null ? "${roll.rolls.join('+')}${roll.modifier != 0 ? " +${roll.modifier}" : ""} = " : ""}$total HP$targetNote$note',
+          '$prefix${spell.name}: $rollText$total HP'
+          '${disciple > 0 ? " (incl. Disciple of Life +$disciple)" : ""}'
+          '$targetNote$selfNote$note',
         );
         return;
 
@@ -214,10 +248,45 @@ extension _SpellEffectsEngine on _CombatScreenState {
           );
           if (outcomes == null) return;
         }
-        final dmg = dice != null ? rollDamage(dice, damageMod) : null;
-        final extra = effect.extraDice != null
-            ? rollDamage(effect.extraDice!, 0)
+        // Toll the Dead: bigger dice if a target is missing Hit Points.
+        final wounded =
+            effect.woundedDice != null &&
+            enemies.any(
+              (e) => outcomes!.containsKey(e.id) && e.currentHp < e.maxHp,
+            );
+        final mainDice = wounded
+            ? scaledDice(
+                effect.withDice(effect.woundedDice),
+                spellLevel: spell.level,
+                slotLevel: slotLevel,
+                characterLevel: level,
+              )
+            : dice;
+        final rolled = mainDice != null
+            ? rollDamage(mainDice, damageMod + effect.flat)
             : null;
+        final dmg =
+            rolled ??
+            (effect.flat > 0
+                ? DiceRollResult(
+                    rolls: const [],
+                    modifier: effect.flat,
+                    total: effect.flat,
+                    formula: '${effect.flat}',
+                  )
+                : null);
+        final extraDice = effect.extraDice == null
+            ? null
+            : scaledDice(
+                effect.withDice(
+                  effect.extraDice,
+                  newUpcast: effect.extraUpcastDice,
+                ),
+                spellLevel: spell.level,
+                slotLevel: slotLevel,
+                characterLevel: level,
+              );
+        final extra = extraDice != null ? rollDamage(extraDice, 0) : null;
         final parts = <String>[];
         for (final e in enemies) {
           final failed = outcomes[e.id];
@@ -255,7 +324,8 @@ extension _SpellEffectsEngine on _CombatScreenState {
   }
 
   /// Asks who receives healing (you or a party member) and applies it.
-  Future<String> _healChosenTarget(
+  /// Returns the result note and whether someone other than you was healed.
+  Future<(String, bool)> _healChosenTarget(
     BuildContext context,
     int characterId,
     int amount,
@@ -281,14 +351,14 @@ extension _SpellEffectsEngine on _CombatScreenState {
           ],
         ),
       );
-      if (choice == null) return ' (not applied)';
+      if (choice == null) return (' (not applied)', false);
       memberId = choice == -1 ? null : choice;
     }
-    if (memberId == null) return _healSelf(characterId, amount);
+    if (memberId == null) return (await _healSelf(characterId, amount), false);
     final m = members.firstWhere((x) => x.id == memberId);
     final newHp = (m.currentHp + amount).clamp(0, m.maxHp);
     await ref.read(appDatabaseProvider).updatePartyMemberHp(m.id, newHp);
-    return ' → ${m.name}: $newHp/${m.maxHp} HP';
+    return (' → ${m.name}: $newHp/${m.maxHp} HP', true);
   }
 }
 

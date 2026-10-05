@@ -9,6 +9,7 @@ const _con = 'Constitution';
 const _str = 'Strength';
 const _wis = 'Wisdom';
 const _int = 'Intelligence';
+const _cha = 'Charisma';
 
 SpellEffect _attack(
   String dice,
@@ -48,9 +49,15 @@ SpellEffect _save(
   bool repeat = false,
   String? extraDice,
   String? extraType,
+  String? extraUpcast,
+  String? wounded,
+  int flat = 0,
   String note = '',
 }) => SpellEffect(
   kind: SpellEffectKind.save,
+  extraUpcastDice: extraUpcast,
+  woundedDice: wounded,
+  flat: flat,
   saveAbility: ability,
   dice: dice,
   damageType: type,
@@ -432,4 +439,144 @@ final Map<String, SpellEffect> spellEffects = {
   'sunburst': _save(_con, dice: '12d6', type: 'Radiant', condition: 'Blinded'),
   'tsunami': _save(_str, dice: '6d10', type: 'Bludgeoning'),
   'wall_of_thorns': _save(_dex, dice: '7d8', type: 'Piercing', upcast: '1d8'),
+
+  // ------------------------------------------------------- Cleric spells
+  'sacred_flame': _save(
+    _dex,
+    dice: '1d8',
+    type: 'Radiant',
+    half: false,
+    cantrip: true,
+    multi: false,
+    note: 'The target gains no benefit from Half or Three-Quarters Cover.',
+  ),
+  'toll_the_dead': _save(
+    _wis,
+    dice: '1d8',
+    wounded: '1d12',
+    type: 'Necrotic',
+    half: false,
+    cantrip: true,
+    multi: false,
+    note: 'd12s instead if the target is missing any Hit Points.',
+  ),
+  'word_of_radiance': _save(
+    _con,
+    dice: '1d6',
+    type: 'Radiant',
+    half: false,
+    cantrip: true,
+  ),
+  'bane': _save(
+    _cha,
+    condition: 'Baned',
+    note:
+        'Failed targets subtract 1d4 from attack rolls and saves. +1 target per slot above 1.',
+  ),
+  'blindness_deafness': _save(
+    _con,
+    condition: 'Blinded',
+    multi: false,
+    note:
+        'Or Deafened (your choice); repeats the save at the end of each of its turns.',
+  ),
+  'bestow_curse': _save(_wis, condition: 'Cursed', multi: false),
+  'banishment': _save(
+    _cha,
+    condition: 'Banished',
+    note: 'Incapacitated in a demiplane. +1 target per slot above 4.',
+  ),
+  'blade_barrier': _save(
+    _dex,
+    dice: '6d10',
+    type: 'Force',
+    repeat: true,
+    note: 'Also when a creature enters the wall or ends its turn there.',
+  ),
+  'calm_emotions': _save('Charisma', condition: 'Calmed'),
+  'command': _save(
+    _wis,
+    condition: 'Commanded',
+    note: 'Approach, Drop, Flee, Grovel (Prone) or Halt on its next turn.',
+  ),
+  'conjure_celestial': _save(
+    _dex,
+    dice: '6d12',
+    type: 'Radiant',
+    upcast: '1d12',
+    repeat: true,
+    note:
+        'Searing Light. Healing Light instead: 4d12 + mod (+1d12 per slot above 7).',
+  ),
+  'flame_strike': _save(
+    _dex,
+    dice: '5d6',
+    type: 'Fire',
+    upcast: '1d6',
+    extraDice: '5d6',
+    extraType: 'Radiant',
+    extraUpcast: '1d6',
+  ),
+  'guardian_of_faith': _save(
+    _dex,
+    flat: 20,
+    type: 'Radiant',
+    note:
+        'Enemies moving within 10 ft of the guardian; it vanishes after dealing 60 damage.',
+  ),
+  'harm': _save(
+    _con,
+    dice: '14d6',
+    type: 'Necrotic',
+    multi: false,
+    note: 'Failed save also lowers its Hit Point maximum by the damage taken.',
+  ),
+  'inflict_wounds': _save(
+    _con,
+    dice: '2d10',
+    type: 'Necrotic',
+    upcast: '1d10',
+    multi: false,
+  ),
+  'spirit_guardians': _save(
+    _wis,
+    dice: '3d8',
+    type: 'Radiant',
+    upcast: '1d8',
+    repeat: true,
+    note:
+        'Necrotic if you are evil. Enemies\' Speed is halved in the Emanation.',
+  ),
+  'spiritual_weapon': _attack(
+    '1d8',
+    'Force',
+    melee: true,
+    mod: true,
+    upcast: '1d8',
+    repeat: true,
+    note: 'Bonus Action on later turns: move it 20 ft and attack again.',
+  ),
+  'mass_healing_word': _heal(
+    '2d4',
+    mod: true,
+    upcast: '1d4',
+    note: 'Up to six creatures each regain this amount.',
+  ),
+  'prayer_of_healing': _heal(
+    '2d8',
+    upcast: '1d8',
+    note: 'Up to five creatures also gain the benefits of a Short Rest.',
+  ),
+  'mass_heal': _heal(
+    null,
+    flat: 700,
+    note:
+        'Divided among any number of creatures; also ends Blinded, Deafened and Poisoned.',
+  ),
+  'power_word_heal': _heal(
+    null,
+    flat: 1000,
+    note:
+        'Regains all its Hit Points and ends Charmed, Frightened, Paralyzed, Poisoned, Stunned.',
+  ),
 };

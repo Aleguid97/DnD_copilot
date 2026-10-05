@@ -21,35 +21,6 @@ String? _dice(String id, int slot, {int characterLevel = 1}) => scaledDice(
   characterLevel: characterLevel,
 );
 
-Finder _textContaining(String part) =>
-    find.byWidgetPredicate((w) => w is Text && (w.data ?? '').contains(part));
-
-Finder _castButton(String spell) => find.descendant(
-  of: find.widgetWithText(ListTile, spell),
-  matching: find.widgetWithText(OutlinedButton, 'Cast'),
-);
-
-/// Runs a database call inside the widget test's clock (drift streams are
-/// bound to it), letting it complete while frames are pumped.
-Future<T> _db<T>(WidgetTester tester, Future<T> Function() call) async {
-  final future = call();
-  await settleDatabase(tester);
-  return future;
-}
-
-Future<CombatEnemy> _enemy(WidgetTester tester, AppDatabase db) async {
-  await _db(tester, () => db.addEnemy(1, 'Goblin', 100, armorClass: 1));
-  return _reload(tester, db);
-}
-
-Future<CombatEnemy> _reload(WidgetTester tester, AppDatabase db) =>
-    _db(tester, () => db.select(db.combatEnemies).getSingle());
-
-Future<void> _selectTarget(WidgetTester tester) async {
-  await tapAndSettle(tester, find.byType(DropdownButton<int?>));
-  await tapAndSettle(tester, find.textContaining('Goblin (AC 1').last);
-}
-
 void main() {
   group('data', () {
     test('every spell with an effect is in the catalog', () {
@@ -110,18 +81,17 @@ void main() {
           },
         ),
       );
-      await _enemy(tester, db);
-      await _selectTarget(tester);
+      await addAndTargetGoblin(tester, db);
 
       await tapAndSettle(
         tester,
         find.widgetWithText(ActionChip, 'Produce Flame'),
       );
 
-      final goblin = await _reload(tester, db);
+      final goblin = await reloadGoblin(tester, db);
       expect(goblin.currentHp, lessThan(100));
-      expect(_textContaining('ranged spell attack'), findsWidgets);
-      expect(_textContaining('Fire'), findsWidgets);
+      expect(textContaining('ranged spell attack'), findsWidgets);
+      expect(textContaining('Fire'), findsWidgets);
       await disposeCombatScreen(tester, db);
     });
 
@@ -138,16 +108,15 @@ void main() {
           },
         ),
       );
-      await _enemy(tester, db);
-      await _selectTarget(tester);
+      await addAndTargetGoblin(tester, db);
 
-      await tapAndSettle(tester, _castButton('Moonbeam'));
+      await tapAndSettle(tester, castButton('Moonbeam'));
       await tapAndSettle(tester, find.text('Level 3 (2/2 left)'));
       // Target preselected as "Failed".
       expect(find.text('Moonbeam: DC 13 Constitution save'), findsOneWidget);
       await tapAndSettle(tester, find.text('Apply').last);
 
-      final afterFirst = (await _reload(tester, db)).currentHp;
+      final afterFirst = (await reloadGoblin(tester, db)).currentHp;
       // 3d10 at slot 3: between 3 and 30 damage.
       expect(100 - afterFirst, inInclusiveRange(3, 30));
       expect(find.text('Concentrating on Moonbeam'), findsOneWidget);
@@ -155,7 +124,7 @@ void main() {
       await tapAndSettle(tester, find.text('Repeat effect'));
       await tapAndSettle(tester, find.text('Saved'));
       await tapAndSettle(tester, find.text('Apply').last);
-      final afterSecond = (await _reload(tester, db)).currentHp;
+      final afterSecond = (await reloadGoblin(tester, db)).currentHp;
       // Half damage on a save.
       expect(afterFirst - afterSecond, inInclusiveRange(1, 15));
       await disposeCombatScreen(tester, db);
@@ -174,19 +143,21 @@ void main() {
           },
         ),
       );
-      await _enemy(tester, db);
-      await _selectTarget(tester);
+      await addAndTargetGoblin(tester, db);
 
-      await tapAndSettle(tester, _castButton('Entangle'));
+      await tapAndSettle(tester, castButton('Entangle'));
       await tapAndSettle(tester, find.text('Level 1 (2/2 left)'));
       await tapAndSettle(tester, find.text('Apply').last);
       expect(
-        jsonDecode((await _reload(tester, db)).conditionsJson),
+        jsonDecode((await reloadGoblin(tester, db)).conditionsJson),
         contains('Restrained (Entangle)'),
       );
 
       await tapAndSettle(tester, find.widgetWithText(OutlinedButton, 'End'));
-      expect(jsonDecode((await _reload(tester, db)).conditionsJson), isEmpty);
+      expect(
+        jsonDecode((await reloadGoblin(tester, db)).conditionsJson),
+        isEmpty,
+      );
       expect(find.text('Concentrating on Entangle'), findsNothing);
       await disposeCombatScreen(tester, db);
     });
@@ -205,9 +176,8 @@ void main() {
           },
         ),
       );
-      await _enemy(tester, db);
-      await _selectTarget(tester);
-      await tapAndSettle(tester, _castButton('Faerie Fire'));
+      await addAndTargetGoblin(tester, db);
+      await tapAndSettle(tester, castButton('Faerie Fire'));
       await tapAndSettle(tester, find.text('Level 1 (2/2 left)'));
       await tapAndSettle(tester, find.text('Apply').last);
 
@@ -215,7 +185,7 @@ void main() {
         tester,
         find.widgetWithText(ActionChip, 'Starry Wisp'),
       );
-      expect(_textContaining('(Advantage '), findsWidgets);
+      expect(textContaining('(Advantage '), findsWidgets);
       await disposeCombatScreen(tester, db);
     });
 
@@ -230,11 +200,11 @@ void main() {
           },
         ),
       );
-      await tapAndSettle(tester, _castButton('Cure Wounds'));
+      await tapAndSettle(tester, castButton('Cure Wounds'));
       await tapAndSettle(tester, find.text('Level 1 (2/2 left)'));
 
-      expect(_textContaining('Cure Wounds: '), findsWidgets);
-      expect(_textContaining('→ you: '), findsWidgets);
+      expect(textContaining('Cure Wounds: '), findsWidgets);
+      expect(textContaining('→ you: '), findsWidgets);
       await disposeCombatScreen(tester, db);
     });
   });
