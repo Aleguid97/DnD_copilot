@@ -271,7 +271,7 @@ extension _BarbarianSection on _CombatScreenState {
                                   final enemies =
                                       ref
                                           .read(
-                                            combatEnemiesProvider(characterId!),
+                                            combatEnemiesProvider(characterId),
                                           )
                                           .value ??
                                       [];
@@ -430,7 +430,7 @@ extension _BarbarianSection on _CombatScreenState {
                                           await ref
                                               .read(appDatabaseProvider)
                                               .useResource(
-                                                characterId!,
+                                                characterId,
                                                 'intimidating_presence',
                                                 1,
                                               );
@@ -438,7 +438,7 @@ extension _BarbarianSection on _CombatScreenState {
                                               ref
                                                   .read(
                                                     combatEnemiesProvider(
-                                                      characterId!,
+                                                      characterId,
                                                     ),
                                                   )
                                                   .value ??
@@ -493,7 +493,7 @@ extension _BarbarianSection on _CombatScreenState {
                                           await ref
                                               .read(appDatabaseProvider)
                                               .useResource(
-                                                characterId!,
+                                                characterId,
                                                 'rage',
                                                 maxUses,
                                               );
@@ -501,7 +501,7 @@ extension _BarbarianSection on _CombatScreenState {
                                               ref
                                                   .read(
                                                     combatEnemiesProvider(
-                                                      characterId!,
+                                                      characterId,
                                                     ),
                                                   )
                                                   .value ??
@@ -591,7 +591,7 @@ extension _BarbarianSection on _CombatScreenState {
                                           ref
                                               .read(
                                                 combatEnemiesProvider(
-                                                  characterId!,
+                                                  characterId,
                                                 ),
                                               )
                                               .value ??
@@ -656,7 +656,7 @@ extension _BarbarianSection on _CombatScreenState {
                                 Builder(
                                   builder: (context) {
                                     final partyAsync = ref.watch(
-                                      partyMembersProvider(characterId!),
+                                      partyMembersProvider(characterId),
                                     );
                                     return partyAsync.when(
                                       loading: () => const SizedBox.shrink(),
@@ -776,7 +776,7 @@ extension _BarbarianSection on _CombatScreenState {
                                                 ref
                                                     .read(
                                                       combatEnemiesProvider(
-                                                        characterId!,
+                                                        characterId,
                                                       ),
                                                     )
                                                     .value ??
@@ -867,7 +867,7 @@ extension _BarbarianSection on _CombatScreenState {
                                                 await ref
                                                     .read(appDatabaseProvider)
                                                     .useResource(
-                                                      characterId!,
+                                                      characterId,
                                                       'warrior_of_the_gods_pool',
                                                       poolSize,
                                                     );
@@ -877,7 +877,7 @@ extension _BarbarianSection on _CombatScreenState {
                                                 final currentStored = await ref
                                                     .read(
                                                       currentHpProvider(
-                                                        characterId!,
+                                                        characterId,
                                                       ).future,
                                                     );
                                                 final currentHp =
@@ -888,7 +888,7 @@ extension _BarbarianSection on _CombatScreenState {
                                                 await ref
                                                     .read(appDatabaseProvider)
                                                     .setCurrentHp(
-                                                      characterId!,
+                                                      characterId,
                                                       newHp,
                                                     );
                                                 _update(() {
@@ -1003,7 +1003,7 @@ extension _BarbarianSection on _CombatScreenState {
                                                   await ref
                                                       .read(appDatabaseProvider)
                                                       .useResource(
-                                                        characterId!,
+                                                        characterId,
                                                         'zealous_presence',
                                                         1,
                                                       );
@@ -1034,7 +1034,7 @@ extension _BarbarianSection on _CombatScreenState {
                                                   await ref
                                                       .read(appDatabaseProvider)
                                                       .useResource(
-                                                        characterId!,
+                                                        characterId,
                                                         'rage',
                                                         maxUses,
                                                       );

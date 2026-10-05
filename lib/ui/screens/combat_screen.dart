@@ -22,7 +22,6 @@ import '../../state/enemies_provider.dart';
 import '../../state/party_provider.dart';
 import '../../data/weapon_mastery_data.dart';
 import '../../data/racial_cantrip_swap_data.dart';
-import '../../state/racial_cantrip_provider.dart';
 import 'enemies_screen.dart';
 import 'party_screen.dart';
 import '../../data/skills_data.dart';
