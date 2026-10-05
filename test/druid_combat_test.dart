@@ -247,10 +247,7 @@ void main() {
     await tapAndSettle(tester, find.text('Level 2 (3/3 left)'));
     expect(find.text('L2  2/3'), findsOneWidget);
     expect(find.text('L1  4/4'), findsOneWidget);
-    expect(
-      _textContaining('Cure Wounds using a level 2 slot (upcast)'),
-      findsOneWidget,
-    );
+    expect(_textContaining('L2 (upcast) Cure Wounds: '), findsOneWidget);
 
     // Moonbeam (level 2, Concentration): level 1 slots are not offered.
     await tapAndSettle(tester, castButton('Moonbeam'));

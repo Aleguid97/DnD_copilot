@@ -8,6 +8,7 @@ class _CasterRules {
   final List<String> alwaysPreparedNames;
   final int saveDc;
   final int attackBonus;
+  final int abilityMod;
 
   const _CasterRules({
     required this.cantrips,
@@ -15,6 +16,7 @@ class _CasterRules {
     required this.alwaysPreparedNames,
     required this.saveDc,
     required this.attackBonus,
+    required this.abilityMod,
   });
 }
 
@@ -29,6 +31,7 @@ extension _SpellcastingSection on _CombatScreenState {
           alwaysPreparedNames: druidAlwaysPreparedNames(c),
           saveDc: druidSpellSaveDc(c, profBonus),
           attackBonus: druidSpellAttackBonus(c, profBonus),
+          abilityMod: druidWisdomModifier(c),
         );
     }
     return null;
@@ -100,13 +103,32 @@ extension _SpellcastingSection on _CombatScreenState {
                   subtitle: const Text(
                     'Casting another Concentration spell ends it.',
                   ),
-                  trailing: OutlinedButton(
-                    onPressed: () => _update(() {
-                      _lastRollResult =
-                          'Concentration on $_concentrationSpell ended.';
-                      _concentrationSpell = null;
-                    }),
-                    child: const Text('End'),
+                  trailing: Wrap(
+                    spacing: 8,
+                    children: [
+                      if (spellEffects[_concentrationSpellId]?.repeatable ??
+                          false)
+                        ElevatedButton(
+                          onPressed: () => _resolveSpellEffect(
+                            context,
+                            characterId,
+                            allSpells[_concentrationSpellId]!,
+                            spellEffects[_concentrationSpellId]!,
+                            _concentrationSlotLevel ?? 0,
+                            rules,
+                            prefix: 'Again — ',
+                          ),
+                          child: const Text('Repeat effect'),
+                        ),
+                      OutlinedButton(
+                        onPressed: () => _endConcentration(
+                          characterId,
+                          reason:
+                              'Concentration on $_concentrationSpell ended.',
+                        ),
+                        child: const Text('End'),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -125,18 +147,28 @@ extension _SpellcastingSection on _CombatScreenState {
     _CasterRules rules,
   ) {
     final known = _knownCantrips;
+    // Cantrips granted by features (e.g. Circle spells) don't count.
+    final granted = [
+      for (final n in rules.alwaysPreparedNames)
+        if ((spellByName(n)?.isCantrip ?? false) &&
+            !known.contains(spellByName(n)!.id))
+          spellByName(n)!.id,
+    ];
     return _featureCard(
       context,
-      'Cantrips (${known.length}/${rules.cantrips})',
-      known.isEmpty ? 'No cantrips chosen yet.' : 'Tap to cast (no slot).',
+      'Cantrips (${known.length}/${rules.cantrips}${granted.isEmpty ? '' : ' + ${granted.length} always prepared'})',
+      known.isEmpty && granted.isEmpty
+          ? 'No cantrips chosen yet.'
+          : 'Tap to cast (no slot).',
       [
-        for (final id in known)
+        for (final id in [...known, ...granted])
           ActionChip(
             label: Text(allSpells[id]?.name ?? id),
             onPressed:
                 _castBlockedReason(allSpells[id], allSpells[id]?.name ?? id) ==
                     null
-                ? () => _castSpell(context, characterId, const [], id: id)
+                ? () =>
+                      _castSpell(context, characterId, const [], rules, id: id)
                 : null,
           ),
         TextButton.icon(
@@ -183,11 +215,6 @@ extension _SpellcastingSection on _CombatScreenState {
         if (!alwaysIds.contains(id))
           (allSpells[id]?.name ?? id, allSpells[id], false),
     ]..sort((a, b) => (a.$2?.level ?? 0).compareTo(b.$2?.level ?? 0));
-
-    final alwaysCantrips = [
-      for (final n in always)
-        if (spellByName(n)?.isCantrip ?? false) n,
-    ];
 
     return Card(
       child: Padding(
@@ -236,11 +263,6 @@ extension _SpellcastingSection on _CombatScreenState {
               'Casting expends a slot of the spell\'s level or higher (choose a higher slot to upcast).',
               style: theme.textTheme.bodySmall,
             ),
-            if (alwaysCantrips.isNotEmpty)
-              Text(
-                'Always-prepared cantrips: ${alwaysCantrips.join(', ')}',
-                style: theme.textTheme.bodySmall,
-              ),
             for (final (name, spell, isAlways) in entries)
               ListTile(
                 dense: true,
@@ -254,6 +276,8 @@ extension _SpellcastingSection on _CombatScreenState {
                     if (spell != null) spell.school,
                     if (spell != null && spell.tags.isNotEmpty) spell.tags,
                     if (isAlways) 'always prepared',
+                    if (spell != null && _effectSummary(spell) != null)
+                      _effectSummary(spell)!,
                   ].join(' · '),
                 ),
                 trailing: Builder(
@@ -265,6 +289,7 @@ extension _SpellcastingSection on _CombatScreenState {
                               context,
                               characterId,
                               rows,
+                              rules,
                               id: spell?.id,
                               name: name,
                             )
@@ -281,26 +306,31 @@ extension _SpellcastingSection on _CombatScreenState {
   }
 
   /// Casts a spell: cantrips are free; leveled spells expend a slot of the
-  /// spell's level or higher. Concentration replaces the current one.
+  /// spell's level or higher. Concentration replaces the current one. Spells
+  /// with combat data (spell_effects_data.dart) then roll and apply their
+  /// effect to the targets.
   Future<void> _castSpell(
     BuildContext context,
     int characterId,
-    List<CharacterResourceUse> rows, {
+    List<CharacterResourceUse> rows,
+    _CasterRules rules, {
     String? id,
     String? name,
   }) async {
     final spell = id != null ? allSpells[id] : null;
     final spellName = spell?.name ?? name ?? id ?? '?';
+    var slot = 0;
     var slotNote = '';
     if (spell == null || !spell.isCantrip) {
       final minLevel = spell?.level ?? 1;
-      final slot = await _pickSlotLevel(
+      final picked = await _pickSlotLevel(
         context,
         rows,
         minLevel: minLevel,
         title: 'Cast $spellName with which slot?',
       );
-      if (slot == null) return;
+      if (picked == null) return;
+      slot = picked;
       await _spendSlot(characterId, slot);
       slotNote = spell != null && slot > spell.level
           ? ' using a level $slot slot (upcast)'
@@ -308,15 +338,73 @@ extension _SpellcastingSection on _CombatScreenState {
     }
     var concentrationNote = '';
     if (spell?.concentration ?? false) {
-      if (_concentrationSpell != null && _concentrationSpell != spellName) {
+      if (_concentrationSpell != null) {
         concentrationNote = ' — Concentration on $_concentrationSpell ended';
+        await _endConcentration(characterId);
       }
       concentrationNote += ' — Concentrating';
+      _update(() {
+        _concentrationSpell = spellName;
+        _concentrationSpellId = spell!.id;
+        _concentrationSlotLevel = slot;
+      });
     }
-    _update(() {
-      if (spell?.concentration ?? false) _concentrationSpell = spellName;
-      _lastRollResult = 'Cast $spellName$slotNote$concentrationNote.';
-    });
+    _showRoll('Cast $spellName$slotNote$concentrationNote.');
+    // The tapped button may have been rebuilt away (e.g. the Concentration
+    // banner appeared), so dialogs use the screen's own context.
+    final effect = spell != null ? spellEffects[spell.id] : null;
+    if (effect != null && mounted) {
+      await _resolveSpellEffect(
+        this.context,
+        characterId,
+        spell!,
+        effect,
+        slot,
+        rules,
+        prefix: slot == 0
+            ? ''
+            : 'L$slot${slot > spell.level ? ' (upcast)' : ''} ',
+      );
+      if (concentrationNote.isNotEmpty) {
+        _showRoll('$_lastRollResult$concentrationNote');
+      }
+    }
+  }
+
+  /// One-line combat summary shown under a spell, e.g. "2d10 Radiant · Con save".
+  String? _effectSummary(Spell spell) {
+    final e = spellEffects[spell.id];
+    if (e == null) return null;
+    final dice = scaledDice(
+      e,
+      spellLevel: spell.level,
+      slotLevel: spell.level,
+      characterLevel: widget.character.level,
+    );
+    final damage = [
+      ?dice,
+      if (e.addModifier) '+ mod',
+      if (e.kind == SpellEffectKind.heal)
+        'healing'
+      else if (e.damageType != null)
+        e.damageType!,
+    ].join(' ');
+    return [
+      if (e.kind == SpellEffectKind.heal && e.flat > 0 && dice == null)
+        '${e.flat} HP'
+      else if (damage.isNotEmpty)
+        damage,
+      switch (e.kind) {
+        SpellEffectKind.attack =>
+          '${e.melee ? "melee" : "ranged"} spell attack',
+        SpellEffectKind.save =>
+          '${e.saveAbility!.substring(0, 3)} save${e.dealsDamage ? (e.halfOnSave ? " (half)" : " (negates)") : ""}',
+        SpellEffectKind.automatic => 'automatic',
+        SpellEffectKind.heal => '',
+      },
+      if (e.condition != null) e.condition!,
+      if (e.repeatable) 'repeatable',
+    ].where((x) => x.isNotEmpty).join(' · ');
   }
 
   Future<void> _manageSpellsDialog(

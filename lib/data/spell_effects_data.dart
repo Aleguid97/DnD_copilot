@@ -1,0 +1,435 @@
+import '../models/spell_effect.dart';
+
+// Combat effects verified against chapter 7 (Spell Descriptions) of the 2024
+// Player's Handbook. Spells not listed here are cast as reminders only.
+// Notes paraphrase what the dice don't capture.
+
+const _dex = 'Dexterity';
+const _con = 'Constitution';
+const _str = 'Strength';
+const _wis = 'Wisdom';
+const _int = 'Intelligence';
+
+SpellEffect _attack(
+  String dice,
+  String type, {
+  bool melee = false,
+  bool mod = false,
+  String? upcast,
+  bool cantrip = false,
+  String? condition,
+  bool repeat = false,
+  SpellEffect? secondary,
+  String note = '',
+}) => SpellEffect(
+  kind: SpellEffectKind.attack,
+  dice: dice,
+  damageType: type,
+  melee: melee,
+  addModifier: mod,
+  upcastDice: upcast,
+  cantripScaling: cantrip,
+  condition: condition,
+  repeatable: repeat,
+  secondary: secondary,
+  note: note,
+);
+
+SpellEffect _save(
+  String ability, {
+  String? dice,
+  String? type,
+  bool half = true,
+  String? upcast,
+  int? upcastAbove,
+  bool cantrip = false,
+  String? condition,
+  bool multi = true,
+  bool repeat = false,
+  String? extraDice,
+  String? extraType,
+  String note = '',
+}) => SpellEffect(
+  kind: SpellEffectKind.save,
+  saveAbility: ability,
+  dice: dice,
+  damageType: type,
+  halfOnSave: half,
+  upcastDice: upcast,
+  upcastAbove: upcastAbove,
+  cantripScaling: cantrip,
+  condition: condition,
+  multiTarget: multi,
+  repeatable: repeat,
+  extraDice: extraDice,
+  extraDamageType: extraType,
+  note: note,
+);
+
+SpellEffect _auto(
+  String dice,
+  String type, {
+  String? upcast,
+  bool repeat = true,
+  String note = '',
+}) => SpellEffect(
+  kind: SpellEffectKind.automatic,
+  dice: dice,
+  damageType: type,
+  upcastDice: upcast,
+  repeatable: repeat,
+  note: note,
+);
+
+SpellEffect _heal(
+  String? dice, {
+  bool mod = false,
+  String? upcast,
+  int flat = 0,
+  int upcastFlat = 0,
+  bool repeat = false,
+  String note = '',
+}) => SpellEffect(
+  kind: SpellEffectKind.heal,
+  dice: dice,
+  addModifier: mod,
+  upcastDice: upcast,
+  flat: flat,
+  upcastFlat: upcastFlat,
+  repeatable: repeat,
+  note: note,
+);
+
+final Map<String, SpellEffect> spellEffects = {
+  // ------------------------------------------------------------- cantrips
+  'acid_splash': _save(
+    _dex,
+    dice: '1d6',
+    type: 'Acid',
+    half: false,
+    cantrip: true,
+  ),
+  'fire_bolt': _attack('1d10', 'Fire', cantrip: true),
+  'poison_spray': _attack('1d12', 'Poison', cantrip: true),
+  'produce_flame': _attack(
+    '1d8',
+    'Fire',
+    cantrip: true,
+    note:
+        'The flame lights 20 ft for 10 minutes; hurl it again with a Magic action.',
+  ),
+  'ray_of_frost': _attack(
+    '1d8',
+    'Cold',
+    cantrip: true,
+    note: 'Target\'s Speed −10 ft until the start of your next turn.',
+  ),
+  'shocking_grasp': _attack(
+    '1d8',
+    'Lightning',
+    melee: true,
+    cantrip: true,
+    note: 'Target can\'t make Opportunity Attacks until its next turn.',
+  ),
+  'starry_wisp': _attack(
+    '1d8',
+    'Radiant',
+    cantrip: true,
+    note:
+        'Target sheds Dim Light and can\'t be Invisible until the end of your next turn.',
+  ),
+  'thorn_whip': _attack(
+    '1d6',
+    'Piercing',
+    melee: true,
+    cantrip: true,
+    note: 'Pull a Large or smaller target up to 10 ft toward you.',
+  ),
+  'thunderclap': _save(
+    _con,
+    dice: '1d6',
+    type: 'Thunder',
+    half: false,
+    cantrip: true,
+  ),
+
+  // -------------------------------------------------------------- level 1
+  'animal_friendship': _save(_wis, condition: 'Charmed', multi: false),
+  'burning_hands': _save(_dex, dice: '3d6', type: 'Fire', upcast: '1d6'),
+  'charm_person': _save(
+    _wis,
+    condition: 'Charmed',
+    multi: false,
+    note: 'Advantage on the save if you or allies are fighting it.',
+  ),
+  'cure_wounds': _heal('2d8', mod: true, upcast: '2d8'),
+  'entangle': _save(
+    _str,
+    condition: 'Restrained',
+    note:
+        'Area is Difficult Terrain; Strength (Athletics) vs your DC to escape.',
+  ),
+  'faerie_fire': _save(
+    _dex,
+    condition: 'Outlined',
+    note: 'Attacks against outlined creatures have Advantage.',
+  ),
+  'guiding_bolt': _attack(
+    '4d6',
+    'Radiant',
+    upcast: '1d6',
+    condition: 'Guiding Bolt',
+    note: 'The next attack roll against the target has Advantage.',
+  ),
+  'healing_word': _heal('2d4', mod: true, upcast: '2d4'),
+  'ice_knife': _attack(
+    '1d10',
+    'Piercing',
+    secondary: _save(
+      _dex,
+      dice: '2d6',
+      type: 'Cold',
+      half: false,
+      upcast: '1d6',
+      note:
+          'The shard explodes on the target and creatures within 5 ft, hit or miss.',
+    ),
+  ),
+  'ray_of_sickness': _attack(
+    '2d8',
+    'Poison',
+    upcast: '1d8',
+    condition: 'Poisoned',
+    note: 'Poisoned until the end of your next turn.',
+  ),
+  'sleep': _save(
+    _wis,
+    condition: 'Incapacitated',
+    note: 'Repeat the save at the end of its next turn: fail = Unconscious.',
+  ),
+  'thunderwave': _save(
+    _con,
+    dice: '2d8',
+    type: 'Thunder',
+    upcast: '1d8',
+    note: 'Failed save: pushed 10 ft away.',
+  ),
+
+  // -------------------------------------------------------------- level 2
+  'flame_blade': _attack(
+    '3d6',
+    'Fire',
+    melee: true,
+    mod: true,
+    upcast: '1d6',
+    repeat: true,
+  ),
+  'flaming_sphere': _save(
+    _dex,
+    dice: '2d6',
+    type: 'Fire',
+    upcast: '1d6',
+    repeat: true,
+    note: 'Creatures ending their turn within 5 ft of the sphere save again.',
+  ),
+  'heat_metal': _auto(
+    '2d8',
+    'Fire',
+    upcast: '1d8',
+    note:
+        'Holder makes a Con save or drops the object; if it keeps it, Disadvantage on attacks and checks.',
+  ),
+  'hold_person': _save(
+    _wis,
+    condition: 'Paralyzed',
+    note:
+        'Repeats the save at the end of each of its turns. +1 Humanoid per slot above 2.',
+  ),
+  'moonbeam': _save(
+    _con,
+    dice: '2d10',
+    type: 'Radiant',
+    upcast: '1d10',
+    repeat: true,
+    note: 'Shape-shifted creatures revert to true form.',
+  ),
+  'shatter': _save(_con, dice: '3d8', type: 'Thunder', upcast: '1d8'),
+  'spike_growth': _auto(
+    '2d4',
+    'Piercing',
+    note: 'Damage for every 5 ft a creature moves in the area.',
+  ),
+  'web': _save(_dex, condition: 'Restrained', repeat: true),
+
+  // -------------------------------------------------------------- level 3
+  'aura_of_vitality': _heal(
+    '2d6',
+    repeat: true,
+    note: 'Heal one creature in the aura at the start of each of your turns.',
+  ),
+  'call_lightning': _save(
+    _dex,
+    dice: '3d10',
+    type: 'Lightning',
+    upcast: '1d10',
+    repeat: true,
+    note: 'Outdoors in a storm the damage increases by 1d10.',
+  ),
+  'conjure_animals': _save(
+    _dex,
+    dice: '3d10',
+    type: 'Slashing',
+    half: false,
+    upcast: '1d10',
+    repeat: true,
+  ),
+  'fireball': _save(_dex, dice: '8d6', type: 'Fire', upcast: '1d6'),
+  'lightning_bolt': _save(_dex, dice: '8d6', type: 'Lightning', upcast: '1d6'),
+  'sleet_storm': _save(
+    _dex,
+    condition: 'Prone',
+    repeat: true,
+    note: 'Failed save also breaks Concentration.',
+  ),
+  'stinking_cloud': _save(
+    _con,
+    condition: 'Poisoned',
+    repeat: true,
+    note: 'Poisoned until the end of the current turn.',
+  ),
+  'wind_wall': _save(_str, dice: '4d8', type: 'Bludgeoning'),
+
+  // -------------------------------------------------------------- level 4
+  'blight': _save(
+    _con,
+    dice: '8d8',
+    type: 'Necrotic',
+    upcast: '1d8',
+    multi: false,
+  ),
+  'charm_monster': _save(_wis, condition: 'Charmed', multi: false),
+  'confusion': _save(_wis, condition: 'Confused'),
+  'conjure_minor_elementals': _auto(
+    '2d8',
+    'Acid/Cold/Fire/Lightning',
+    upcast: '2d8',
+    note:
+        'Extra damage when your attacks hit a creature in the 15-ft Emanation.',
+  ),
+  'conjure_woodland_beings': _save(
+    _wis,
+    dice: '5d8',
+    type: 'Force',
+    upcast: '1d8',
+    upcastAbove: 5,
+    repeat: true,
+  ),
+  'dominate_beast': _save(_wis, condition: 'Charmed', multi: false),
+  'fount_of_moonlight': _auto(
+    '2d6',
+    'Radiant',
+    note: 'Extra damage on your melee hits; you resist Radiant damage.',
+  ),
+  'grasping_vine': _attack(
+    '4d8',
+    'Bludgeoning',
+    melee: true,
+    condition: 'Grappled',
+    repeat: true,
+    note: 'Pulled up to 30 ft toward the vine.',
+  ),
+  'ice_storm': _save(
+    _dex,
+    dice: '2d10',
+    type: 'Bludgeoning',
+    upcast: '1d10',
+    extraDice: '4d6',
+    extraType: 'Cold',
+  ),
+  'polymorph': _save(_wis, condition: 'Polymorphed', multi: false),
+  'wall_of_fire': _save(
+    _dex,
+    dice: '5d8',
+    type: 'Fire',
+    upcast: '1d8',
+    repeat: true,
+  ),
+
+  // -------------------------------------------------------------- level 5
+  'cone_of_cold': _save(_con, dice: '8d8', type: 'Cold', upcast: '1d8'),
+  'conjure_elemental': _save(
+    _dex,
+    dice: '8d8',
+    type: 'elemental',
+    half: false,
+    upcast: '2d8',
+    condition: 'Restrained',
+    repeat: true,
+    note: 'Restrained target repeats the save each turn: fail = 4d8 more.',
+  ),
+  'contagion': _save(
+    _con,
+    dice: '11d8',
+    type: 'Necrotic',
+    half: false,
+    condition: 'Poisoned',
+    multi: false,
+  ),
+  'geas': _save(_wis, condition: 'Charmed', multi: false),
+  'hold_monster': _save(_wis, condition: 'Paralyzed'),
+  'insect_plague': _save(
+    _con,
+    dice: '4d10',
+    type: 'Piercing',
+    upcast: '1d10',
+    repeat: true,
+  ),
+  'mass_cure_wounds': _heal(
+    '5d8',
+    mod: true,
+    upcast: '1d8',
+    note: 'Up to six creatures in a 30-ft Sphere each regain this amount.',
+  ),
+
+  // ------------------------------------------------------------ level 6-9
+  'befuddlement': _save(_int, dice: '10d12', type: 'Psychic', multi: false),
+  'conjure_fey': _attack(
+    '3d12',
+    'Psychic',
+    melee: true,
+    mod: true,
+    upcast: '2d12',
+    condition: 'Frightened',
+    repeat: true,
+  ),
+  'earthquake': _save(
+    _dex,
+    condition: 'Prone',
+    repeat: true,
+    note: 'Failed save also breaks Concentration.',
+  ),
+  'fire_storm': _save(_dex, dice: '7d10', type: 'Fire'),
+  'flesh_to_stone': _save(_con, condition: 'Restrained', multi: false),
+  'heal': _heal(
+    null,
+    flat: 70,
+    upcastFlat: 10,
+    note: 'Also ends Blinded, Deafened and Poisoned.',
+  ),
+  'incendiary_cloud': _save(_dex, dice: '10d8', type: 'Fire', repeat: true),
+  'regenerate': _heal(
+    '4d8',
+    flat: 15,
+    note: 'Then 1 HP at the start of each of its turns for 1 hour.',
+  ),
+  'sunbeam': _save(
+    _con,
+    dice: '6d8',
+    type: 'Radiant',
+    condition: 'Blinded',
+    repeat: true,
+  ),
+  'sunburst': _save(_con, dice: '12d6', type: 'Radiant', condition: 'Blinded'),
+  'tsunami': _save(_str, dice: '6d10', type: 'Bludgeoning'),
+  'wall_of_thorns': _save(_dex, dice: '7d8', type: 'Piercing', upcast: '1d8'),
+};

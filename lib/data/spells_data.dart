@@ -2,8 +2,8 @@ import '../models/spell.dart';
 
 // Spell list entries (level, school, Concentration/Ritual/Material) from the
 // class spell lists of the 2024 Player's Handbook, chapter 3. Spells are
-// added as each class's chapter is verified; effects (damage, healing) need
-// chapter 7 and are not modelled yet.
+// added as each class's chapter is verified; combat effects (damage, saves,
+// healing) live in spell_effects_data.dart.
 
 const _abj = 'Abjuration';
 const _conj = 'Conjuration';
@@ -290,6 +290,22 @@ const List<Spell> _druidList = [
 /// (Ranger, chapter 3) because Druid circles grant them.
 const List<Spell> _otherVerified = [
   Spell('misty_step', 'Misty Step', 2, _conj),
+  // From chapter 7 headers (Sorcerer/Wizard/Cleric spells granted by circles).
+  Spell('acid_splash', 'Acid Splash', 0, _evo),
+  Spell('fire_bolt', 'Fire Bolt', 0, _evo),
+  Spell('ray_of_frost', 'Ray of Frost', 0, _evo),
+  Spell('shocking_grasp', 'Shocking Grasp', 0, _evo),
+  Spell('burning_hands', 'Burning Hands', 1, _evo),
+  Spell('guiding_bolt', 'Guiding Bolt', 1, _evo),
+  Spell('ray_of_sickness', 'Ray of Sickness', 1, _necro),
+  Spell('sleep', 'Sleep', 1, _ench, concentration: true),
+  Spell('blur', 'Blur', 2, _ill, concentration: true),
+  Spell('shatter', 'Shatter', 2, _evo),
+  Spell('web', 'Web', 2, _conj, concentration: true),
+  Spell('fireball', 'Fireball', 3, _evo),
+  Spell('lightning_bolt', 'Lightning Bolt', 3, _evo),
+  Spell('stinking_cloud', 'Stinking Cloud', 3, _conj, concentration: true),
+  Spell('hold_monster', 'Hold Monster', 5, _ench, concentration: true),
 ];
 
 final Map<String, Spell> allSpells = {

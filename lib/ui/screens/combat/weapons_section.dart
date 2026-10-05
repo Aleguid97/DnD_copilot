@@ -56,9 +56,14 @@ extension _WeaponsSection on _CombatScreenState {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () async {
+                            // Faerie Fire / Guiding Bolt on the target.
+                            final markerAdvantage = characterId != null
+                                ? await _targetMarkerAdvantage(characterId)
+                                : false;
                             final hasAdvantage =
                                 _hasAdvantageFromVex ||
                                 _hasAdvantageFromStudiedAttacks ||
+                                markerAdvantage ||
                                 (widget.character.characterClass.id ==
                                         'barbarian' &&
                                     _isRecklessAttack);

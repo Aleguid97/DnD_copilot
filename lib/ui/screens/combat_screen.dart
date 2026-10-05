@@ -16,6 +16,8 @@ import '../../models/druid_features.dart';
 import '../../data/spell_slots_data.dart';
 import '../../data/spells_data.dart';
 import '../../models/spell.dart';
+import '../../models/spell_effect.dart';
+import '../../data/spell_effects_data.dart';
 
 import '../../state/database_provider.dart';
 import '../../state/resource_uses_provider.dart';
@@ -34,6 +36,7 @@ import '../../models/character_proficiencies.dart';
 part 'combat/combat_core_sections.dart';
 part 'combat/combat_helpers.dart';
 part 'combat/spellcasting_section.dart';
+part 'combat/spell_effects_engine.dart';
 part 'combat/fighter_section.dart';
 part 'combat/barbarian_section.dart';
 part 'combat/weapons_section.dart';
@@ -120,6 +123,8 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _landsAidHeal;
   // Spellcasting
   String? _concentrationSpell;
+  String? _concentrationSpellId;
+  int? _concentrationSlotLevel;
   List<String>? _cantripsOverride;
   List<String>? _preparedOverride;
 

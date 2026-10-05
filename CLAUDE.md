@@ -37,6 +37,7 @@ che restituisce `List<Widget>`:
 | `combat_core_sections.dart` | AC/Iniziativa/Velocità, HP, dadi, tiri salvezza e prove di abilità (richiudibili), bersaglio |
 | `combat_helpers.dart` | Helper condivisi: risorse, slot, card, danno al bersaglio, cura |
 | `spellcasting_section.dart` | Incantatori: slot, Concentrazione, trucchetti, preparati, Cast (scala lo slot, upcast) |
+| `spell_effects_engine.dart` | Risolve gli effetti: attacco con incantesimo vs CA, tiri salvezza multi-bersaglio, cure, condizioni sui nemici, ripetizione durante la Concentrazione |
 | `fighter_section.dart` | Guerriero (Tactical Mind) |
 | `barbarian_section.dart` | Barbaro e sottoclassi |
 | `weapons_section.dart` | Armi equipaggiate, Weapon Mastery, Unarmed Strike |
@@ -59,7 +60,13 @@ Regole:
 - Incantesimi: catalogo in `lib/data/spells_data.dart` (livello, scuola, C/R/M dalle
   liste del cap. 3 PHB). Per abilitare una classe: aggiungere la sua lista a
   `classSpellLists` e le sue regole (trucchetti, preparati, CD) in `_casterRules`.
-  Gli effetti (danni/cure) richiedono il cap. 7 del PHB: non ancora modellati.
+  Effetti in combattimento in `lib/data/spell_effects_data.dart` (dal cap. 7 PHB:
+  dadi, tipo di danno, TS, scaling per slot/livello, condizioni). Le condizioni
+  messe da un incantesimo sono etichettate "Condizione (Incantesimo)" e vengono
+  tolte quando finisce la Concentrazione. Faerie Fire/Guiding Bolt danno
+  Vantaggio anche agli attacchi con le armi.
+- Test: `seedDiceRoller(seed)` rende i dadi deterministici; le scritte sul DB nei
+  widget test vanno fatte nel clock del test (vedi `_db` in `test/spell_effects_test.dart`).
 
 ## Convenzioni di lavoro
 
@@ -91,8 +98,10 @@ bersaglio, colpito/mancato vs CA, critici, 8 proprietà Weapon Mastery, party pe
 1. ~~Refactor `combat_screen.dart`~~ (fatto: sezioni in `combat/`).
 2. Estendere le 8 classi rimanenti al livello 20 (fatto: Druido).
 3. Specializzare strumenti/set generici nei background (Artisan, Entertainer, Guard, Noble, Soldier).
-4. Sistema Incantesimi: fatti slot, preparati, lancio e Concentrazione (Druido). Mancano
-   effetti dei singoli incantesimi (cap. 7 PHB) e le liste delle altre classi.
+4. Sistema Incantesimi: fatti slot, preparati, lancio, Concentrazione ed effetti in
+   combattimento (lista Druido + incantesimi dei circoli). Per le altre classi servono
+   le loro liste (cap. 3) e gli effetti dei loro incantesimi (cap. 7 già disponibile
+   all'utente: chiedere l'estratto se serve).
 5. Epic Boon Feats al 19° (categoria a sé, alcuni alzano fino a 30).
 6. Convertire le ultime scelte testuali in vere `Choice`.
 7. Crafting/oggetti custom.

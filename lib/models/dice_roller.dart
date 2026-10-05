@@ -14,7 +14,10 @@ class DiceRollResult {
   });
 }
 
-final Random _random = Random();
+Random _random = Random();
+
+/// Makes dice rolls reproducible in tests.
+void seedDiceRoller(int seed) => _random = Random(seed);
 
 /// Parses a string like "1d8 Slashing" or "2d6" and rolls it, adding [modifier].
 /// If [isCritical] is true, the number of dice is doubled (2024 critical hit rule),
