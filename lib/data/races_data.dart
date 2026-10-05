@@ -80,7 +80,7 @@ final List<Race> allRaces = [
       Choice(
         id: 'elf_keen_senses',
         title: 'Keen Senses: choose 1 skill proficiency',
-        options: const [
+        options: [
           ChoiceOption(id: 'perception', label: 'Perception'),
           ChoiceOption(id: 'insight', label: 'Insight'),
           ChoiceOption(id: 'survival', label: 'Survival'),

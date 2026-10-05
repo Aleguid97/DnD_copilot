@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'ability_scores.dart';
 import 'ability_score_improvement.dart';
-import 'background_ability_choice.dart';
 
 class CharacterSaveData {
   final String name;

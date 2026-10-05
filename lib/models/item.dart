@@ -57,8 +57,9 @@ class GameItem {
       );
       return isTwoHanded ? 2 : 1;
     }
-    if (id == 'arcane_focus' || id == 'druidic_focus' || id == 'holy_symbol')
+    if (id == 'arcane_focus' || id == 'druidic_focus' || id == 'holy_symbol') {
       return 1;
+    }
     return 0; // armor and everything else doesn't occupy a hand
   }
 

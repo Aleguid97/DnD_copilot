@@ -8,8 +8,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dnd_prova/main.dart';
-
 // A minimal test app used only for this widget test when MyApp isn't available.
 class TestApp extends StatefulWidget {
   const TestApp({super.key});

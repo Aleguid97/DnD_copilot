@@ -148,8 +148,9 @@ class _LevelUpScreenState extends ConsumerState<LevelUpScreen> {
     for (final choice in allClassChoices) {
       final selectedIds = classState.selections[choice.id] ?? const {};
       for (final option in choice.options) {
-        if (selectedIds.contains(option.id))
+        if (selectedIds.contains(option.id)) {
           selectedSubclassOptions.add(option);
+        }
       }
     }
 
