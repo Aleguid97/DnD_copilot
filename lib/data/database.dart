@@ -74,6 +74,9 @@ class PartyMembers extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// In-memory database for tests.
+  AppDatabase.forTesting(super.executor);
+
   @override
   int get schemaVersion => 8;
 
