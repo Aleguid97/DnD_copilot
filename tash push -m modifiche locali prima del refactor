@@ -1,0 +1,246 @@
+[1mdiff --git a/lib/ui/screens/combat_screen.dart b/lib/ui/screens/combat_screen.dart[m
+[1mindex 0ee65e2..ec1b8ca 100644[m
+[1m--- a/lib/ui/screens/combat_screen.dart[m
+[1m+++ b/lib/ui/screens/combat_screen.dart[m
+[36m@@ -1183,7 +1183,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                     ref[m
+                                                         .read([m
+                                                           combatEnemiesProvider([m
+[31m-                                                            characterId!,[m
+[32m+[m[32m                                                            characterId,[m
+                                                           ),[m
+                                                         )[m
+                                                         .value ??[m
+[36m@@ -1215,64 +1215,6 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                         child: const Text('Hamstring Blow'),[m
+                                       ),[m
+                                     ),[m
+[31m-                                    if (widget.character.level >= 11)[m
+[31m-                                      Padding([m
+[31m-                                        padding: const EdgeInsets.only(top: 8),[m
+[31m-                                        child: Card([m
+[31m-                                          child: Padding([m
+[31m-                                            padding: const EdgeInsets.all(12),[m
+[31m-                                            child: Column([m
+[31m-                                              crossAxisAlignment:[m
+[31m-                                                  CrossAxisAlignment.start,[m
+[31m-                                              children: [[m
+[31m-                                                Text([m
+[31m-                                                  'Relentless Rage',[m
+[31m-                                                  style: Theme.of([m
+[31m-                                                    context,[m
+[31m-                                                  ).textTheme.titleSmall,[m
+[31m-                                                ),[m
+[31m-                                                Text([m
+[31m-                                                  'If you drop to 0 HP while raging, Constitution save (DC ${relentlessRageDc(_relentlessRageUsesSinceRest)}) to drop to ${2 * widget.character.level} HP instead.',[m
+[31m-                                                  style: Theme.of([m
+[31m-                                                    context,[m
+[31m-                                                  ).textTheme.bodySmall,[m
+[31m-                                                ),[m
+[31m-                                                const SizedBox(height: 8),[m
+[31m-                                                SizedBox([m
+[31m-                                                  width: double.infinity,[m
+[31m-                                                  child: OutlinedButton([m
+[31m-                                                    onPressed: _isRaging[m
+[31m-                                                        ? () {[m
+[31m-                                                            final dc =[m
+[31m-                                                                relentlessRageDc([m
+[31m-                                                                  _relentlessRageUsesSinceRest,[m
+[31m-                                                                );[m
+[31m-                                                            final result =[m
+[31m-                                                                rollAttack(0);[m
+[31m-                                                            final success =[m
+[31m-                                                                result.total >=[m
+[31m-                                                                dc;[m
+[31m-                                                            setState(() {[m
+[31m-                                                              if (success) {[m
+[31m-                                                                _relentlessRageUsesSinceRest++;[m
+[31m-                                                              }[m
+[31m-                                                              _lastRollResult =[m
+[31m-                                                                  success[m
+[31m-                                                                  ? 'Relentless Rage: CON save ${result.rolls.first} vs DC $dc — SUCCESS! HP set to ${2 * widget.character.level}.'[m
+[31m-                                                                  : 'Relentless Rage: CON save ${result.rolls.first} vs DC $dc — FAILED. You drop to 0 HP.';[m
+[31m-                                                            });[m
+[31m-                                                          }[m
+[31m-                                                        : null,[m
+[31m-                                                    child: const Text([m
+[31m-                                                      'Attempt Relentless Rage (rolled CON save)',[m
+[31m-                                                    ),[m
+[31m-                                                  ),[m
+[31m-                                                ),[m
+[31m-                                              ],[m
+[31m-                                            ),[m
+[31m-                                          ),[m
+[31m-                                        ),[m
+[31m-                                      ),[m
+                                   ],[m
+                                 ),[m
+                               ],[m
+[36m@@ -1280,6 +1222,59 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                           ),[m
+                         ),[m
+ [m
+[32m+[m[32m                        if (widget.character.level >= 11)[m
+[32m+[m[32m                          Padding([m
+[32m+[m[32m                            padding: const EdgeInsets.only(top: 8),[m
+[32m+[m[32m                            child: Card([m
+[32m+[m[32m                              child: Padding([m
+[32m+[m[32m                                padding: const EdgeInsets.all(12),[m
+[32m+[m[32m                                child: Column([m
+[32m+[m[32m                                  crossAxisAlignment: CrossAxisAlignment.start,[m
+[32m+[m[32m                                  children: [[m
+[32m+[m[32m                                    Text([m
+[32m+[m[32m                                      'Relentless Rage',[m
+[32m+[m[32m                                      style: Theme.of([m
+[32m+[m[32m                                        context,[m
+[32m+[m[32m                                      ).textTheme.titleSmall,[m
+[32m+[m[32m                                    ),[m
+[32m+[m[32m                                    Text([m
+[32m+[m[32m                                      'If you drop to 0 HP while raging, Constitution save (DC ${relentlessRageDc(_relentlessRageUsesSinceRest)}) to drop to ${2 * widget.character.level} HP instead.',[m
+[32m+[m[32m                                      style: Theme.of([m
+[32m+[m[32m                                        context,[m
+[32m+[m[32m                                      ).textTheme.bodySmall,[m
+[32m+[m[32m                                    ),[m
+[32m+[m[32m                                    const SizedBox(height: 8),[m
+[32m+[m[32m                                    SizedBox([m
+[32m+[m[32m                                      width: double.infinity,[m
+[32m+[m[32m                                      child: OutlinedButton([m
+[32m+[m[32m                                        onPressed: _isRaging[m
+[32m+[m[32m                                            ? () {[m
+[32m+[m[32m                                                final dc = relentlessRageDc([m
+[32m+[m[32m                                                  _relentlessRageUsesSinceRest,[m
+[32m+[m[32m                                                );[m
+[32m+[m[32m                                                final result = rollAttack(0);[m
+[32m+[m[32m                                                final success =[m
+[32m+[m[32m                                                    result.total >= dc;[m
+[32m+[m[32m                                                setState(() {[m
+[32m+[m[32m                                                  if (success) {[m
+[32m+[m[32m                                                    _relentlessRageUsesSinceRest++;[m
+[32m+[m[32m                                                  }[m
+[32m+[m[32m                                                  _lastRollResult = success[m
+[32m+[m[32m                                                      ? 'Relentless Rage: CON save ${result.rolls.first} vs DC $dc — SUCCESS! HP set to ${2 * widget.character.level}.'[m
+[32m+[m[32m                                                      : 'Relentless Rage: CON save ${result.rolls.first} vs DC $dc — FAILED. You drop to 0 HP.';[m
+[32m+[m[32m                                                });[m
+[32m+[m[32m                                              }[m
+[32m+[m[32m                                            : null,[m
+[32m+[m[32m                                        child: const Text([m
+[32m+[m[32m                                          'Attempt Relentless Rage (rolled CON save)',[m
+[32m+[m[32m                                        ),[m
+[32m+[m[32m                                      ),[m
+[32m+[m[32m                                    ),[m
+[32m+[m[32m                                  ],[m
+[32m+[m[32m                                ),[m
+[32m+[m[32m                              ),[m
+[32m+[m[32m                            ),[m
+[32m+[m[32m                          ),[m
+                         if (widget[m
+                                     .character[m
+                                     .classSelections['barbarian_subclass'][m
+[36m@@ -1378,7 +1373,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                               appDatabaseProvider,[m
+                                                             )[m
+                                                             .useResource([m
+[31m-                                                              characterId!,[m
+[32m+[m[32m                                                              characterId,[m
+                                                               'intimidating_presence',[m
+                                                               1,[m
+                                                             );[m
+[36m@@ -1386,7 +1381,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                             ref[m
+                                                                 .read([m
+                                                                   combatEnemiesProvider([m
+[31m-                                                                    characterId!,[m
+[32m+[m[32m                                                                    characterId,[m
+                                                                   ),[m
+                                                                 )[m
+                                                                 .value ??[m
+[36m@@ -1460,7 +1455,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                               appDatabaseProvider,[m
+                                                             )[m
+                                                             .useResource([m
+[31m-                                                              characterId!,[m
+[32m+[m[32m                                                              characterId,[m
+                                                               'rage',[m
+                                                               maxUses,[m
+                                                             );[m
+[36m@@ -1468,7 +1463,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                             ref[m
+                                                                 .read([m
+                                                                   combatEnemiesProvider([m
+[31m-                                                                    characterId!,[m
+[32m+[m[32m                                                                    characterId,[m
+                                                                   ),[m
+                                                                 )[m
+                                                                 .value ??[m
+[36m@@ -1570,7 +1565,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                         ref[m
+                                                             .read([m
+                                                               combatEnemiesProvider([m
+[31m-                                                                characterId!,[m
+[32m+[m[32m                                                                characterId,[m
+                                                               ),[m
+                                                             )[m
+                                                             .value ??[m
+[36m@@ -1654,7 +1649,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                 builder: (context) {[m
+                                                   final partyAsync = ref.watch([m
+                                                     partyMembersProvider([m
+[31m-                                                      characterId!,[m
+[32m+[m[32m                                                      characterId,[m
+                                                     ),[m
+                                                   );[m
+                                                   return partyAsync.when([m
+[36m@@ -1795,7 +1790,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                               ref[m
+                                                                   .read([m
+                                                                     combatEnemiesProvider([m
+[31m-                                                                      characterId!,[m
+[32m+[m[32m                                                                      characterId,[m
+                                                                     ),[m
+                                                                   )[m
+                                                                   .value ??[m
+[36m@@ -1896,7 +1891,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                                     appDatabaseProvider,[m
+                                                                   )[m
+                                                                   .useResource([m
+[31m-                                                                    characterId!,[m
+[32m+[m[32m                                                                    characterId,[m
+                                                                     'warrior_of_the_gods_pool',[m
+                                                                     poolSize,[m
+                                                                   );[m
+[36m@@ -1906,7 +1901,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                               final currentStored =[m
+                                                                   await ref.read([m
+                                                                     currentHpProvider([m
+[31m-                                                                      characterId!,[m
+[32m+[m[32m                                                                      characterId,[m
+                                                                     ).future,[m
+                                                                   );[m
+                                                               final currentHp =[m
+[36m@@ -1925,7 +1920,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                                     appDatabaseProvider,[m
+                                                                   )[m
+                                                                   .setCurrentHp([m
+[31m-                                                                    characterId!,[m
+[32m+[m[32m                                                                    characterId,[m
+                                                                     newHp,[m
+                                                                   );[m
+                                                               setState(() {[m
+[36m@@ -2059,7 +2054,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                                       appDatabaseProvider,[m
+                                                                     )[m
+                                                                     .useResource([m
+[31m-                                                                      characterId!,[m
+[32m+[m[32m                                                                      characterId,[m
+                                                                       'zealous_presence',[m
+                                                                       1,[m
+                                                                     );[m
+[36m@@ -2095,7 +2090,7 @@[m [mclass _CombatScreenState extends ConsumerState<CombatScreen> {[m
+                                                                       appDatabaseProvider,[m
+                                                                     )[m
+                                                                     .useResource([m
+[31m-                                                                      characterId!,[m
+[32m+[m[32m                                                                      characterId,[m
+                                                                       'rage',[m
+                                                                       maxUses,[m
+                                                                     );[m

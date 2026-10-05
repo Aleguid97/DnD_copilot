@@ -1,4 +1,3 @@
-import '../data/items_data.dart';
 import 'ability_scores.dart';
 import 'character.dart';
 import 'item.dart';

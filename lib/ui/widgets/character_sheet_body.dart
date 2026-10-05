@@ -12,7 +12,6 @@ import '../../models/character_spells.dart';
 import '../screens/spell_list_screen.dart';
 import '../screens/class_features_screen.dart';
 import '../screens/inventory_screen.dart';
-import '../../models/currency.dart';
 import 'gold_section.dart';
 import '../../data/racial_cantrip_swap_data.dart';
 import '../../state/racial_cantrip_provider.dart';

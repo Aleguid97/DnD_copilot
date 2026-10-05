@@ -31,7 +31,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 15,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'barbarian_b',
         label: '75 GP (buy your own equipment)',
         goldPieces: 75,
@@ -69,7 +69,7 @@ final List<CharacterClass> allClasses = [
           ),
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 2,
         fixedTraits: [
           'Danger Sense: Advantage on Dexterity saving throws (unless Incapacitated)',
@@ -281,95 +281,95 @@ final List<CharacterClass> allClasses = [
           ),
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 4,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 5,
         fixedTraits: [
           'Extra Attack: attack twice instead of once whenever you take the Attack action',
           'Fast Movement: Speed increases by 10 feet while not wearing Heavy armor',
         ],
       ),
-      const LevelFeature(level: 6),
-      const LevelFeature(
+      LevelFeature(level: 6),
+      LevelFeature(
         level: 7,
         fixedTraits: [
           'Feral Instinct: Advantage on Initiative rolls',
           'Instinctive Pounce: as part of the Bonus Action to enter Rage, move up to half your Speed',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 8,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 9,
         fixedTraits: [
           'Brutal Strike: forgo Reckless Attack\'s Advantage on one Strength attack (must not have Disadvantage); on hit, extra 1d10 damage plus a Brutal Strike effect (Forceful Blow: push 15 ft; Hamstring Blow: reduce Speed by 15 ft)',
         ],
       ),
-      const LevelFeature(level: 10),
-      const LevelFeature(
+      LevelFeature(level: 10),
+      LevelFeature(
         level: 11,
         fixedTraits: [
           'Relentless Rage: if you drop to 0 HP while raging (and don\'t die outright), DC 10 Constitution save to instead drop to HP = 2× Barbarian level (DC +5 each further use, resets to 10 on a rest)',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 12,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 13,
         fixedTraits: [
           'Improved Brutal Strike: new effect options — Staggering Blow (Disadvantage on next save, no Opportunity Attacks until your next turn) and Sundering Blow (+5 to the next attack roll against the target)',
         ],
       ),
-      const LevelFeature(level: 14),
-      const LevelFeature(
+      LevelFeature(level: 14),
+      LevelFeature(
         level: 15,
         fixedTraits: [
           'Persistent Rage: on rolling Initiative, regain all Rage uses (once per Long Rest); Rage now lasts 10 minutes without needing to extend it each round',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 16,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 17,
         fixedTraits: [
           'Improved Brutal Strike: extra damage increases to 2d10; you can use two different Brutal Strike effects at once',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 18,
         fixedTraits: [
           'Indomitable Might: if your Strength check or save total is less than your Strength score, use that score instead',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 19,
         fixedTraits: [
           'Epic Boon: gain an Epic Boon feat of your choice (requires level 19+); Boon of Irresistible Offense recommended',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 20,
         fixedTraits: [
           'Primal Champion: Strength and Constitution scores increase by 4, to a maximum of 25',
@@ -417,7 +417,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 19,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'bard_b',
         label: '90 GP (buy your own equipment)',
         goldPieces: 90,
@@ -489,7 +489,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 7,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'cleric_b',
         label: '110 GP (buy your own equipment)',
         goldPieces: 110,
@@ -555,7 +555,7 @@ final List<CharacterClass> allClasses = [
           ),
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 2,
         fixedTraits: [
           'Channel Divinity (2 uses, regain 1 per Short Rest, all per Long Rest): Divine Spark or Turn Undead',
@@ -683,20 +683,20 @@ final List<CharacterClass> allClasses = [
           ),
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 4,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 5,
         fixedTraits: [
           'Sear Undead: when you use Turn Undead, Undead that fail their save also take Radiant damage (d8s equal to your Wisdom modifier)',
         ],
       ),
-      const LevelFeature(level: 6),
+      LevelFeature(level: 6),
       LevelFeature(
         level: 7,
         choices: [
@@ -736,48 +736,48 @@ final List<CharacterClass> allClasses = [
           ),
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 8,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(level: 9),
-      const LevelFeature(
+      LevelFeature(level: 9),
+      LevelFeature(
         level: 10,
         fixedTraits: [
           'Divine Intervention: as a Magic action, cast any level 5-or-lower Cleric spell (no Reaction required) without a spell slot or Material components (once per Long Rest)',
         ],
       ),
-      const LevelFeature(level: 11),
-      const LevelFeature(
+      LevelFeature(level: 11),
+      LevelFeature(
         level: 12,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(level: 13),
-      const LevelFeature(level: 14),
-      const LevelFeature(level: 15),
-      const LevelFeature(
+      LevelFeature(level: 13),
+      LevelFeature(level: 14),
+      LevelFeature(level: 15),
+      LevelFeature(
         level: 16,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(level: 17),
-      const LevelFeature(level: 18),
-      const LevelFeature(
+      LevelFeature(level: 17),
+      LevelFeature(level: 18),
+      LevelFeature(
         level: 19,
         fixedTraits: [
           'Epic Boon: gain an Epic Boon feat of your choice (requires level 19+)',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 20,
         fixedTraits: [
           'Greater Divine Intervention: your Divine Intervention can now cast Wish (then unusable again until 2d4 Long Rests)',
@@ -818,7 +818,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 9,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'druid_b',
         label: '50 GP (buy your own equipment)',
         goldPieces: 50,
@@ -932,7 +932,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 11,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'fighter_c',
         label: '155 GP (buy your own equipment)',
         goldPieces: 155,
@@ -1036,7 +1036,7 @@ final List<CharacterClass> allClasses = [
           ),
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 2,
         fixedTraits: [
           'Action Surge (1 use): take one additional action on your turn (once per Short or Long Rest)',
@@ -1223,91 +1223,91 @@ final List<CharacterClass> allClasses = [
           ),
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 4,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 5,
         fixedTraits: [
           'Extra Attack: attack twice instead of once whenever you take the Attack action',
           'Tactical Shift: when you activate Second Wind as a Bonus Action, move up to half your Speed without provoking Opportunity Attacks',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 6,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(level: 7),
-      const LevelFeature(
+      LevelFeature(level: 7),
+      LevelFeature(
         level: 8,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 9,
         fixedTraits: [
           'Indomitable (1 use): reroll a failed saving throw (once per Long Rest)',
           'Tactical Master: your Weapon Mastery properties can be swapped when you finish a Short or Long Rest',
         ],
       ),
-      const LevelFeature(level: 10),
-      const LevelFeature(
+      LevelFeature(level: 10),
+      LevelFeature(
         level: 11,
         fixedTraits: [
           'Two Extra Attacks: attack three times whenever you take the Attack action',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 12,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 13,
         fixedTraits: [
           'Indomitable (2 uses)',
           'Studied Attacks: Advantage on an attack roll against a creature if your last attack against it this turn missed',
         ],
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 14,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(level: 15),
-      const LevelFeature(
+      LevelFeature(level: 15),
+      LevelFeature(
         level: 16,
         fixedTraits: [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 17,
         fixedTraits: ['Action Surge (2 uses)', 'Indomitable (3 uses)'],
       ),
-      const LevelFeature(level: 18),
-      const LevelFeature(
+      LevelFeature(level: 18),
+      LevelFeature(
         level: 19,
         fixedTraits: [
           'Epic Boon: gain an Epic Boon feat of your choice (requires level 19+)',
         ],
         grantsAbilityScoreImprovement: true,
       ),
-      const LevelFeature(
+      LevelFeature(
         level: 20,
         fixedTraits: [
           'Three Extra Attacks: attack four times whenever you take the Attack action',
@@ -1344,7 +1344,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 11,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'monk_b',
         label: '50 GP (buy your own equipment)',
         goldPieces: 50,
@@ -1391,7 +1391,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 9,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'paladin_b',
         label: '150 GP (buy your own equipment)',
         goldPieces: 150,
@@ -1457,7 +1457,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 7,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'ranger_b',
         label: '150 GP (buy your own equipment)',
         goldPieces: 150,
@@ -1528,7 +1528,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 8,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'rogue_b',
         label: '100 GP (buy your own equipment)',
         goldPieces: 100,
@@ -1573,7 +1573,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 28,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'sorcerer_b',
         label: '50 GP (buy your own equipment)',
         goldPieces: 50,
@@ -1646,7 +1646,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 15,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'warlock_b',
         label: '100 GP (buy your own equipment)',
         goldPieces: 100,
@@ -1724,7 +1724,7 @@ final List<CharacterClass> allClasses = [
         ],
         goldPieces: 5,
       ),
-      const StartingEquipmentOption(
+      StartingEquipmentOption(
         id: 'wizard_b',
         label: '55 GP (buy your own equipment)',
         goldPieces: 55,

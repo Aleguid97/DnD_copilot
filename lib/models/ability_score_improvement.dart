@@ -41,11 +41,13 @@ class AsiChoice {
       return plusTwo != null ? {plusTwo!: 2} : {};
     }
     final map = <Ability, int>{};
-    if (firstPlusOne != null)
+    if (firstPlusOne != null) {
       map[firstPlusOne!] = (map[firstPlusOne!] ?? 0) + 1;
+    }
 
-    if (secondPlusOne != null)
+    if (secondPlusOne != null) {
       map[secondPlusOne!] = (map[secondPlusOne!] ?? 0) + 1;
+    }
 
     return map;
   }
