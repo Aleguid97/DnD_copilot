@@ -43,6 +43,7 @@ part 'combat/weapons_section.dart';
 part 'combat/cleric_section.dart';
 part 'combat/druid_section.dart';
 part 'combat/class_resources_section.dart';
+part 'combat/feats_section.dart';
 
 /// Values computed once per build and shared by every combat section.
 class _CombatData {
@@ -127,6 +128,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _concentrationSlotLevel;
   List<String>? _cantripsOverride;
   List<String>? _preparedOverride;
+  // Feats
+  bool _savageAttackerArmed = false;
+  int _battleMedicDie = 8;
 
   /// setState is protected, so the section extensions in combat/ go through this.
   void _update(VoidCallback fn) => setState(fn);
@@ -206,8 +210,12 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
               i.category == ItemCategory.martialRangedWeapon,
         );
 
-        final resources =
-            classResources[widget.character.characterClass.id] ?? [];
+        final resources = <ClassResource>[
+          ...(classResources[widget.character.characterClass.id] ??
+              const <ClassResource>[]),
+          for (final feat in widget.character.featIds)
+            ...(featResources[feat] ?? const <ClassResource>[]),
+        ];
         final availableResources = resources
             .where((r) => r.availableFromLevel <= widget.character.level)
             .toList();
@@ -287,6 +295,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                     ..._buildBarbarianSection(context, d),
                     ..._buildWeaponsSection(context, d),
                     ..._buildUnarmedStrikeSection(context, d),
+                    ..._buildFeatsSection(context, d),
                     ..._buildClericSection(context, d),
                     ..._buildDruidSection(context, d),
                     ..._buildClassResourcesSection(context, d),

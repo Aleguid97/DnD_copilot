@@ -3,7 +3,6 @@
 
 import 'dart:convert';
 
-import 'package:dnd_prova/data/database.dart';
 import 'package:dnd_prova/data/spell_effects_data.dart';
 import 'package:dnd_prova/data/spells_data.dart';
 import 'package:dnd_prova/models/dice_roller.dart';
