@@ -38,8 +38,10 @@ I numeri tra parentesi sono quelli della lista originale.
 
 - ⬜ (13) CombatScreen a schede (Stats, Skills, Attacks, Spells, Class Features),
   decidere il nome della pagina, indicatore munizioni, tooltip sulle risorse.
-- ⬜ (14) Turni/round: durate automatiche (Rage, Concentrazione, Studied Attacks,
-  Starry Form, Wild Shape…).
+- 🟡 (14) Turni/round: ✅ contatore round (parte da solo col tiro di Iniziativa),
+  "Next round" fa scadere Concentrazione (durate dal cap. 7), Rage (chiede se l'hai
+  prolungata, max 10 min), Starry Form, Wrath of the Sea; azzera Savage Attacker.
+  ⬜ Studied Attacks e altri effetti "fino alla fine del prossimo turno".
 - 🟡 (10) Sistema incantesimi: ✅ dati dal cap. 7, slot, Cast con upcast,
   Concentrazione, effetti su nemici/party, Potent Spellcasting. ⬜ tooltip sui chip,
   ⬜ Divine Intervention (+ versione maggiore), ⬜ War God's Blessing,

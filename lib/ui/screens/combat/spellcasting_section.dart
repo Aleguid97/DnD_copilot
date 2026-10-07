@@ -118,8 +118,10 @@ extension _SpellcastingSection on _CombatScreenState {
                 child: ListTile(
                   leading: const Icon(Icons.center_focus_strong),
                   title: Text('Concentrating on $_concentrationSpell'),
-                  subtitle: const Text(
-                    'Casting another Concentration spell ends it.',
+                  subtitle: Text(
+                    _concentrationRoundsLeft != null && _round > 0
+                        ? '$_concentrationRoundsLeft rounds left. Casting another Concentration spell ends it.'
+                        : 'Casting another Concentration spell ends it.',
                   ),
                   trailing: Wrap(
                     spacing: 8,
@@ -365,6 +367,7 @@ extension _SpellcastingSection on _CombatScreenState {
         _concentrationSpell = spellName;
         _concentrationSpellId = spell!.id;
         _concentrationSlotLevel = slot;
+        _concentrationRoundsLeft = concentrationRounds[spell.id];
       });
     }
     _showRoll('Cast $spellName$slotNote$concentrationNote.');

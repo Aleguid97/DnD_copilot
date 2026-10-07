@@ -58,6 +58,7 @@ extension _CoreSections on _CombatScreenState {
                       ' — Evergreen Wild Shape: regain a use if you had none';
                 }
                 _update(() {
+                  if (_round == 0) _round = 1;
                   _lastRollResult =
                       'Initiative: ${result.rolls.first} ${total >= 0 ? "+$total" : total} = ${result.total}$advantageNote';
                 });

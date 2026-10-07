@@ -65,6 +65,7 @@ extension _SpellEffectsEngine on _CombatScreenState {
       _concentrationSpell = null;
       _concentrationSpellId = null;
       _concentrationSlotLevel = null;
+      _concentrationRoundsLeft = null;
       if (reason.isNotEmpty) _lastRollResult = reason;
     });
   }

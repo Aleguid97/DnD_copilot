@@ -18,6 +18,7 @@ import '../../data/spells_data.dart';
 import '../../models/spell.dart';
 import '../../models/spell_effect.dart';
 import '../../data/spell_effects_data.dart';
+import '../../data/spell_durations_data.dart';
 
 import '../../state/database_provider.dart';
 import '../../state/resource_uses_provider.dart';
@@ -44,6 +45,7 @@ part 'combat/cleric_section.dart';
 part 'combat/druid_section.dart';
 part 'combat/class_resources_section.dart';
 part 'combat/feats_section.dart';
+part 'combat/round_tracker_section.dart';
 
 /// Values computed once per build and shared by every combat section.
 class _CombatData {
@@ -128,6 +130,12 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _concentrationSlotLevel;
   List<String>? _cantripsOverride;
   List<String>? _preparedOverride;
+  // Round tracker (0 = not in combat) and timed effects, in rounds left.
+  int _round = 0;
+  int? _concentrationRoundsLeft;
+  int? _rageRoundsLeft;
+  int? _starryRoundsLeft;
+  int? _wrathRoundsLeft;
   // Feats
   bool _savageAttackerArmed = false;
   int _battleMedicDie = 8;
@@ -285,6 +293,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
                   padding: const EdgeInsets.all(16),
                   children: [
                     ..._buildTopStats(context, d),
+                    ..._buildRoundTracker(context, d),
                     ..._buildHpCard(context, d),
                     ..._buildQuickDice(context, d),
                     ..._buildSavingThrows(context, d),

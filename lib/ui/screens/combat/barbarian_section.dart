@@ -56,7 +56,10 @@ extension _BarbarianSection on _CombatScreenState {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _isRaging
-                            ? () => _update(() => _isRaging = false)
+                            ? () => _update(() {
+                                _isRaging = false;
+                                _rageRoundsLeft = null;
+                              })
                             : (remaining > 0
                                   ? () async {
                                       await ref
@@ -72,6 +75,8 @@ extension _BarbarianSection on _CombatScreenState {
                                           ?.firstOrNull;
                                       _update(() {
                                         _isRaging = true;
+                                        // Max 10 minutes.
+                                        _rageRoundsLeft = 100;
                                         _fanaticalFocusUsedThisRage = false;
                                         if (subclass == 'world_tree') {
                                           _tempHpSource = 'Vitality Surge';

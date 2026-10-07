@@ -676,6 +676,7 @@ extension _DruidSection on _CombatScreenState {
                       await _spendWildShape(characterId);
                       _update(() {
                         _wrathOfTheSeaActive = true;
+                        _wrathRoundsLeft = 100; // 10 minutes
                         _lastRollResult =
                             'Wrath of the Sea manifested (10 minutes).';
                       });
@@ -691,6 +692,7 @@ extension _DruidSection on _CombatScreenState {
                         await _spendWildShape(characterId);
                         _update(() {
                           _wrathOfTheSeaActive = true;
+                          _wrathRoundsLeft = 100; // 10 minutes
                           _lastRollResult =
                               'Oceanic Gift: Wrath of the Sea around you and an ally (2 uses).';
                         });
@@ -726,6 +728,7 @@ extension _DruidSection on _CombatScreenState {
             OutlinedButton(
               onPressed: () => _update(() {
                 _wrathOfTheSeaActive = false;
+                _wrathRoundsLeft = null;
                 _lastRollResult = 'Wrath of the Sea dismissed.';
               }),
               child: const Text('Dismiss'),
@@ -809,6 +812,7 @@ extension _DruidSection on _CombatScreenState {
                         await _spendWildShape(characterId);
                         _update(() {
                           _starryConstellation = e.key;
+                          _starryRoundsLeft = 100; // 10 minutes
                           _lastRollResult =
                               'Starry Form: ${e.value} (10 minutes).';
                         });
@@ -869,6 +873,7 @@ extension _DruidSection on _CombatScreenState {
             OutlinedButton(
               onPressed: () => _update(() {
                 _starryConstellation = null;
+                _starryRoundsLeft = null;
                 _lastRollResult = 'Starry Form ended.';
               }),
               child: const Text('End form'),
