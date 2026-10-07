@@ -6,6 +6,7 @@ import 'ability_scores.dart';
 import 'background_ability_choice.dart';
 import 'ability_score_improvement.dart';
 import 'hit_points.dart';
+import 'character_feats.dart';
 
 class Character {
   final int? id; // database row id; null while still in the creation wizard
@@ -81,12 +82,22 @@ class Character {
     bonuses: totalAbilityBonuses,
   );
 
+  /// Origin feats (background feat + the Human's Versatile feat).
+  Set<String> get featIds => featIdsFor(
+    originFeatName: background.originFeatName,
+    raceSelections: raceSelections,
+  );
+
+  bool hasFeat(String featId) => featIds.contains(featId);
+
   int get totalHitPoints {
     final base = hitPoints.totalHitPoints(
       hitDie: characterClass.hitDie,
       targetLevel: level,
       conModifier: conModifier,
     );
-    return base + (race.hpBonusPerLevel * level);
+    // Tough: +2 Hit Points per character level.
+    final toughBonus = hasFeat('tough') ? 2 * level : 0;
+    return base + (race.hpBonusPerLevel * level) + toughBonus;
   }
 }

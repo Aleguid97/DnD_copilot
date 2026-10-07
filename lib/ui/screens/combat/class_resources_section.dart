@@ -78,6 +78,7 @@ extension _ClassResourcesSection on _CombatScreenState {
                         r.id != 'rage' &&
                         r.id != 'warrior_of_the_gods_pool' &&
                         r.id != 'zealous_presence' &&
+                        r.id != 'luck_points' &&
                         !isSpellSlotResource(r.id) &&
                         !druidSectionResourceIds.contains(r.id),
                   )

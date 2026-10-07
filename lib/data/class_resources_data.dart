@@ -2,6 +2,7 @@ import '../models/class_resource.dart';
 import '../models/barbarian_features.dart';
 import '../models/druid_features.dart';
 import 'spell_slots_data.dart';
+import 'xp_table.dart';
 
 final Map<String, List<ClassResource>> classResources = {
   'fighter': [
@@ -144,6 +145,20 @@ final Map<String, List<ClassResource>> classResources = {
       name: 'Cosmic Omen',
       maxUses: (level) => 0, // Wisdom modifier (min 1), see druid_section.dart
       availableFromLevel: 6,
+      fullRecoveryOn: RestType.long,
+    ),
+  ],
+};
+
+/// Resources granted by feats (keyed by feat id); they are added to the class
+/// resources so Short/Long Rests recharge them too.
+final Map<String, List<ClassResource>> featResources = {
+  'lucky': [
+    ClassResource(
+      id: 'luck_points',
+      name: 'Luck Points (Lucky)',
+      maxUses: proficiencyBonusForLevel,
+      availableFromLevel: 1,
       fullRecoveryOn: RestType.long,
     ),
   ],

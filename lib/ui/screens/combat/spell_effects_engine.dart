@@ -133,7 +133,12 @@ extension _SpellEffectsEngine on _CombatScreenState {
         final supreme = life && c.level >= 17;
         final bonus =
             (effect.addModifier ? rules.abilityMod : 0) + flat + disciple;
-        final roll = dice == null ? null : rollDamage(dice, bonus);
+        // Healer feat (Healing Rerolls): a 1 on a healing die is rerolled once.
+        final roll = dice == null
+            ? null
+            : (c.hasFeat('healer')
+                  ? rollDamageWithReroll(dice, bonus, rerollThreshold: 1)
+                  : rollDamage(dice, bonus));
         final total = roll == null
             ? flat + disciple
             : (supreme ? maxHealingRoll(dice!) + bonus : roll.total);

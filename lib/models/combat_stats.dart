@@ -240,12 +240,13 @@ class CombatStats {
     final attackBonus = strMod + proficiencyBonus;
 
     String dice;
-    if (!_hasUnarmedFightingStyle) {
-      dice = '1d1'; // flat 1 damage before modifier (no Unarmed Fighting style)
-    } else if (!_hasWeaponOrShieldEquipped) {
-      dice = '1d6'; // Unarmed Fighting, both hands free
+    if (_hasUnarmedFightingStyle) {
+      // Unarmed Fighting: 1d6 with both hands free, 1d4 holding something.
+      dice = _hasWeaponOrShieldEquipped ? '1d4' : '1d6';
+    } else if (character.hasFeat('tavern_brawler')) {
+      dice = '1d4'; // Tavern Brawler: Enhanced Unarmed Strike (1d4 + Str)
     } else {
-      dice = '1d4'; // Unarmed Fighting, holding a weapon or shield
+      dice = '1d1'; // flat 1 damage before modifier
     }
 
     return WeaponAttackInfo(

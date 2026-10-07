@@ -179,7 +179,7 @@ extension _WeaponsSection on _CombatScreenState {
                               ? null
                               : () async {
                                   final isCrit = _lastAttackWasCritical;
-                                  final baseResult = usesGwf
+                                  DiceRollResult rollBase() => usesGwf
                                       ? rollDamageWithReroll(
                                           info.damageDice,
                                           0,
@@ -190,6 +190,18 @@ extension _WeaponsSection on _CombatScreenState {
                                           0,
                                           isCritical: isCrit,
                                         );
+                                  var baseResult = rollBase();
+                                  // Savage Attacker: roll the weapon's damage
+                                  // dice twice and use either roll (the higher).
+                                  var savageNote = '';
+                                  if (_savageAttackerArmed) {
+                                    final second = rollBase();
+                                    final keptSecond =
+                                        second.total > baseResult.total;
+                                    savageNote =
+                                        ' [Savage Attacker: ${baseResult.total} / ${second.total}, kept ${keptSecond ? second.total : baseResult.total}]';
+                                    if (keptSecond) baseResult = second;
+                                  }
 
                                   final parts = <String>[
                                     '${baseResult.rolls.join('+')} (dice)',
@@ -303,8 +315,9 @@ extension _WeaponsSection on _CombatScreenState {
 
                                   _update(() {
                                     _lastRollResult =
-                                        '${w.name} — Damage: ${parts.join(' ')} = $grandTotal ${info.damageType}$targetNote';
+                                        '${w.name} — Damage: ${parts.join(' ')} = $grandTotal ${info.damageType}$savageNote$targetNote';
                                     _lastAttackWasCritical = false;
+                                    _savageAttackerArmed = false;
                                   });
                                 },
 
@@ -666,14 +679,29 @@ extension _WeaponsSection on _CombatScreenState {
                     child: OutlinedButton(
                       onPressed: () {
                         final isCrit = _lastAttackWasCritical;
-                        final result = rollDamage(
-                          info.damageDice,
-                          info.damageModifier,
-                          isCritical: isCrit,
+                        // Tavern Brawler: a 1 on an Unarmed Strike damage die
+                        // is rerolled once.
+                        final tavern = widget.character.hasFeat(
+                          'tavern_brawler',
                         );
+                        final result = tavern
+                            ? rollDamageWithReroll(
+                                info.damageDice,
+                                info.damageModifier,
+                                rerollThreshold: 1,
+                                isCritical: isCrit,
+                              )
+                            : rollDamage(
+                                info.damageDice,
+                                info.damageModifier,
+                                isCritical: isCrit,
+                              );
+                        final modText = info.damageModifier == 0
+                            ? ''
+                            : ' ${info.damageModifier >= 0 ? "+" : ""}${info.damageModifier}';
                         _update(() {
                           _lastRollResult =
-                              'Unarmed Strike — Damage: ${result.total} ${info.damageType}';
+                              'Unarmed Strike — Damage: ${result.rolls.join('+')}$modText = ${result.total} ${info.damageType}${tavern ? " (Tavern Brawler: 1s rerolled)" : ""}';
                           _lastAttackWasCritical = false;
                         });
                       },
