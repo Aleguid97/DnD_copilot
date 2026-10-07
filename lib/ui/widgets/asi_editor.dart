@@ -34,17 +34,21 @@ class AsiEditor extends StatelessWidget {
               'Ability Score Improvement #${index + 1}',
               style: Theme.of(context).textTheme.titleSmall,
             ),
-            RadioListTile<AsiAllocationMode>(
-              title: const Text('+2 to one ability'),
-              value: AsiAllocationMode.twoInOne,
+            RadioGroup<AsiAllocationMode>(
               groupValue: asi.mode,
               onChanged: (mode) => onModeChanged(index, mode!),
-            ),
-            RadioListTile<AsiAllocationMode>(
-              title: const Text('+1 to two abilities'),
-              value: AsiAllocationMode.onePlusOne,
-              groupValue: asi.mode,
-              onChanged: (mode) => onModeChanged(index, mode!),
+              child: const Column(
+                children: [
+                  RadioListTile<AsiAllocationMode>(
+                    title: Text('+2 to one ability'),
+                    value: AsiAllocationMode.twoInOne,
+                  ),
+                  RadioListTile<AsiAllocationMode>(
+                    title: Text('+1 to two abilities'),
+                    value: AsiAllocationMode.onePlusOne,
+                  ),
+                ],
+              ),
             ),
             if (asi.mode == AsiAllocationMode.twoInOne)
               Wrap(

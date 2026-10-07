@@ -22,17 +22,24 @@ Character testCharacter(
   String classId,
   int level, {
   Map<String, Set<String>> selections = const {},
+  String? backgroundId,
+  String? raceId,
+  Map<String, Set<String>> raceSelections = const {},
 }) {
   return Character(
     id: 1,
     basics: const CharacterBasics(name: 'Test'),
-    race: allRaces.first,
-    raceSelections: const {},
+    race: raceId == null
+        ? allRaces.first
+        : allRaces.firstWhere((r) => r.id == raceId),
+    raceSelections: raceSelections,
     characterClass: allClasses.firstWhere((c) => c.id == classId),
     level: level,
     classSelections: selections,
     asiChoices: const [],
-    background: allBackgrounds.first,
+    background: backgroundId == null
+        ? allBackgrounds.first
+        : allBackgrounds.firstWhere((b) => b.id == backgroundId),
     backgroundAbilityChoice: const BackgroundAbilityChoice(),
     backgroundSelections: const {},
     abilityScores: AbilityScores(

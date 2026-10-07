@@ -5,24 +5,25 @@ I numeri tra parentesi sono quelli della lista originale.
 
 ## Fase A – Correzioni veloci (nessuna pagina necessaria)
 
-- ⬜ (5) Mostrare la Velocità dei nemici nella schermata Enemies (Slow, Hamstring Blow, Branches of the Tree).
+- ✅ (5) Velocità dei nemici nella schermata Enemies (in rosso se ridotta, reset a 30 ft).
 - 🟡 (15) Pulizia tecnica:
   - ✅ import inutilizzato `currency.dart` in `character_sheet_body.dart`
-  - ⬜ `RadioListTile` → `RadioGroup` (10 usi deprecati)
-  - ⬜ rimuovere `macos/test/` (test fuori posto: i test veri sono in `test/`)
-  - ⬜ `devtools_options.yaml` nel `.gitignore`
+  - ✅ `RadioListTile` → `RadioGroup`
+  - ✅ rimosso `macos/test/` (il test dei punteggi è stato spostato in `test/` e ora gira)
+  - ✅ `devtools_options.yaml` nel `.gitignore`
+  - ✅ codice morto in `combat_stats.dart`
   - ⬜ decidere sui `*.g.dart` (oggi 16 versionati: consiglio di tenerli, così l'app compila senza `build_runner`)
   - ⬜ aggiornare le dipendenze (riverpod 2→3, drift…): da fare in un passo dedicato, con test
 - ✅ (4) Relentless Rage: ora usa il tiro salvezza su Costituzione reale.
 
 ## Fase B – Completare ciò che esiste (📖 pagine per classe/capitolo)
 
-- ⬜📖 (2)+(7) **Talenti** – capitolo 5 (Feats): Origin Feats e Epic Boons insieme.
-  - Tough (+2 PF/livello nei PF totali), Tavern Brawler sull'Unarmed Strike,
-    Lucky (punti fortuna = bonus di competenza), Healer (1d6 + 2×competenza col
-    Kit del Guaritore), Savage Attacker (tira due volte il danno, tieni il migliore).
-  - Umano/Versatile: applicare davvero il talento scelto.
-  - Epic Boon al 19°: 10 talenti dedicati, alcuni portano una caratteristica a 30.
+- 🟡 (2) **Talenti Origine** (fatti dall'altra chat sul testo ufficiale, verificati e uniti):
+  - ✅ Tough, Tavern Brawler, Lucky, Healer (Battle Medic + rilancio degli 1),
+    Savage Attacker, Alert; valgono sia dal background sia da Versatile (Umano).
+  - ⬜📖 Magic Initiate, Skilled, Crafter, Musician: effetti ancora da collegare.
+- ⬜📖 (7) **Epic Boon** al 19° – capitolo 5 (Feats): 10 talenti dedicati, alcuni
+  portano una caratteristica a 30.
 - ⬜📖 (6) **Chierico** – capitolo 3 (Cleric): usi di Channel Divinity per livello,
   trucchetti/preparati per livello, incantesimi di dominio, conferma della tabella slot.
 - ⬜📖 (8) **Guerriero** – capitolo 3 (Fighter): Battle Master (dadi di superiorità +

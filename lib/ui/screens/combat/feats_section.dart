@@ -77,7 +77,8 @@ extension _FeatsSection on _CombatScreenState {
       [
         OutlinedButton(
           onPressed: remaining > 0
-              ? () => spend('Advantage on your d20 Test (keep the higher)', true)
+              ? () =>
+                    spend('Advantage on your d20 Test (keep the higher)', true)
               : null,
           child: const Text('Advantage (spend 1)'),
         ),

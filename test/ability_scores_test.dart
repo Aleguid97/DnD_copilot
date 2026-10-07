@@ -27,19 +27,22 @@ void main() {
       expect(scores.pointsRemaining, 26);
     });
 
-    test('il costo aumenta man mano che il punteggio cresce (14->15 costa 2)', () {
-      var scores = AbilityScores();
-      // Portiamo forza da 8 a 14 (costo totale 7), poi da 14 a 15 (costo 9, quindi +2)
-      for (var i = 0; i < 6; i++) {
-        scores = scores.increase(Ability.strength);
-      }
-      expect(scores.baseScores[Ability.strength], 14);
-      expect(scores.pointsSpent, 7);
+    test(
+      'il costo aumenta man mano che il punteggio cresce (14->15 costa 2)',
+      () {
+        var scores = AbilityScores();
+        // Portiamo forza da 8 a 14 (costo totale 7), poi da 14 a 15 (costo 9, quindi +2)
+        for (var i = 0; i < 6; i++) {
+          scores = scores.increase(Ability.strength);
+        }
+        expect(scores.baseScores[Ability.strength], 14);
+        expect(scores.pointsSpent, 7);
 
-      scores = scores.increase(Ability.strength); // 14 -> 15
-      expect(scores.baseScores[Ability.strength], 15);
-      expect(scores.pointsSpent, 9);
-    });
+        scores = scores.increase(Ability.strength); // 14 -> 15
+        expect(scores.baseScores[Ability.strength], 15);
+        expect(scores.pointsSpent, 9);
+      },
+    );
 
     test('non si può superare il budget di 27 punti', () {
       var scores = AbilityScores();

@@ -73,7 +73,7 @@ class CombatStats {
           ? dexModifier
           : (dexModifier > cap ? cap : dexModifier).clamp(
               cap == 0 ? 0 : -20,
-              cap ?? 20,
+              cap,
             );
       total = armor.baseAC! + (cap == 0 ? 0 : dexBonus);
       parts.add('${armor.name} (${armor.baseAC})');
@@ -114,9 +114,8 @@ class CombatStats {
   int get initiative => dexModifier;
 
   int totalInitiative(int proficiencyBonus) {
-    final alertBonus = character.background.originFeatName == 'Alert'
-        ? proficiencyBonus
-        : 0;
+    // Alert (from the background or the Human's Versatile feat).
+    final alertBonus = character.hasFeat('alert') ? proficiencyBonus : 0;
     return dexModifier + alertBonus;
   }
 

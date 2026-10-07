@@ -183,18 +183,23 @@ class ClassSelectionScreen extends ConsumerWidget {
                                         context,
                                       ).textTheme.titleSmall,
                                     ),
-                                    ...charClass.startingEquipmentOptions.map((
-                                      option,
-                                    ) {
-                                      return RadioListTile<String>(
-                                        title: Text(option.label),
-                                        value: option.id,
-                                        groupValue:
-                                            state.startingEquipmentOptionId,
-                                        onChanged: (id) => notifier
-                                            .setStartingEquipmentOption(id!),
-                                      );
-                                    }),
+                                    RadioGroup<String>(
+                                      groupValue:
+                                          state.startingEquipmentOptionId,
+                                      onChanged: (id) => notifier
+                                          .setStartingEquipmentOption(id!),
+                                      child: Column(
+                                        children: [
+                                          for (final option
+                                              in charClass
+                                                  .startingEquipmentOptions)
+                                            RadioListTile<String>(
+                                              title: Text(option.label),
+                                              value: option.id,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),

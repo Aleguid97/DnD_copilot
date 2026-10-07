@@ -159,8 +159,37 @@ class _EnemiesScreenState extends ConsumerState<EnemiesScreen> {
                                 ),
                               ],
                             ),
-                            Text(
-                              'AC ${enemy.armorClass} • HP ${enemy.currentHp} / ${enemy.maxHp}',
+                            Row(
+                              children: [
+                                Text(
+                                  'AC ${enemy.armorClass} • HP ${enemy.currentHp} / ${enemy.maxHp} • ',
+                                ),
+                                // Speed changes from Slow, Hamstring Blow,
+                                // Branches of the Tree... (30 ft by default).
+                                Text(
+                                  'Speed ${enemy.speed} ft',
+                                  style: enemy.speed < 30
+                                      ? TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
+                                          fontWeight: FontWeight.bold,
+                                        )
+                                      : null,
+                                ),
+                                if (enemy.speed != 30)
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    icon: const Icon(
+                                      Icons.restart_alt,
+                                      size: 18,
+                                    ),
+                                    tooltip: 'Reset Speed to 30 ft',
+                                    onPressed: () => ref
+                                        .read(appDatabaseProvider)
+                                        .updateEnemySpeed(enemy.id, 30),
+                                  ),
+                              ],
                             ),
                             if (conditions.isNotEmpty)
                               Wrap(

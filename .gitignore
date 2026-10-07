@@ -46,3 +46,6 @@ app.*.map.json
 
 # Rulebook extracts (copyrighted) must never be committed
 *.pdf
+
+# Flutter DevTools local settings
+devtools_options.yaml

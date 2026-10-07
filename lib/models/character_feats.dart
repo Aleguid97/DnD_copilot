@@ -1,6 +1,6 @@
-/// Origin feats a character has, as lowercase ids ('tough', 'lucky',
-/// 'magic_initiate_cleric', ...). Sources: the background's origin feat and,
-/// for Humans, the extra feat chosen with Versatile.
+// Origin feats a character has, as lowercase ids ('tough', 'lucky',
+// 'magic_initiate_cleric', ...). Sources: the background's origin feat and,
+// for Humans, the extra feat chosen with Versatile.
 
 /// 'Magic Initiate (Cleric)' -> 'magic_initiate_cleric', 'Tough' -> 'tough'.
 String featIdFromName(String name) => name

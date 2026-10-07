@@ -98,17 +98,21 @@ class BackgroundSelectionScreen extends ConsumerWidget {
                                 'Distribuisci i bonus di caratteristica',
                                 style: Theme.of(context).textTheme.titleSmall,
                               ),
-                              RadioListTile<AllocationMode>(
-                                title: const Text('+1 a tutte e tre'),
-                                value: AllocationMode.onePlusOnePlusOne,
+                              RadioGroup<AllocationMode>(
                                 groupValue: state.abilityChoice.mode,
                                 onChanged: (mode) => notifier.setMode(mode!),
-                              ),
-                              RadioListTile<AllocationMode>(
-                                title: const Text('+2 a una, +1 a un\'altra'),
-                                value: AllocationMode.twoPlusOne,
-                                groupValue: state.abilityChoice.mode,
-                                onChanged: (mode) => notifier.setMode(mode!),
+                                child: const Column(
+                                  children: [
+                                    RadioListTile<AllocationMode>(
+                                      title: Text('+1 a tutte e tre'),
+                                      value: AllocationMode.onePlusOnePlusOne,
+                                    ),
+                                    RadioListTile<AllocationMode>(
+                                      title: Text('+2 a una, +1 a un\'altra'),
+                                      value: AllocationMode.twoPlusOne,
+                                    ),
+                                  ],
+                                ),
                               ),
                               if (state.abilityChoice.mode ==
                                   AllocationMode.twoPlusOne) ...[
