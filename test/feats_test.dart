@@ -48,10 +48,18 @@ void main() {
       tester,
       testCharacter('fighter', 5, backgroundId: 'merchant'),
     );
-    expect(find.text('Feats'), findsOneWidget);
-    expect(textContaining('Luck Points: 3/3'), findsOneWidget);
+    await expectInTabs(tester, find.text('Feats'), findsOneWidget);
+    await expectInTabs(
+      tester,
+      textContaining('Luck Points: 3/3'),
+      findsOneWidget,
+    );
     await tapAndSettle(tester, find.text('Advantage (spend 1)'));
-    expect(textContaining('Luck Points: 2/3'), findsOneWidget);
+    await expectInTabs(
+      tester,
+      textContaining('Luck Points: 2/3'),
+      findsOneWidget,
+    );
     await disposeCombatScreen(tester, db);
   });
 
@@ -63,11 +71,12 @@ void main() {
       testCharacter('fighter', 1, backgroundId: 'soldier'),
     );
     await tapAndSettle(tester, find.text('Arm for the next weapon hit'));
-    expect(
+    await expectInTabs(
+      tester,
       textContaining('Armed: next weapon damage rolls twice'),
       findsOneWidget,
     );
-    expect(find.byType(OutlinedButton), findsWidgets);
+    await expectInTabs(tester, find.byType(OutlinedButton), findsWidgets);
     await disposeCombatScreen(tester, db);
   });
 }

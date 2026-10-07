@@ -249,69 +249,110 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
           domain: domain,
         );
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Combat'),
-            actions: [
-              if (characterId != null)
-                IconButton(
-                  icon: const Icon(Icons.groups),
-                  tooltip: 'Enemies',
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => EnemiesScreen(characterId: characterId),
-                    ),
-                  ),
-                ),
-              if (characterId != null)
-                IconButton(
-                  icon: const Icon(Icons.diversity_3),
-                  tooltip: 'Party',
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => PartyScreen(characterId: characterId),
-                    ),
-                  ),
-                ),
+        // Tabs: (label, widgets). Spells only for classes with spellcasting.
+        final tabs = <(String, List<Widget>)>[
+          (
+            'Overview',
+            [
+              ..._buildTopStats(context, d),
+              ..._buildRoundTracker(context, d),
+              ..._buildHpCard(context, d),
+              ..._buildQuickDice(context, d),
             ],
           ),
-          body: Column(
-            children: [
-              if (_lastRollResult != null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Text(
-                    _lastRollResult!,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
+          (
+            'Checks',
+            [
+              ..._buildSavingThrows(context, d),
+              ..._buildSkillChecks(context, d),
+              ..._buildFighterSection(context, d),
+            ],
+          ),
+          (
+            'Attacks',
+            [
+              ..._buildWeaponsSection(context, d),
+              ..._buildUnarmedStrikeSection(context, d),
+              ..._buildFeatsSection(context, d),
+            ],
+          ),
+          if (hasSpellcastingSupport(widget.character.characterClass.id))
+            ('Spells', _buildSpellcastingSection(context, d)),
+          (
+            'Class',
+            [
+              ..._buildBarbarianSection(context, d),
+              ..._buildClericSection(context, d),
+              ..._buildDruidSection(context, d),
+              ..._buildClassResourcesSection(context, d),
+            ],
+          ),
+        ];
+
+        return DefaultTabController(
+          length: tabs.length,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Combat'),
+              actions: [
+                if (characterId != null)
+                  IconButton(
+                    icon: const Icon(Icons.groups),
+                    tooltip: 'Enemies',
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => EnemiesScreen(characterId: characterId),
+                      ),
+                    ),
+                  ),
+                if (characterId != null)
+                  IconButton(
+                    icon: const Icon(Icons.diversity_3),
+                    tooltip: 'Party',
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PartyScreen(characterId: characterId),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            body: Column(
+              children: [
+                if (_lastRollResult != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Text(
+                      _lastRollResult!,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                // The target stays visible whatever tab is open.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Column(children: _buildTargetSelector(context, d)),
+                ),
+                TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  tabs: [for (final t in tabs) Tab(text: t.$1)],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      for (final t in tabs)
+                        ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: t.$2,
+                        ),
+                    ],
                   ),
                 ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    ..._buildTopStats(context, d),
-                    ..._buildRoundTracker(context, d),
-                    ..._buildHpCard(context, d),
-                    ..._buildQuickDice(context, d),
-                    ..._buildSavingThrows(context, d),
-                    ..._buildSkillChecks(context, d),
-                    ..._buildFighterSection(context, d),
-                    ..._buildTargetSelector(context, d),
-                    ..._buildSpellcastingSection(context, d),
-                    ..._buildBarbarianSection(context, d),
-                    ..._buildWeaponsSection(context, d),
-                    ..._buildUnarmedStrikeSection(context, d),
-                    ..._buildFeatsSection(context, d),
-                    ..._buildClericSection(context, d),
-                    ..._buildDruidSection(context, d),
-                    ..._buildClassResourcesSection(context, d),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

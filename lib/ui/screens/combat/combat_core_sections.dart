@@ -494,6 +494,7 @@ extension _CoreSections on _CombatScreenState {
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ExpansionTile(
         key: PageStorageKey('combat_group_$title'),
+        initiallyExpanded: true,
         title: Text(title, style: Theme.of(context).textTheme.titleMedium),
         shape: const Border(),
         collapsedShape: const Border(),

@@ -36,8 +36,10 @@ I numeri tra parentesi sono quelli della lista originale.
 
 ## Fase C – Struttura prima di aggiungere 7 classi
 
-- ⬜ (13) CombatScreen a schede (Stats, Skills, Attacks, Spells, Class Features),
-  decidere il nome della pagina, indicatore munizioni, tooltip sulle risorse.
+- 🟡 (13) ✅ CombatScreen a schede: Overview · Checks · Attacks · Spells (solo
+  incantatori) · Class; il bersaglio resta sempre visibile sopra le schede.
+  ⬜ nome della pagina (per ora "Combat"), ⬜ indicatore munizioni,
+  ⬜ tooltip sulle risorse, ⬜ CharacterSheetBody.
 - 🟡 (14) Turni/round: ✅ contatore round (parte da solo col tiro di Iniziativa),
   "Next round" fa scadere Concentrazione (durate dal cap. 7), Rage (chiede se l'hai
   prolungata, max 10 min), Starry Form, Wrath of the Sea; azzera Savage Attacker.

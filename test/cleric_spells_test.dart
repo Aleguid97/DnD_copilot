@@ -63,8 +63,8 @@ void main() {
           },
         ),
       );
-      expect(find.text('Spellcasting'), findsOneWidget);
-      expect(find.text('Cantrips (3/3)'), findsOneWidget);
+      await expectInTabs(tester, find.text('Spellcasting'), findsOneWidget);
+      await expectInTabs(tester, find.text('Cantrips (3/3)'), findsOneWidget);
       await addAndTargetGoblin(tester, db);
 
       await tapAndSettle(
@@ -104,7 +104,7 @@ void main() {
         find.widgetWithText(ActionChip, 'Toll the Dead'),
       );
       await tapAndSettle(tester, find.text('Apply').last);
-      expect(textContaining('= '), findsWidgets);
+      await expectInTabs(tester, textContaining('= '), findsWidgets);
       final hp = (await reloadGoblin(tester, db)).currentHp;
       expect(90 - hp, inInclusiveRange(1, 12));
       await disposeCombatScreen(tester, db);
@@ -124,7 +124,11 @@ void main() {
       await addAndTargetGoblin(tester, db);
       await tapAndSettle(tester, castButton('Spirit Guardians'));
       await tapAndSettle(tester, find.text('Level 3 (2/2 left)'));
-      expect(find.text('Spirit Guardians: DC 13 Wisdom save'), findsOneWidget);
+      await expectInTabs(
+        tester,
+        find.text('Spirit Guardians: DC 13 Wisdom save'),
+        findsOneWidget,
+      );
       await tapAndSettle(tester, find.text('Apply').last);
       final first = (await reloadGoblin(tester, db)).currentHp;
       expect(100 - first, inInclusiveRange(3, 24));
@@ -151,8 +155,16 @@ void main() {
       );
       await tapAndSettle(tester, castButton('Cure Wounds'));
       await tapAndSettle(tester, find.text('Level 2 (2/2 left)'));
-      expect(textContaining('Disciple of Life +4'), findsWidgets);
-      expect(textContaining('L2 (upcast) Cure Wounds: '), findsWidgets);
+      await expectInTabs(
+        tester,
+        textContaining('Disciple of Life +4'),
+        findsWidgets,
+      );
+      await expectInTabs(
+        tester,
+        textContaining('L2 (upcast) Cure Wounds: '),
+        findsWidgets,
+      );
       await disposeCombatScreen(tester, db);
     });
   });

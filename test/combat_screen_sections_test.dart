@@ -65,10 +65,11 @@ void main() {
       expect(tester.takeException(), isNull);
       for (final title in _expectedSections(entry.value)) {
         expect(
-          find.text(title),
-          findsOneWidget,
+          await findInAnyTab(tester, find.text(title)),
+          isTrue,
           reason: '"$title" missing for ${entry.key}',
         );
+        expect(tester.takeException(), isNull, reason: title);
       }
 
       await disposeCombatScreen(tester, db);

@@ -89,8 +89,12 @@ void main() {
 
       final goblin = await reloadGoblin(tester, db);
       expect(goblin.currentHp, lessThan(100));
-      expect(textContaining('ranged spell attack'), findsWidgets);
-      expect(textContaining('Fire'), findsWidgets);
+      await expectInTabs(
+        tester,
+        textContaining('ranged spell attack'),
+        findsWidgets,
+      );
+      await expectInTabs(tester, textContaining('Fire'), findsWidgets);
       await disposeCombatScreen(tester, db);
     });
 
@@ -112,13 +116,21 @@ void main() {
       await tapAndSettle(tester, castButton('Moonbeam'));
       await tapAndSettle(tester, find.text('Level 3 (2/2 left)'));
       // Target preselected as "Failed".
-      expect(find.text('Moonbeam: DC 13 Constitution save'), findsOneWidget);
+      await expectInTabs(
+        tester,
+        find.text('Moonbeam: DC 13 Constitution save'),
+        findsOneWidget,
+      );
       await tapAndSettle(tester, find.text('Apply').last);
 
       final afterFirst = (await reloadGoblin(tester, db)).currentHp;
       // 3d10 at slot 3: between 3 and 30 damage.
       expect(100 - afterFirst, inInclusiveRange(3, 30));
-      expect(find.text('Concentrating on Moonbeam'), findsOneWidget);
+      await expectInTabs(
+        tester,
+        find.text('Concentrating on Moonbeam'),
+        findsOneWidget,
+      );
 
       await tapAndSettle(tester, find.text('Repeat effect'));
       await tapAndSettle(tester, find.text('Saved'));
@@ -184,7 +196,7 @@ void main() {
         tester,
         find.widgetWithText(ActionChip, 'Starry Wisp'),
       );
-      expect(textContaining('(Advantage '), findsWidgets);
+      await expectInTabs(tester, textContaining('(Advantage '), findsWidgets);
       await disposeCombatScreen(tester, db);
     });
 
@@ -202,8 +214,8 @@ void main() {
       await tapAndSettle(tester, castButton('Cure Wounds'));
       await tapAndSettle(tester, find.text('Level 1 (2/2 left)'));
 
-      expect(textContaining('Cure Wounds: '), findsWidgets);
-      expect(textContaining('→ you: '), findsWidgets);
+      await expectInTabs(tester, textContaining('Cure Wounds: '), findsWidgets);
+      await expectInTabs(tester, textContaining('→ you: '), findsWidgets);
       await disposeCombatScreen(tester, db);
     });
   });

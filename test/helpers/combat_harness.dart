@@ -81,8 +81,10 @@ Future<void> settleDatabase(WidgetTester tester) async {
   }
 }
 
-/// Taps the first widget matching [finder] and waits for database writes.
+/// Taps the first widget matching [finder] (switching Combat tab if it is on
+/// another one) and waits for database writes.
 Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
+  if (finder.evaluate().isEmpty) await findInAnyTab(tester, finder);
   await tester.tap(finder.first);
   await settleDatabase(tester);
 }
@@ -136,3 +138,30 @@ Future<void> addAndTargetGoblin(
 
 Future<CombatEnemy> reloadGoblin(WidgetTester tester, AppDatabase db) =>
     runDb(tester, () => db.select(db.combatEnemies).getSingle());
+
+/// Opens a tab of the Combat screen (Overview, Checks, Attacks, Spells, Class).
+Future<void> openTab(WidgetTester tester, String label) async {
+  await tester.tap(find.widgetWithText(Tab, label));
+  await tester.pumpAndSettle(const Duration(milliseconds: 100));
+  await settleDatabase(tester);
+}
+
+/// Whether [finder] matches something in any tab; leaves that tab open.
+Future<bool> findInAnyTab(WidgetTester tester, Finder finder) async {
+  for (final tab in tester.widgetList<Tab>(find.byType(Tab)).toList()) {
+    await openTab(tester, tab.text!);
+    if (finder.evaluate().isNotEmpty) return true;
+  }
+  return false;
+}
+
+/// Like `expect(finder, matcher)` but first opens the tab that shows it.
+Future<void> expectInTabs(
+  WidgetTester tester,
+  Finder finder,
+  Matcher matcher, {
+  String? reason,
+}) async {
+  if (finder.evaluate().isEmpty) await findInAnyTab(tester, finder);
+  expect(finder, matcher, reason: reason);
+}

@@ -28,7 +28,8 @@ Il web non è supportato (SQLite nativo via `dart:ffi`).
 ### Combat screen
 
 `lib/ui/screens/combat_screen.dart` contiene solo stato, `build()` e il
-calcolo dei dati condivisi (`_CombatData`). Ogni sezione vive in un file
+calcolo dei dati condivisi (`_CombatData`). `build()` distribuisce le sezioni in
+schede (Overview, Checks, Attacks, Spells, Class); il bersaglio sta sopra le schede. Ogni sezione vive in un file
 `part` sotto `lib/ui/screens/combat/` come extension su `_CombatScreenState`
 che restituisce `List<Widget>`:
 
@@ -44,6 +45,8 @@ che restituisce `List<Widget>`:
 | `cleric_section.dart` | Chierico e domini |
 | `druid_section.dart` | Druido: slot incantesimo, Wild Shape, Elemental Fury, cerchi |
 | `class_resources_section.dart` | Tracker generico risorse di classe |
+| `round_tracker_section.dart` | Round di combattimento e durate (Concentrazione, Rage, Starry Form…) |
+| `feats_section.dart` | Talenti Origine con pulsanti (Lucky, Healer, Savage Attacker, Tavern Brawler) |
 
 Regole:
 - Nuova classe → nuovo file `combat/<classe>_section.dart` + `part` + chiamata in `build()`.
@@ -66,7 +69,9 @@ Regole:
   tolte quando finisce la Concentrazione. Faerie Fire/Guiding Bolt danno
   Vantaggio anche agli attacchi con le armi.
 - Test: `seedDiceRoller(seed)` rende i dadi deterministici; le scritte sul DB nei
-  widget test vanno fatte nel clock del test (vedi `_db` in `test/spell_effects_test.dart`).
+  widget test vanno fatte nel clock del test (`runDb` in `test/helpers/combat_harness.dart`).
+  Con le schede: `tapAndSettle` cambia scheda da solo se il pulsante non è visibile,
+  `expectInTabs` fa lo stesso per i controlli positivi, `openTab` apre una scheda.
 
 ## Convenzioni di lavoro
 
