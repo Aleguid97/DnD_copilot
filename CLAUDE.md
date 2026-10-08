@@ -94,8 +94,8 @@ Regole:
   Incantesimi: lista di 117 (cap. 3), trucchetti/preparati per livello, incantesimi di
   dominio sempre preparati. Risorse di sottoclasse che dipendono dalla Saggezza in
   `subclassResourcesFor` (`class_resources_data.dart`).
-  **Da verificare**: privilegi del War Domain (pagina non inclusa nell'estratto: dati
-  forniti dall'utente).
+  War Domain verificato (pag. 77): Avatar of Battle dimezza i danni B/P/S nel
+  riquadro PF (come Rage e Full of Stars, vedi `_physicalResistance`).
 - **Barbaro**: 1–20, Berserker/Wild Heart/World Tree/Zealot con meccaniche in Combat.
 - **Druido**: 1–20, Land/Moon/Sea/Stars con meccaniche in Combat; slot incantesimo
   tracciati; Wild Shape a contatore (forme solo come nomi: le statistiche delle

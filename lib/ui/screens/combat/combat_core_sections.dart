@@ -222,10 +222,22 @@ extension _CoreSections on _CombatScreenState {
                             onPressed: characterId == null
                                 ? null
                                 : () async {
-                                    final delta = int.tryParse(
+                                    var delta = int.tryParse(
                                       _hpAdjustController.text,
                                     );
                                     if (delta == null) return;
+                                    // Resistance halves the damage (round
+                                    // down) before Temporary HP absorb it.
+                                    final resisted =
+                                        delta < 0 &&
+                                        _physicalDamage &&
+                                        _physicalResistance.isNotEmpty;
+                                    if (resisted) delta = -((-delta) ~/ 2);
+                                    if (resisted) {
+                                      _showRoll(
+                                        'Resistance (${_physicalResistance.join(', ')}): damage halved to ${-delta}.',
+                                      );
+                                    }
                                     if (delta < 0 && _tempHp > 0) {
                                       final absorbed = (-delta).clamp(
                                         0,
@@ -255,6 +267,19 @@ extension _CoreSections on _CombatScreenState {
                           ),
                         ],
                       ),
+                      if (_physicalResistance.isNotEmpty)
+                        CheckboxListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          value: _physicalDamage,
+                          onChanged: (v) =>
+                              _update(() => _physicalDamage = v ?? false),
+                          title: Text(
+                            'Bludgeoning/Piercing/Slashing damage (halved: '
+                            '${_physicalResistance.join(', ')})',
+                          ),
+                        ),
                       if (potionRow != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
@@ -571,6 +596,24 @@ extension _CoreSections on _CombatScreenState {
           );
         },
       ),
+    ];
+  }
+
+  /// Active sources of Resistance to Bludgeoning, Piercing and Slashing.
+  List<String> get _physicalResistance {
+    final c = widget.character;
+    final subclass = c.classSelections['${c.characterClass.id}_subclass'];
+    return [
+      if (_isRaging) 'Rage',
+      if (c.characterClass.id == 'cleric' &&
+          (subclass?.contains('war') ?? false) &&
+          c.level >= 17)
+        'Avatar of Battle',
+      if (c.characterClass.id == 'druid' &&
+          (subclass?.contains('stars') ?? false) &&
+          c.level >= 14 &&
+          _starryConstellation != null)
+        'Full of Stars',
     ];
   }
 }

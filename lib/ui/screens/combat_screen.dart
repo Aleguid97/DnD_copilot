@@ -141,6 +141,8 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _duplicityRoundsLeft;
   int? _coronaRoundsLeft;
   bool _divineStrikeUsed = false;
+  // HP card: the damage being applied is Bludgeoning/Piercing/Slashing.
+  bool _physicalDamage = true;
   // Feats
   bool _savageAttackerArmed = false;
   int _battleMedicDie = 8;

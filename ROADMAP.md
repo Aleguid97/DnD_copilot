@@ -24,13 +24,14 @@ I numeri tra parentesi sono quelli della lista originale.
   - ⬜📖 Magic Initiate, Skilled, Crafter, Musician: effetti ancora da collegare.
 - ⬜📖 (7) **Epic Boon** al 19° – capitolo 5 (Feats): 10 talenti dedicati, alcuni
   portano una caratteristica a 30.
-- 🟡 (6) **Chierico** – capitolo 3 verificato: ✅ trucchetti/preparati per livello,
+- ✅ (6) **Chierico** – capitolo 3 verificato: ✅ trucchetti/preparati per livello,
   ✅ Channel Divinity 2/3/4 e consumo degli usi per ogni opzione, ✅ incantesimi di dominio
   (Life, Light, Trickery, War), ✅ Power Word Fortify in lista (117), ✅ Divine Intervention
   e Greater Divine Intervention, ✅ War God's Blessing, ✅ Warding Flare/Improved/Corona of
   Light a contatore, ✅ Preserve Life con divisione fra Bloodied, ✅ bonus Thaumaturge,
   ✅ Divine Strike una volta per turno.
-  ⬜📖 War Domain: manca la pagina 76 nell'estratto (dati dall'utente, da confermare).
+  ✅ War Domain verificato (pag. 77); Avatar of Battle, Rage e Full of Stars dimezzano
+  i danni B/P/S inseriti nel riquadro PF.
 - ⬜📖 (8) **Guerriero** – capitolo 3 (Fighter): Battle Master (dadi di superiorità +
   manovre), Psi Warrior (dadi psionici), Eldritch Knight (ora sbloccabile: il sistema
   incantesimi c'è).

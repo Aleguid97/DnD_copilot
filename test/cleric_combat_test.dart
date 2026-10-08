@@ -2,6 +2,7 @@
 // features (chapter 3 of the PHB 2024).
 
 import 'package:dnd_prova/models/dice_roller.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers/combat_harness.dart';
@@ -121,6 +122,36 @@ void main() {
       tester,
       find.text('Channel Divinity (1/2)'),
       findsOneWidget,
+    );
+    await disposeCombatScreen(tester, db);
+  });
+
+  testWidgets('Avatar of Battle halves Bludgeoning/Piercing/Slashing damage', (
+    tester,
+  ) async {
+    var db = await pumpCombatScreen(tester, testCharacter('cleric', 17));
+    expect(textContaining('Avatar of Battle'), findsNothing);
+    await disposeCombatScreen(tester, db);
+
+    db = await pumpCombatScreen(
+      tester,
+      testCharacter(
+        'cleric',
+        17,
+        selections: {
+          'cleric_subclass': {'war'},
+        },
+      ),
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Amount (+heal / -damage)'),
+      '-11',
+    );
+    await tapAndSettle(tester, find.widgetWithText(ElevatedButton, 'Apply'));
+    await expectInTabs(
+      tester,
+      textContaining('Resistance (Avatar of Battle): damage halved to 5'),
+      findsWidgets,
     );
     await disposeCombatScreen(tester, db);
   });
