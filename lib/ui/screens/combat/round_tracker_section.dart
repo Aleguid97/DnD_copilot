@@ -108,6 +108,8 @@ extension _RoundTrackerSection on _CombatScreenState {
       _round++;
       _savageAttackerArmed = false;
       _divineStrikeUsed = false;
+      _relentlessUsed = false;
+      _psionicStrikeUsed = false;
       if (_duplicityRoundsLeft != null) {
         _duplicityRoundsLeft = _duplicityRoundsLeft! - 1;
         if (_duplicityRoundsLeft! <= 0) {

@@ -1341,16 +1341,60 @@ final List<CharacterClass> allClasses = [
                 description:
                     'Combat Superiority: Superiority Dice fuel maneuvers; Student of War (Level 3).',
                 levelFeatures: {
+                  3: LevelFeature(
+                    level: 3,
+                    fixedTraits: [
+                      'Combat Superiority: 4 Superiority Dice (d8), all back on a Short or Long Rest; one maneuver per attack; save DC 8 + Strength or Dexterity modifier + Proficiency Bonus',
+                      'Student of War: proficiency with one Artisan\'s Tools and one Fighter skill',
+                    ],
+                    choices: [
+                      Choice(
+                        id: 'battle_master_maneuvers',
+                        title: 'Choose 3 maneuvers',
+                        minSelections: 3,
+                        maxSelections: 3,
+                        options: _maneuverOptions,
+                      ),
+                      Choice(
+                        id: 'battle_master_tool',
+                        title: 'Student of War: choose Artisan\'s Tools',
+                        options: _artisanToolOptions,
+                      ),
+                      Choice(
+                        id: 'battle_master_extra_skill',
+                        title: 'Student of War: choose a skill',
+                        options: _fighterSkillOptions,
+                      ),
+                    ],
+                  ),
                   7: LevelFeature(
                     level: 7,
                     fixedTraits: [
                       'Know Your Enemy: Bonus Action, learn a creature\'s Immunities, Resistances, and Vulnerabilities (once per Long Rest, or expend a Superiority Die)',
                     ],
+                    choices: [
+                      Choice(
+                        id: 'battle_master_maneuvers_7',
+                        title: 'Learn 2 more maneuvers',
+                        minSelections: 2,
+                        maxSelections: 2,
+                        options: _maneuverOptions,
+                      ),
+                    ],
                   ),
                   10: LevelFeature(
                     level: 10,
                     fixedTraits: [
-                      'Improved Combat Superiority: superiority die upgrades to d10',
+                      'Improved Combat Superiority: your Superiority Die becomes a d10; 5 dice since level 7',
+                    ],
+                    choices: [
+                      Choice(
+                        id: 'battle_master_maneuvers_10',
+                        title: 'Learn 2 more maneuvers',
+                        minSelections: 2,
+                        maxSelections: 2,
+                        options: _maneuverOptions,
+                      ),
                     ],
                   ),
                   15: LevelFeature(
@@ -1358,11 +1402,20 @@ final List<CharacterClass> allClasses = [
                     fixedTraits: [
                       'Relentless: once per turn, when you use a maneuver, you can roll 1d8 instead of expending a Superiority Die',
                     ],
+                    choices: [
+                      Choice(
+                        id: 'battle_master_maneuvers_15',
+                        title: 'Learn 2 more maneuvers',
+                        minSelections: 2,
+                        maxSelections: 2,
+                        options: _maneuverOptions,
+                      ),
+                    ],
                   ),
                   18: LevelFeature(
                     level: 18,
                     fixedTraits: [
-                      'Ultimate Combat Superiority: superiority die upgrades to d12',
+                      'Ultimate Combat Superiority: your Superiority Die becomes a d12',
                     ],
                   ),
                 },
@@ -2138,4 +2191,62 @@ const _fighterMasteryOptions = [
   ChoiceOption(id: 'hand_crossbow', label: 'Hand Crossbow (Vex)'),
   ChoiceOption(id: 'heavy_crossbow', label: 'Heavy Crossbow (Push)'),
   ChoiceOption(id: 'longbow', label: 'Longbow (Slow)'),
+];
+
+/// Battle Master maneuvers (ids match `battleMasterManeuvers`).
+const _maneuverOptions = [
+  ChoiceOption(id: 'ambush', label: 'Ambush'),
+  ChoiceOption(id: 'bait_and_switch', label: 'Bait and Switch'),
+  ChoiceOption(id: 'commanders_strike', label: "Commander's Strike"),
+  ChoiceOption(id: 'commanding_presence', label: 'Commanding Presence'),
+  ChoiceOption(id: 'disarming_attack', label: 'Disarming Attack'),
+  ChoiceOption(id: 'distracting_strike', label: 'Distracting Strike'),
+  ChoiceOption(id: 'evasive_footwork', label: 'Evasive Footwork'),
+  ChoiceOption(id: 'feinting_attack', label: 'Feinting Attack'),
+  ChoiceOption(id: 'goading_attack', label: 'Goading Attack'),
+  ChoiceOption(id: 'lunging_attack', label: 'Lunging Attack'),
+  ChoiceOption(id: 'maneuvering_attack', label: 'Maneuvering Attack'),
+  ChoiceOption(id: 'menacing_attack', label: 'Menacing Attack'),
+  ChoiceOption(id: 'parry', label: 'Parry'),
+  ChoiceOption(id: 'precision_attack', label: 'Precision Attack'),
+  ChoiceOption(id: 'pushing_attack', label: 'Pushing Attack'),
+  ChoiceOption(id: 'rally', label: 'Rally'),
+  ChoiceOption(id: 'riposte', label: 'Riposte'),
+  ChoiceOption(id: 'sweeping_attack', label: 'Sweeping Attack'),
+  ChoiceOption(id: 'tactical_assessment', label: 'Tactical Assessment'),
+  ChoiceOption(id: 'trip_attack', label: 'Trip Attack'),
+];
+
+/// Artisan's Tools (Student of War).
+const _artisanToolOptions = [
+  ChoiceOption(id: 'alchemists_supplies', label: "Alchemist's Supplies"),
+  ChoiceOption(id: 'brewers_supplies', label: "Brewer's Supplies"),
+  ChoiceOption(id: 'calligraphers_supplies', label: "Calligrapher's Supplies"),
+  ChoiceOption(id: 'carpenters_tools', label: "Carpenter's Tools"),
+  ChoiceOption(id: 'cartographers_tools', label: "Cartographer's Tools"),
+  ChoiceOption(id: 'cobblers_tools', label: "Cobbler's Tools"),
+  ChoiceOption(id: 'cooks_utensils', label: "Cook's Utensils"),
+  ChoiceOption(id: 'glassblowers_tools', label: "Glassblower's Tools"),
+  ChoiceOption(id: 'jewelers_tools', label: "Jeweler's Tools"),
+  ChoiceOption(id: 'leatherworkers_tools', label: "Leatherworker's Tools"),
+  ChoiceOption(id: 'masons_tools', label: "Mason's Tools"),
+  ChoiceOption(id: 'painters_supplies', label: "Painter's Supplies"),
+  ChoiceOption(id: 'potters_tools', label: "Potter's Tools"),
+  ChoiceOption(id: 'smiths_tools', label: "Smith's Tools"),
+  ChoiceOption(id: 'tinkers_tools', label: "Tinker's Tools"),
+  ChoiceOption(id: 'weavers_tools', label: "Weaver's Tools"),
+  ChoiceOption(id: 'woodcarvers_tools', label: "Woodcarver's Tools"),
+];
+
+/// Skills available to Fighters at level 1 (Student of War).
+const _fighterSkillOptions = [
+  ChoiceOption(id: 'Acrobatics', label: 'Acrobatics'),
+  ChoiceOption(id: 'Animal Handling', label: 'Animal Handling'),
+  ChoiceOption(id: 'Athletics', label: 'Athletics'),
+  ChoiceOption(id: 'History', label: 'History'),
+  ChoiceOption(id: 'Insight', label: 'Insight'),
+  ChoiceOption(id: 'Intimidation', label: 'Intimidation'),
+  ChoiceOption(id: 'Persuasion', label: 'Persuasion'),
+  ChoiceOption(id: 'Perception', label: 'Perception'),
+  ChoiceOption(id: 'Survival', label: 'Survival'),
 ];

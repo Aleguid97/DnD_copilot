@@ -146,6 +146,8 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   // Inspiration (Champion's Heroic Warrior).
   final Map<String, String> _tacticalMasterOverride = {};
   bool _heroicInspiration = false;
+  bool _relentlessUsed = false;
+  bool _psionicStrikeUsed = false;
   // HP card: the damage being applied is Bludgeoning/Piercing/Slashing.
   bool _physicalDamage = true;
   // Feats

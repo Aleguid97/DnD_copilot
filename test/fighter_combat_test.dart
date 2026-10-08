@@ -1,5 +1,6 @@
 // Fighter features in combat (chapter 3 of the PHB 2024).
 
+import 'package:dnd_prova/models/character_proficiencies.dart';
 import 'package:dnd_prova/models/fighter_features.dart';
 import 'package:dnd_prova/models/dice_roller.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'helpers/combat_harness.dart';
 
 void main() {
   setUp(() => seedDiceRoller(3));
+  battleMasterAndPsiTests();
 
   test('Fighter table: Second Wind and Weapon Mastery counts', () {
     expect([1, 4, 10].map(secondWindUses), [2, 3, 4]);
@@ -122,6 +124,97 @@ void main() {
     await expectInTabs(
       tester,
       find.text('Use Heroic Inspiration'),
+      findsOneWidget,
+    );
+    await disposeCombatScreen(tester, db);
+  });
+}
+
+void battleMasterAndPsiTests() {
+  testWidgets(
+    'Battle Master: Trip Attack spends a die, damages, knocks Prone',
+    (tester) async {
+      final db = await pumpCombatScreen(
+        tester,
+        testCharacter(
+          'fighter',
+          3,
+          selections: {
+            'fighter_subclass': {'battle_master'},
+            'battle_master_maneuvers': {
+              'trip_attack',
+              'precision_attack',
+              'rally',
+            },
+            'battle_master_extra_skill': {'History'},
+          },
+        ),
+      );
+      await expectInTabs(
+        tester,
+        find.text('Superiority Dice (4/4 d8)'),
+        findsOneWidget,
+      );
+      await addAndTargetGoblin(tester, db);
+      await tapAndSettle(
+        tester,
+        find.widgetWithText(OutlinedButton, 'Trip Attack'),
+      );
+      await tapAndSettle(tester, find.text('Apply').last);
+      final goblin = await reloadGoblin(tester, db);
+      expect(100 - goblin.currentHp, inInclusiveRange(1, 8));
+      expect(goblin.conditionsJson, contains('Prone (Trip Attack)'));
+      await expectInTabs(
+        tester,
+        find.text('Superiority Dice (3/4 d8)'),
+        findsOneWidget,
+      );
+      await disposeCombatScreen(tester, db);
+    },
+  );
+
+  test('Student of War adds a skill proficiency', () {
+    final c = testCharacter(
+      'fighter',
+      3,
+      selections: {
+        'fighter_subclass': {'battle_master'},
+        'battle_master_extra_skill': {'History'},
+      },
+    );
+    expect(proficientSkills(c), contains('History'));
+  });
+
+  test('Psi Warrior dice: d6 x4 at 3, d10 x8 at 11, d12 x12 at 17', () {
+    expect(psionicEnergyDice(3), ('d6', 4));
+    expect(psionicEnergyDice(11), ('d10', 8));
+    expect(psionicEnergyDice(17), ('d12', 12));
+  });
+
+  testWidgets('Psi Warrior: Psionic Strike once per turn, Force damage', (
+    tester,
+  ) async {
+    final db = await pumpCombatScreen(
+      tester,
+      testCharacter(
+        'fighter',
+        5,
+        selections: {
+          'fighter_subclass': {'psi_warrior'},
+        },
+      ),
+    );
+    await addAndTargetGoblin(tester, db);
+    await tapAndSettle(tester, find.text('Psionic Strike (after a hit)'));
+    expect((await reloadGoblin(tester, db)).currentHp, lessThan(100));
+    await expectInTabs(
+      tester,
+      find.text('Psionic Strike (used this turn)'),
+      findsOneWidget,
+    );
+    await expectInTabs(
+      tester,
+      find.text('Psionic Energy Dice (5/6 d8)'),
       findsOneWidget,
     );
     await disposeCombatScreen(tester, db);

@@ -188,6 +188,60 @@ final Map<String, List<ClassResource> Function(Character)> _subclassResources =
           fullRecoveryOn: RestType.long,
         ),
       ],
+      'fighter:battle_master': (c) => [
+        ClassResource(
+          id: 'superiority_dice',
+          name: 'Superiority Dice',
+          maxUses: superiorityDiceCount,
+          availableFromLevel: 3,
+          fullRecoveryOn: RestType.short,
+        ),
+        ClassResource(
+          id: 'know_your_enemy',
+          name: 'Know Your Enemy',
+          maxUses: (_) => 1,
+          availableFromLevel: 7,
+          fullRecoveryOn: RestType.long,
+        ),
+      ],
+      'fighter:psi_warrior': (c) => [
+        ClassResource(
+          id: 'psionic_energy',
+          name: 'Psionic Energy Dice',
+          maxUses: (level) => psionicEnergyDice(level).$2,
+          availableFromLevel: 3,
+          fullRecoveryOn: RestType.long,
+          shortRestPartialRecovery: 1,
+        ),
+        ClassResource(
+          id: 'telekinetic_movement',
+          name: 'Telekinetic Movement',
+          maxUses: (_) => 1,
+          availableFromLevel: 3,
+          fullRecoveryOn: RestType.short,
+        ),
+        ClassResource(
+          id: 'psi_powered_leap',
+          name: 'Psi-Powered Leap',
+          maxUses: (_) => 1,
+          availableFromLevel: 7,
+          fullRecoveryOn: RestType.short,
+        ),
+        ClassResource(
+          id: 'bulwark_of_force',
+          name: 'Bulwark of Force',
+          maxUses: (_) => 1,
+          availableFromLevel: 15,
+          fullRecoveryOn: RestType.long,
+        ),
+        ClassResource(
+          id: 'telekinetic_master',
+          name: 'Telekinetic Master',
+          maxUses: (_) => 1,
+          availableFromLevel: 18,
+          fullRecoveryOn: RestType.long,
+        ),
+      ],
       'cleric:war': (c) => [
         ClassResource(
           id: 'war_priest',

@@ -39,7 +39,7 @@ che restituisce `List<Widget>`:
 | `combat_helpers.dart` | Helper condivisi: risorse, slot, card, danno al bersaglio, cura |
 | `spellcasting_section.dart` | Incantatori: slot, Concentrazione, trucchetti, preparati, Cast (scala lo slot, upcast) |
 | `spell_effects_engine.dart` | Risolve gli effetti: attacco con incantesimo vs CA, tiri salvezza multi-bersaglio, cure, condizioni sui nemici, ripetizione durante la Concentrazione |
-| `fighter_section.dart` | Guerriero (Tactical Mind) |
+| `fighter_section.dart` | Guerriero: Second Wind, Indomitable, Champion, Battle Master (manovre), Psi Warrior |
 | `barbarian_section.dart` | Barbaro e sottoclassi |
 | `weapons_section.dart` | Armi equipaggiate, Weapon Mastery, Unarmed Strike |
 | `cleric_section.dart` | Chierico: Channel Divinity (spende gli usi), domini, Divine Intervention |
@@ -85,8 +85,13 @@ Regole:
 
 ## Stato classi
 
-- **Guerriero**: 1–20, tutte le sottoclassi (meccaniche solo Champion/Battle Master;
-  Eldritch Knight/Psi Warrior parzialmente testuali), 6 Fighting Style, Weapon Mastery, Studied Attacks.
+- **Guerriero**: 1–20, verificato sul cap. 3 (regole in `lib/models/fighter_features.dart`).
+  Second Wind 2/3/4 con cura, Tactical Mind, Indomitable (+livello), Weapon Mastery 3–6
+  (scelte extra al 4/10/16; la maestria vale solo per le armi scelte), Tactical Master.
+  Champion (critico 19/18, Remarkable Athlete, Heroic Warrior, Survivor), Battle Master
+  (dadi di superiorità, 20 manovre come pulsanti, Relentless, Know Your Enemy, Student
+  of War), Psi Warrior (dadi psionici e poteri). **Eldritch Knight**: tabella verificata,
+  incantesimi in attesa della lista del Mago (cap. 3, classe Mago).
 - **Chierico**: 1–20, verificato sul cap. 3 (tabella, Channel Divinity, Divine Order,
   Blessed Strikes, Divine Intervention e versione maggiore, domini Life/Light/Trickery).
   Ogni opzione di Channel Divinity consuma un uso (Divine Spark, Turn Undead + Sear Undead,

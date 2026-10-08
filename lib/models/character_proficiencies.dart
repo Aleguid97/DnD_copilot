@@ -13,6 +13,12 @@ Set<String> proficientSkills(Character character) {
   final classSkillChoiceId = '${character.characterClass.id}_skills';
   final classSelected = character.classSelections[classSkillChoiceId] ?? {};
   result.addAll(classSelected.map(normalizeSkillId));
+  // Subclass skill picks, e.g. the Battle Master's Student of War.
+  for (final e in character.classSelections.entries) {
+    if (e.key.endsWith('_extra_skill')) {
+      result.addAll(e.value.map(normalizeSkillId));
+    }
+  }
 
   for (final selectedIds in character.raceSelections.values) {
     for (final id in selectedIds) {

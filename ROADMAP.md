@@ -32,9 +32,9 @@ I numeri tra parentesi sono quelli della lista originale.
   ✅ Divine Strike una volta per turno.
   ✅ War Domain verificato (pag. 77); Avatar of Battle, Rage e Full of Stars dimezzano
   i danni B/P/S inseriti nel riquadro PF.
-- ⬜📖 (8) **Guerriero** – capitolo 3 (Fighter): Battle Master (dadi di superiorità +
-  manovre), Psi Warrior (dadi psionici), Eldritch Knight (ora sbloccabile: il sistema
-  incantesimi c'è).
+- 🟡 (8) **Guerriero** – capitolo 3 verificato: ✅ base (Second Wind, Weapon Mastery,
+  Tactical Master, Indomitable), ✅ Champion, ✅ Battle Master (manovre), ✅ Psi Warrior.
+  ⬜📖 Eldritch Knight: serve la lista incantesimi del Mago (tabella slot già verificata).
 - ⬜📖 (8) **Barbaro Wild Heart** – capitolo 3 (Barbarian): Bear/Eagle/Wolf, Aspect,
   Falcon/Lion meccanici.
 - ⬜📖 (3) **Specie** – capitolo 4 (Origins): audit dei tratti delle 10 specie

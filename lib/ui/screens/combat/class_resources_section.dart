@@ -75,8 +75,7 @@ extension _ClassResourcesSection on _CombatScreenState {
                   .where(
                     (r) =>
                         r.id != 'war_priest' &&
-                        r.id != 'second_wind' &&
-                        r.id != 'indomitable' &&
+                        !_fighterCardResources.contains(r.id) &&
                         r.id != 'rage' &&
                         r.id != 'warrior_of_the_gods_pool' &&
                         r.id != 'zealous_presence' &&
@@ -120,3 +119,16 @@ extension _ClassResourcesSection on _CombatScreenState {
     ];
   }
 }
+
+/// Fighter resources shown on their own cards in the Fighter section.
+const _fighterCardResources = {
+  'second_wind',
+  'indomitable',
+  'superiority_dice',
+  'know_your_enemy',
+  'psionic_energy',
+  'telekinetic_movement',
+  'psi_powered_leap',
+  'bulwark_of_force',
+  'telekinetic_master',
+};
