@@ -2,7 +2,7 @@ part of '../combat_screen.dart';
 
 extension _RoundTrackerSection on _CombatScreenState {
   /// Combat round counter. "Next round" ages timed effects (Concentration,
-  /// Rage, Starry Form, Wrath of the Sea) and clears once-per-turn options.
+  /// Rage, Starry Form, Wrath of the Sea, War God's Blessing) and clears once-per-turn options.
   List<Widget> _buildRoundTracker(BuildContext context, _CombatData d) {
     final characterId = d.characterId;
     final theme = Theme.of(context);
@@ -12,6 +12,8 @@ extension _RoundTrackerSection on _CombatScreenState {
       if (_isRaging) 'Rage': _rageRoundsLeft,
       if (_starryConstellation != null) 'Starry Form': _starryRoundsLeft,
       if (_wrathOfTheSeaActive) 'Wrath of the Sea': _wrathRoundsLeft,
+      if (_blessingSpellId != null)
+        allSpells[_blessingSpellId]!.name: _blessingRoundsLeft,
     };
     return [
       const SizedBox(height: 8),
@@ -125,6 +127,14 @@ extension _RoundTrackerSection on _CombatScreenState {
           _wrathOfTheSeaActive = false;
           _wrathRoundsLeft = null;
           notes.add('Wrath of the Sea ended');
+        }
+      }
+      if (_blessingSpellId != null) {
+        _blessingRoundsLeft = tick(_blessingRoundsLeft);
+        if ((_blessingRoundsLeft ?? 1) <= 0) {
+          notes.add('${allSpells[_blessingSpellId]!.name} ended');
+          _blessingSpellId = null;
+          _blessingRoundsLeft = null;
         }
       }
       _concentrationRoundsLeft = concentration;

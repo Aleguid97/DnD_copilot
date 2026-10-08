@@ -136,6 +136,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _rageRoundsLeft;
   int? _starryRoundsLeft;
   int? _wrathRoundsLeft;
+  // War God's Blessing: a Shield of Faith/Spiritual Weapon without Concentration.
+  String? _blessingSpellId;
+  int? _blessingRoundsLeft;
   // Feats
   bool _savageAttackerArmed = false;
   int _battleMedicDie = 8;

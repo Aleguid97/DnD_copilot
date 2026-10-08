@@ -1,5 +1,6 @@
 import '../models/class_resource.dart';
 import '../models/barbarian_features.dart';
+import '../models/cleric_features.dart';
 import '../models/druid_features.dart';
 import 'spell_slots_data.dart';
 import 'xp_table.dart';
@@ -34,10 +35,17 @@ final Map<String, List<ClassResource>> classResources = {
     ClassResource(
       id: 'channel_divinity',
       name: 'Channel Divinity',
-      maxUses: (level) => 2,
+      maxUses: channelDivinityUses,
       availableFromLevel: 2,
       fullRecoveryOn: RestType.long,
       shortRestPartialRecovery: 1,
+    ),
+    ClassResource(
+      id: 'divine_intervention',
+      name: 'Divine Intervention',
+      maxUses: (level) => 1,
+      availableFromLevel: 10,
+      fullRecoveryOn: RestType.long,
     ),
     ClassResource(
       id: 'war_priest',

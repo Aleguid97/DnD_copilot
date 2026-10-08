@@ -306,6 +306,21 @@ const List<Spell> _otherVerified = [
   Spell('lightning_bolt', 'Lightning Bolt', 3, _evo),
   Spell('stinking_cloud', 'Stinking Cloud', 3, _conj, concentration: true),
   Spell('hold_monster', 'Hold Monster', 5, _ench, concentration: true),
+  // War Domain spells (chapter 7 headers).
+  Spell('magic_weapon', 'Magic Weapon', 2, _trans),
+  Spell('crusaders_mantle', "Crusader's Mantle", 3, _evo, concentration: true),
+  Spell('steel_wind_strike', 'Steel Wind Strike', 5, _conj),
+  // Light and Trickery Domain spells (chapter 7 headers).
+  Spell('disguise_self', 'Disguise Self', 1, _ill),
+  Spell('invisibility', 'Invisibility', 2, _ill, concentration: true),
+  Spell('scorching_ray', 'Scorching Ray', 2, _evo),
+  Spell('see_invisibility', 'See Invisibility', 2, _div),
+  Spell('hypnotic_pattern', 'Hypnotic Pattern', 3, _ill, concentration: true),
+  Spell('nondetection', 'Nondetection', 3, _abj, material: true),
+  Spell('arcane_eye', 'Arcane Eye', 4, _div, concentration: true),
+  Spell('dimension_door', 'Dimension Door', 4, _conj),
+  Spell('dominate_person', 'Dominate Person', 5, _ench, concentration: true),
+  Spell('modify_memory', 'Modify Memory', 5, _ench, concentration: true),
 ];
 
 /// Cleric spells not on the Druid list. Level, school and C/R/M from the
@@ -405,6 +420,7 @@ const List<Spell> _clericOnly = [
   Spell('astral_projection', 'Astral Projection', 9, _necro, material: true),
   Spell('gate', 'Gate', 9, _conj, concentration: true, material: true),
   Spell('mass_heal', 'Mass Heal', 9, _abj),
+  Spell('power_word_fortify', 'Power Word Fortify', 7, _ench),
   Spell('power_word_heal', 'Power Word Heal', 9, _ench),
 ];
 
@@ -525,6 +541,7 @@ final Map<String, List<String>> classSpellLists = {
     'etherealness',
     'fire_storm',
     'plane_shift',
+    'power_word_fortify',
     'regenerate',
     'resurrection',
     'symbol',

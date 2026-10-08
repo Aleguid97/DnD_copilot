@@ -35,18 +35,11 @@ extension _SpellcastingSection on _CombatScreenState {
           abilityMod: druidWisdomModifier(c),
         );
       case 'cleric':
-        // Level 1 counts come from the verified level 1 Cleric choices
-        // (3 cantrips, +1 for Thaumaturge; 4 prepared spells). The Cleric
-        // Features table for later levels and the domain spell lists still
-        // need the Cleric chapter of the PHB.
         final wis = wisdomModifier(c);
-        final thaumaturge =
-            c.classSelections['cleric_divine_order']?.contains('thaumaturge') ==
-            true;
         return _CasterRules(
-          cantrips: c.level == 1 ? 3 + (thaumaturge ? 1 : 0) : null,
-          prepared: c.level == 1 ? 4 : null,
-          alwaysPreparedNames: const [],
+          cantrips: clericCantripCount(c),
+          prepared: clericPreparedSpellCount(c.level),
+          alwaysPreparedNames: clericDomainSpells(c),
           saveDc: 8 + profBonus + wis,
           attackBonus: profBonus + wis,
           abilityMod: wis,
@@ -336,12 +329,18 @@ extension _SpellcastingSection on _CombatScreenState {
     _CasterRules rules, {
     String? id,
     String? name,
+    String? freeCastSource,
+    bool noConcentration = false,
   }) async {
     final spell = id != null ? allSpells[id] : null;
     final spellName = spell?.name ?? name ?? id ?? '?';
     var slot = 0;
     var slotNote = '';
-    if (spell == null || !spell.isCantrip) {
+    if (freeCastSource != null) {
+      // Features like Divine Intervention cast at the spell's level, no slot.
+      slot = spell?.isCantrip ?? false ? 0 : (spell?.level ?? 1);
+      slotNote = ' with $freeCastSource (no slot)';
+    } else if (spell == null || !spell.isCantrip) {
       final minLevel = spell?.level ?? 1;
       final picked = await _pickSlotLevel(
         context,
@@ -357,7 +356,9 @@ extension _SpellcastingSection on _CombatScreenState {
           : ' using a level $slot slot';
     }
     var concentrationNote = '';
-    if (spell?.concentration ?? false) {
+    if (noConcentration) {
+      concentrationNote = ' — no Concentration, lasts 1 minute';
+    } else if (spell?.concentration ?? false) {
       if (_concentrationSpell != null) {
         concentrationNote = ' — Concentration on $_concentrationSpell ended';
         await _endConcentration(characterId);
@@ -386,9 +387,10 @@ extension _SpellcastingSection on _CombatScreenState {
             ? ''
             : 'L$slot${slot > spell.level ? ' (upcast)' : ''} ',
       );
-      if (concentrationNote.isNotEmpty) {
-        _showRoll('$_lastRollResult$concentrationNote');
-      }
+      final tail =
+          '${freeCastSource == null ? '' : ' — $freeCastSource, no slot'}'
+          '$concentrationNote';
+      if (tail.isNotEmpty) _showRoll('$_lastRollResult$tail');
     }
   }
 

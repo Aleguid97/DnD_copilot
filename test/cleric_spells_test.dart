@@ -3,6 +3,7 @@
 
 import 'package:dnd_prova/data/spell_effects_data.dart';
 import 'package:dnd_prova/data/spells_data.dart';
+import 'package:dnd_prova/models/cleric_features.dart';
 import 'package:dnd_prova/models/dice_roller.dart';
 import 'package:dnd_prova/models/spell_effect.dart';
 import 'package:flutter/material.dart';
@@ -11,9 +12,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'helpers/combat_harness.dart';
 
 void main() {
-  test('Cleric list comes from chapter 7 headers', () {
+  test('Cleric list matches chapter 3 (117 spells)', () {
     final list = classSpellLists['cleric']!;
-    expect(list.length, 116);
+    expect(list.length, 117);
     for (final id in [
       'sacred_flame',
       'toll_the_dead',
@@ -28,6 +29,67 @@ void main() {
     }
     expect(allSpells['spirit_guardians']!.concentration, isTrue);
     expect(allSpells['clairvoyance']!.level, 3);
+  });
+
+  test('Cleric table: cantrips, prepared spells, Channel Divinity', () {
+    expect(clericCantripCount(testCharacter('cleric', 3)), 3);
+    expect(clericCantripCount(testCharacter('cleric', 4)), 4);
+    expect(clericCantripCount(testCharacter('cleric', 10)), 5);
+    expect(
+      clericCantripCount(
+        testCharacter(
+          'cleric',
+          10,
+          selections: {
+            'cleric_divine_order': {'thaumaturge'},
+          },
+        ),
+      ),
+      6,
+    );
+    expect(clericPreparedSpellCount(1), 4);
+    expect(clericPreparedSpellCount(5), 9);
+    expect(clericPreparedSpellCount(12), 16);
+    expect(clericPreparedSpellCount(20), 22);
+    expect(channelDivinityUses(1), 0);
+    expect(channelDivinityUses(5), 2);
+    expect(channelDivinityUses(6), 3);
+    expect(channelDivinityUses(18), 4);
+  });
+
+  test('Domain spells are all in the catalog', () {
+    for (final domain in ['life', 'light', 'trickery', 'war']) {
+      final spells = clericDomainSpells(
+        testCharacter(
+          'cleric',
+          9,
+          selections: {
+            'cleric_subclass': {domain},
+          },
+        ),
+      );
+      expect(spells, hasLength(10), reason: domain);
+      for (final name in spells) {
+        expect(spellByName(name), isNotNull, reason: '$domain: $name');
+      }
+    }
+  });
+
+  test('War Domain spells unlock at Cleric levels 3, 5, 7 and 9', () {
+    final war = {
+      'cleric_subclass': {'war'},
+    };
+    expect(clericDomainSpells(testCharacter('cleric', 3, selections: war)), [
+      'Guiding Bolt',
+      'Magic Weapon',
+      'Shield of Faith',
+      'Spiritual Weapon',
+    ]);
+    final all = clericDomainSpells(testCharacter('cleric', 9, selections: war));
+    expect(all, hasLength(10));
+    for (final name in all) {
+      expect(spellByName(name), isNotNull, reason: name);
+    }
   });
 
   test('Flame Strike scales both damage types', () {
@@ -164,6 +226,95 @@ void main() {
         tester,
         textContaining('L2 (upcast) Cure Wounds: '),
         findsWidgets,
+      );
+      await disposeCombatScreen(tester, db);
+    });
+    testWidgets('War domain spells are always prepared and do not count', (
+      tester,
+    ) async {
+      final db = await pumpCombatScreen(
+        tester,
+        testCharacter(
+          'cleric',
+          9,
+          selections: {
+            'cleric_subclass': {'war'},
+          },
+        ),
+      );
+      await expectInTabs(
+        tester,
+        find.text('Prepared Spells (0/14 + always prepared)'),
+        findsOneWidget,
+      );
+      await expectInTabs(tester, find.text('Steel Wind Strike'), findsWidgets);
+      await disposeCombatScreen(tester, db);
+    });
+
+    testWidgets("War God's Blessing: Channel Divinity, no slot, no "
+        'Concentration', (tester) async {
+      final db = await pumpCombatScreen(
+        tester,
+        testCharacter(
+          'cleric',
+          6,
+          selections: {
+            'cleric_subclass': {'war'},
+          },
+        ),
+      );
+      await addAndTargetGoblin(tester, db);
+      await tapAndSettle(
+        tester,
+        find.widgetWithText(OutlinedButton, 'Spiritual Weapon'),
+      );
+      await expectInTabs(
+        tester,
+        textContaining("War God's Blessing, no slot"),
+        findsWidgets,
+      );
+      expect(find.textContaining('Concentrating on'), findsNothing);
+      await expectInTabs(tester, textContaining('(2/3 left)'), findsOneWidget);
+      await expectInTabs(
+        tester,
+        find.text('Spiritual Weapon: attack again'),
+        findsOneWidget,
+      );
+      await tapAndSettle(tester, find.text('Start combat'));
+      await expectInTabs(
+        tester,
+        find.text('Spiritual Weapon: 10 rds'),
+        findsOneWidget,
+      );
+      await disposeCombatScreen(tester, db);
+    });
+
+    testWidgets('Divine Intervention casts a spell without a slot', (
+      tester,
+    ) async {
+      final db = await pumpCombatScreen(tester, testCharacter('cleric', 10));
+      await addAndTargetGoblin(tester, db);
+      await tapAndSettle(tester, find.text('Call on your deity'));
+      await tester.scrollUntilVisible(
+        find.text('Flame Strike'),
+        300,
+        scrollable: find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tapAndSettle(tester, find.text('Flame Strike'));
+      await tapAndSettle(tester, find.text('Apply').last);
+      await expectInTabs(
+        tester,
+        textContaining('Divine Intervention, no slot'),
+        findsWidgets,
+      );
+      expect((await reloadGoblin(tester, db)).currentHp, lessThan(100));
+      await expectInTabs(
+        tester,
+        textContaining('0/1 (Long Rest)'),
+        findsOneWidget,
       );
       await disposeCombatScreen(tester, db);
     });

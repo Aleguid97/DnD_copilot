@@ -405,6 +405,9 @@ extension _ClericSection on _CombatScreenState {
             ),
           ),
         ],
+        if (domain == 'war' && widget.character.level >= 6)
+          ..._warGodsBlessing(context, d),
+        if (widget.character.level >= 10) ..._divineIntervention(context, d),
         if (domain == 'life') ...[
           const SizedBox(height: 8),
           Card(
@@ -625,5 +628,176 @@ extension _ClericSection on _CombatScreenState {
         ],
       ],
     ];
+  }
+
+  /// War God's Blessing (War, level 6): spend a Channel Divinity use to cast
+  /// Shield of Faith or Spiritual Weapon without a slot or Concentration.
+  List<Widget> _warGodsBlessing(BuildContext context, _CombatData d) {
+    final characterId = d.characterId!;
+    final rules = _casterRules(d.profBonus)!;
+    final maxCd = channelDivinityUses(widget.character.level);
+    final active = _blessingSpellId != null
+        ? allSpells[_blessingSpellId]
+        : null;
+    return [
+      const SizedBox(height: 8),
+      d.resourceUsesAsync.when(
+        loading: () => const SizedBox.shrink(),
+        error: (e, st) => const SizedBox.shrink(),
+        data: (rows) {
+          final left = _resourceRemaining(rows, 'channel_divinity', maxCd);
+          return _featureCard(
+            context,
+            "War God's Blessing",
+            'Spend 1 Channel Divinity ($left/$maxCd left): no slot, no '
+                'Concentration, lasts 1 minute (ends if you cast it again, are '
+                'Incapacitated or die).'
+                '${active == null ? '' : ' Active: ${active.name}${_blessingRoundsLeft == null || _round == 0 ? '' : ', $_blessingRoundsLeft rds'}.'}',
+            [
+              for (final id in warGodsBlessingSpells)
+                OutlinedButton(
+                  onPressed: left > 0
+                      ? () async {
+                          await _spendResource(
+                            characterId,
+                            'channel_divinity',
+                            maxCd,
+                          );
+                          _update(() {
+                            _blessingSpellId = id;
+                            _blessingRoundsLeft = 10;
+                          });
+                          if (!mounted) return;
+                          await _castSpell(
+                            this.context,
+                            characterId,
+                            rows,
+                            rules,
+                            id: id,
+                            freeCastSource: "War God's Blessing",
+                            noConcentration: true,
+                          );
+                        }
+                      : null,
+                  child: Text(allSpells[id]!.name),
+                ),
+              if (active != null && spellEffects[active.id] != null)
+                ElevatedButton(
+                  onPressed: () => _resolveSpellEffect(
+                    context,
+                    characterId,
+                    active,
+                    spellEffects[active.id]!,
+                    active.level,
+                    rules,
+                    prefix: 'Again — ',
+                  ),
+                  child: Text('${active.name}: attack again'),
+                ),
+              if (active != null)
+                TextButton(
+                  onPressed: () => _update(() {
+                    _lastRollResult = '${active.name} ended.';
+                    _blessingSpellId = null;
+                    _blessingRoundsLeft = null;
+                  }),
+                  child: const Text('End'),
+                ),
+            ],
+          );
+        },
+      ),
+    ];
+  }
+
+  /// Divine Intervention (level 10): as a Magic action, cast any Cleric spell
+  /// of level 5 or lower that isn't cast as a Reaction, with no slot and no
+  /// Material components. Once per Long Rest.
+  List<Widget> _divineIntervention(BuildContext context, _CombatData d) {
+    final characterId = d.characterId!;
+    final rules = _casterRules(d.profBonus)!;
+    return [
+      const SizedBox(height: 8),
+      d.resourceUsesAsync.when(
+        loading: () => const SizedBox.shrink(),
+        error: (e, st) => const SizedBox.shrink(),
+        data: (rows) {
+          final left = _resourceRemaining(rows, 'divine_intervention', 1);
+          return _featureCard(
+            context,
+            'Divine Intervention',
+            'Magic action: cast a Cleric spell of level 5 or lower (not a '
+                'Reaction spell) without a slot or Material components. '
+                '$left/1 (Long Rest).',
+            [
+              ElevatedButton(
+                onPressed: left > 0
+                    ? () async {
+                        final id = await _pickDivineInterventionSpell(context);
+                        if (id == null) return;
+                        await _spendResource(
+                          characterId,
+                          'divine_intervention',
+                          1,
+                        );
+                        if (!mounted) return;
+                        await _castSpell(
+                          this.context,
+                          characterId,
+                          rows,
+                          rules,
+                          id: id,
+                          freeCastSource: 'Divine Intervention',
+                        );
+                      }
+                    : null,
+                child: const Text('Call on your deity'),
+              ),
+            ],
+          );
+        },
+      ),
+    ];
+  }
+
+  Future<String?> _pickDivineInterventionSpell(BuildContext context) {
+    final candidates = [
+      for (final id in classSpellLists['cleric']!)
+        if (allSpells[id]!.level >= 1 && allSpells[id]!.level <= 5)
+          allSpells[id]!,
+    ]..sort((a, b) => a.level.compareTo(b.level));
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Divine Intervention: choose a spell'),
+        content: SizedBox(
+          width: 420,
+          height: 480,
+          child: ListView(
+            children: [
+              for (final s in candidates)
+                ListTile(
+                  dense: true,
+                  title: Text(s.name),
+                  subtitle: Text(
+                    [
+                      'Level ${s.level}',
+                      s.school,
+                      if (s.tags.isNotEmpty) s.tags,
+                    ].join(' · '),
+                  ),
+                  onTap: () => Navigator.of(ctx).pop(s.id),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
   }
 }

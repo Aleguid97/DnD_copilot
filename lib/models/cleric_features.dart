@@ -63,3 +63,81 @@ int maxHealingRoll(String diceText) {
   final sides = int.parse(match.group(2)!);
   return count * sides;
 }
+
+// Cleric Features table (PHB 2024, chapter 3), index 0 = level 1.
+const List<int> _clericCantrips = [
+  3, 3, 3, 4, 4, 4, 4, 4, 4, 5, //
+  5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+];
+const List<int> _clericPrepared = [
+  4, 5, 6, 7, 9, 10, 11, 12, 14, 15, //
+  16, 16, 17, 17, 18, 18, 19, 20, 21, 22,
+];
+
+/// Cantrips known: Cleric table, +1 with the Thaumaturge Divine Order.
+int clericCantripCount(Character character) {
+  final thaumaturge =
+      character.classSelections['cleric_divine_order']?.contains(
+        'thaumaturge',
+      ) ==
+      true;
+  return _clericCantrips[(character.level - 1).clamp(0, 19)] +
+      (thaumaturge ? 1 : 0);
+}
+
+int clericPreparedSpellCount(int level) =>
+    _clericPrepared[(level - 1).clamp(0, 19)];
+
+/// Channel Divinity uses: 2 from level 2, 3 from 6, 4 from 18. One use comes
+/// back on a Short Rest, all on a Long Rest.
+int channelDivinityUses(int level) {
+  if (level >= 18) return 4;
+  if (level >= 6) return 3;
+  if (level >= 2) return 2;
+  return 0;
+}
+
+/// Domain spells by Cleric level (PHB 2024, chapter 3): always prepared, they
+/// don't count against the prepared spells.
+const Map<String, Map<int, List<String>>> _domainSpells = {
+  'life': {
+    3: ['Aid', 'Bless', 'Cure Wounds', 'Lesser Restoration'],
+    5: ['Mass Healing Word', 'Revivify'],
+    7: ['Aura of Life', 'Death Ward'],
+    9: ['Greater Restoration', 'Mass Cure Wounds'],
+  },
+  'light': {
+    3: ['Burning Hands', 'Faerie Fire', 'Scorching Ray', 'See Invisibility'],
+    5: ['Daylight', 'Fireball'],
+    7: ['Arcane Eye', 'Wall of Fire'],
+    9: ['Flame Strike', 'Scrying'],
+  },
+  'trickery': {
+    3: ['Charm Person', 'Disguise Self', 'Invisibility', 'Pass without Trace'],
+    5: ['Hypnotic Pattern', 'Nondetection'],
+    7: ['Confusion', 'Dimension Door'],
+    9: ['Dominate Person', 'Modify Memory'],
+  },
+  'war': {
+    3: ['Guiding Bolt', 'Magic Weapon', 'Shield of Faith', 'Spiritual Weapon'],
+    5: ["Crusader's Mantle", 'Spirit Guardians'],
+    7: ['Fire Shield', 'Freedom of Movement'],
+    9: ['Hold Monster', 'Steel Wind Strike'],
+  },
+};
+
+List<String> clericDomainSpells(Character character) {
+  final domain = character.classSelections['cleric_subclass']?.firstOrNull;
+  final table = _domainSpells[domain] ?? const {};
+  return [
+    for (final e in table.entries)
+      if (character.level >= e.key) ...e.value,
+  ];
+}
+
+/// War God's Blessing (War, level 6): spend Channel Divinity to cast one of
+/// these without a slot and without Concentration (lasts 1 minute).
+const List<String> warGodsBlessingSpells = [
+  'shield_of_faith',
+  'spiritual_weapon',
+];

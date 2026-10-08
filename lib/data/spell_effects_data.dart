@@ -547,6 +547,14 @@ final Map<String, SpellEffect> spellEffects = {
     note:
         'Necrotic if you are evil. Enemies\' Speed is halved in the Emanation.',
   ),
+  'steel_wind_strike': _attack(
+    '6d10',
+    'Force',
+    melee: true,
+    note:
+        'One melee spell attack against each of up to five creatures; '
+        'then teleport within 5 feet of one of them.',
+  ),
   'spiritual_weapon': _attack(
     '1d8',
     'Force',
