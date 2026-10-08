@@ -92,7 +92,9 @@ extension _ClassResourcesSection on _CombatScreenState {
                     return Card(
                       child: ListTile(
                         title: Text(resource.name),
-                        subtitle: Text('$remaining / $maxUses remaining'),
+                        subtitle: Text(
+                          '$remaining / $maxUses remaining · ${resource.recoveryText}',
+                        ),
                         trailing: ElevatedButton(
                           onPressed: remaining > 0 && characterId != null
                               ? () => ref

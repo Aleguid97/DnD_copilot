@@ -155,4 +155,40 @@ void main() {
     );
     await disposeCombatScreen(tester, db);
   });
+
+  testWidgets('Resources show when they come back; spells have tooltips', (
+    tester,
+  ) async {
+    final db = await pumpCombatScreen(
+      tester,
+      testCharacter(
+        'cleric',
+        5,
+        selections: {
+          'cleric_cantrips': {'sacred_flame'},
+          'cleric_prepared_spells': {'bless'},
+        },
+      ),
+    );
+    await expectInTabs(
+      tester,
+      textContaining('1 back on a Short Rest, all on a Long Rest'),
+      findsWidgets,
+    );
+    await openTab(tester, 'Spells');
+    final chip = tester.widget<ActionChip>(
+      find.widgetWithText(ActionChip, 'Sacred Flame'),
+    );
+    expect(chip.tooltip, contains('Cantrip'));
+    expect(chip.tooltip, contains('Dex save'));
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Tooltip &&
+            (w.message?.contains('Concentration, up to 1 min') ?? false),
+      ),
+      findsOneWidget,
+    );
+    await disposeCombatScreen(tester, db);
+  });
 }

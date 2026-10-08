@@ -44,15 +44,17 @@ I numeri tra parentesi sono quelli della lista originale.
 
 - 🟡 (13) ✅ CombatScreen a schede: Overview · Checks · Attacks · Spells (solo
   incantatori) · Class; il bersaglio resta sempre visibile sopra le schede.
-  ⬜ nome della pagina (per ora "Combat"), ⬜ indicatore munizioni,
-  ⬜ tooltip sulle risorse, ⬜ CharacterSheetBody.
+  ⬜ nome della pagina (per ora "Combat"), ✅ indicatore munizioni (già presente:
+  quantità sotto l'arma, scala a ogni tiro; ⬜📖 recupero a fine combattimento dal cap. 6),
+  ✅ risorse con il momento del recupero, ⬜ CharacterSheetBody.
 - 🟡 (14) Turni/round: ✅ contatore round (parte da solo col tiro di Iniziativa),
   "Next round" fa scadere Concentrazione (durate dal cap. 7), Rage (chiede se l'hai
   prolungata, max 10 min), Starry Form, Wrath of the Sea; azzera Savage Attacker.
   ⬜ Studied Attacks e altri effetti "fino alla fine del prossimo turno".
 - 🟡 (10) Sistema incantesimi: ✅ dati dal cap. 7, slot, Cast con upcast,
-  Concentrazione, effetti su nemici/party, Potent Spellcasting. ⬜ tooltip sui chip,
-  ⬜ Divine Intervention (+ versione maggiore), ⬜ War God's Blessing,
+  Concentrazione, effetti su nemici/party, Potent Spellcasting, ✅ tooltip su trucchetti
+  e preparati (livello, scuola, effetto, durata della Concentrazione),
+  ✅ Divine Intervention (+ versione maggiore), ✅ War God's Blessing,
   ⬜ Animal/Nature Speaker (rituali), ⬜ tabelle slot di mezzi incantatori e Warlock.
 
 ## Fase D – Classi fino al 20° (una alla volta, audit riga per riga)

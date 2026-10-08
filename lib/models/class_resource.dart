@@ -18,4 +18,15 @@ class ClassResource {
     required this.fullRecoveryOn,
     this.shortRestPartialRecovery = 0,
   });
+
+  /// When spent uses come back, e.g. "Back on a Short or Long Rest".
+  String get recoveryText {
+    if (fullRecoveryOn == RestType.short) {
+      return 'All back on a Short or Long Rest';
+    }
+    if (shortRestPartialRecovery > 0) {
+      return '$shortRestPartialRecovery back on a Short Rest, all on a Long Rest';
+    }
+    return 'All back on a Long Rest';
+  }
 }

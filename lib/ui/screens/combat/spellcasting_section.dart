@@ -177,6 +177,9 @@ extension _SpellcastingSection on _CombatScreenState {
         for (final id in [...known, ...granted])
           ActionChip(
             label: Text(allSpells[id]?.name ?? id),
+            tooltip: allSpells[id] == null
+                ? null
+                : _spellTooltip(allSpells[id]!),
             onPressed:
                 _castBlockedReason(allSpells[id], allSpells[id]?.name ?? id) ==
                     null
@@ -280,7 +283,9 @@ extension _SpellcastingSection on _CombatScreenState {
               ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                title: Text(name),
+                title: spell == null
+                    ? Text(name)
+                    : Tooltip(message: _spellTooltip(spell), child: Text(name)),
                 subtitle: Text(
                   [
                     spell == null
@@ -393,6 +398,31 @@ extension _SpellcastingSection on _CombatScreenState {
       if (tail.isNotEmpty) _showRoll('$_lastRollResult$tail');
     }
   }
+
+  /// Hover / long-press text for a spell: level, school, tags, what it does
+  /// in combat and how long Concentration lasts.
+  String _spellTooltip(Spell spell) {
+    final rounds = concentrationRounds[spell.id];
+    return [
+      spell.isCantrip ? 'Cantrip' : 'Level ${spell.level}',
+      spell.school,
+      if (spell.concentration)
+        rounds == null
+            ? 'Concentration'
+            : 'Concentration, ${_roundsText(rounds)}',
+      if (spell.ritual) 'Ritual',
+      if (spell.material) 'Specific Material component',
+      ?_effectSummary(spell),
+      if (spellEffects[spell.id]?.note.isNotEmpty ?? false)
+        spellEffects[spell.id]!.note,
+    ].where((x) => x.isNotEmpty).join('\n');
+  }
+
+  String _roundsText(int rounds) => rounds >= 600
+      ? 'up to ${rounds ~/ 600} h'
+      : rounds >= 10
+      ? 'up to ${rounds ~/ 10} min'
+      : 'up to $rounds rounds';
 
   /// One-line combat summary shown under a spell, e.g. "2d10 Radiant · Con save".
   String? _effectSummary(Spell spell) {
