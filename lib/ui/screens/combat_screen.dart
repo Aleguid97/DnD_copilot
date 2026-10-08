@@ -93,14 +93,11 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   final TextEditingController _diceCountController = TextEditingController(
     text: '1',
   );
-  final TextEditingController _preserveLifeController = TextEditingController();
   int _diceSides = 20;
   int? _selectedEnemyId;
   bool _hasAdvantageFromVex = false;
   bool _lastAttackWasCritical = false;
   int? _lastAttackRollForCorrection;
-  int? _healTargetPartyMemberId;
-  int? _preserveLifeTargetId;
   bool _isRaging = false;
   bool _isRecklessAttack = false;
   int? _speedOverride;
@@ -139,6 +136,11 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   // War God's Blessing: a Shield of Faith/Spiritual Weapon without Concentration.
   String? _blessingSpellId;
   int? _blessingRoundsLeft;
+  // Cleric: Invoke Duplicity, Corona of Light (rounds left), Divine Strike
+  // (once per turn).
+  int? _duplicityRoundsLeft;
+  int? _coronaRoundsLeft;
+  bool _divineStrikeUsed = false;
   // Feats
   bool _savageAttackerArmed = false;
   int _battleMedicDie = 8;
@@ -150,7 +152,6 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   void dispose() {
     _hpAdjustController.dispose();
     _diceCountController.dispose();
-    _preserveLifeController.dispose();
     super.dispose();
   }
 
@@ -224,6 +225,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
         final resources = <ClassResource>[
           ...(classResources[widget.character.characterClass.id] ??
               const <ClassResource>[]),
+          ...subclassResourcesFor(widget.character),
           for (final feat in widget.character.featIds)
             ...(featResources[feat] ?? const <ClassResource>[]),
         ];
@@ -233,6 +235,9 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
         final resourceUsesAsync = characterId != null
             ? ref.watch(characterResourceUsesProvider(characterId))
             : const AsyncValue.data(<CharacterResourceUse>[]);
+
+        // Keep the party loaded: healing dialogs read it synchronously.
+        if (characterId != null) ref.watch(partyMembersProvider(characterId));
 
         final domain =
             widget.character.classSelections['cleric_subclass']?.firstOrNull;

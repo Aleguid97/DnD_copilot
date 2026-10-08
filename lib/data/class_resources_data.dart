@@ -1,3 +1,4 @@
+import '../models/character.dart';
 import '../models/class_resource.dart';
 import '../models/barbarian_features.dart';
 import '../models/cleric_features.dart';
@@ -46,14 +47,6 @@ final Map<String, List<ClassResource>> classResources = {
       maxUses: (level) => 1,
       availableFromLevel: 10,
       fullRecoveryOn: RestType.long,
-    ),
-    ClassResource(
-      id: 'war_priest',
-      name: 'War Priest (bonus action attack)',
-      maxUses: (level) =>
-          0, // overridden dynamically by Wisdom modifier — see combat_screen.dart
-      availableFromLevel: 3,
-      fullRecoveryOn: RestType.short,
     ),
   ],
   'barbarian': [
@@ -171,3 +164,41 @@ final Map<String, List<ClassResource>> featResources = {
     ),
   ],
 };
+
+/// Subclass resources whose limits depend on the character (e.g. the Wisdom
+/// modifier), keyed by `class:subclass`.
+final Map<String, List<ClassResource> Function(Character)> _subclassResources =
+    {
+      'cleric:light': (c) => [
+        ClassResource(
+          id: 'warding_flare',
+          name: 'Warding Flare',
+          maxUses: (_) => wardingFlareUses(c),
+          availableFromLevel: 3,
+          // Improved Warding Flare (level 6): also back on a Short Rest.
+          fullRecoveryOn: c.level >= 6 ? RestType.short : RestType.long,
+        ),
+        ClassResource(
+          id: 'corona_of_light',
+          name: 'Corona of Light',
+          maxUses: (_) => wardingFlareUses(c),
+          availableFromLevel: 17,
+          fullRecoveryOn: RestType.long,
+        ),
+      ],
+      'cleric:war': (c) => [
+        ClassResource(
+          id: 'war_priest',
+          name: 'War Priest (bonus action attack)',
+          maxUses: (_) => wardingFlareUses(c),
+          availableFromLevel: 3,
+          fullRecoveryOn: RestType.short,
+        ),
+      ],
+    };
+
+List<ClassResource> subclassResourcesFor(Character c) {
+  final classId = c.characterClass.id;
+  final subclass = c.classSelections['${classId}_subclass']?.firstOrNull;
+  return _subclassResources['$classId:$subclass']?.call(c) ?? const [];
+}

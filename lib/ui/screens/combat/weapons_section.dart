@@ -221,7 +221,11 @@ extension _WeaponsSection on _CombatScreenState {
                                         .character
                                         .classSelections['cleric_blessed_strikes']
                                         ?.firstOrNull;
-                                    if (blessedChoice == 'divine_strike') {
+                                    // Divine Strike: once on each of your
+                                    // turns (tracked while in combat).
+                                    if (blessedChoice == 'divine_strike' &&
+                                        !_divineStrikeUsed) {
+                                      if (_round > 0) _divineStrikeUsed = true;
                                       final extraDice =
                                           widget.character.level >= 14
                                           ? '2d8'

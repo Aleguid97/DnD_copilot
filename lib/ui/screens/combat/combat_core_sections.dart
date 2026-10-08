@@ -449,8 +449,18 @@ extension _CoreSections on _CombatScreenState {
                         (skill == 'Arcana' || skill == 'Nature')
                     ? magicianLoreBonus(widget.character)
                     : 0;
+                // Divine Order — Thaumaturge: + Wisdom modifier (min 1) to
+                // Intelligence (Arcana or Religion).
+                final thaumaturgeBonus =
+                    clericIsThaumaturge(widget.character) &&
+                        (skill == 'Arcana' || skill == 'Religion')
+                    ? wisdomModifier(widget.character).clamp(1, 20)
+                    : 0;
                 final bonus =
-                    abilityMod + (isProficient ? profBonus : 0) + magicianBonus;
+                    abilityMod +
+                    (isProficient ? profBonus : 0) +
+                    magicianBonus +
+                    thaumaturgeBonus;
                 final bonusText = bonus >= 0 ? '+$bonus' : '$bonus';
                 return Card(
                   child: ListTile(

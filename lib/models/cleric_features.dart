@@ -74,16 +74,15 @@ const List<int> _clericPrepared = [
   16, 16, 17, 17, 18, 18, 19, 20, 21, 22,
 ];
 
+bool clericIsThaumaturge(Character character) =>
+    character.characterClass.id == 'cleric' &&
+    character.classSelections['cleric_divine_order']?.contains('thaumaturge') ==
+        true;
+
 /// Cantrips known: Cleric table, +1 with the Thaumaturge Divine Order.
-int clericCantripCount(Character character) {
-  final thaumaturge =
-      character.classSelections['cleric_divine_order']?.contains(
-        'thaumaturge',
-      ) ==
-      true;
-  return _clericCantrips[(character.level - 1).clamp(0, 19)] +
-      (thaumaturge ? 1 : 0);
-}
+int clericCantripCount(Character character) =>
+    _clericCantrips[(character.level - 1).clamp(0, 19)] +
+    (clericIsThaumaturge(character) ? 1 : 0);
 
 int clericPreparedSpellCount(int level) =>
     _clericPrepared[(level - 1).clamp(0, 19)];

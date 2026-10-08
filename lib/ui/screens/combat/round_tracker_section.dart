@@ -14,6 +14,9 @@ extension _RoundTrackerSection on _CombatScreenState {
       if (_wrathOfTheSeaActive) 'Wrath of the Sea': _wrathRoundsLeft,
       if (_blessingSpellId != null)
         allSpells[_blessingSpellId]!.name: _blessingRoundsLeft,
+      if (_duplicityRoundsLeft != null)
+        'Invoke Duplicity': _duplicityRoundsLeft,
+      if (_coronaRoundsLeft != null) 'Corona of Light': _coronaRoundsLeft,
     };
     return [
       const SizedBox(height: 8),
@@ -104,6 +107,21 @@ extension _RoundTrackerSection on _CombatScreenState {
     _update(() {
       _round++;
       _savageAttackerArmed = false;
+      _divineStrikeUsed = false;
+      if (_duplicityRoundsLeft != null) {
+        _duplicityRoundsLeft = _duplicityRoundsLeft! - 1;
+        if (_duplicityRoundsLeft! <= 0) {
+          _duplicityRoundsLeft = null;
+          notes.add('Invoke Duplicity ended');
+        }
+      }
+      if (_coronaRoundsLeft != null) {
+        _coronaRoundsLeft = _coronaRoundsLeft! - 1;
+        if (_coronaRoundsLeft! <= 0) {
+          _coronaRoundsLeft = null;
+          notes.add('Corona of Light ended');
+        }
+      }
       if (_isRaging) {
         if (rageEnds) {
           _isRaging = false;

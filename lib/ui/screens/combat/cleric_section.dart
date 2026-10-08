@@ -1,633 +1,434 @@
 part of '../combat_screen.dart';
 
 extension _ClericSection on _CombatScreenState {
-  /// Cleric features (Channel Divinity, domains, ...).
+  /// Cleric features (PHB 2024, chapter 3): Channel Divinity and its options,
+  /// domain features, Divine Intervention.
   List<Widget> _buildClericSection(BuildContext context, _CombatData d) {
     final characterId = d.characterId;
-    final resourceUsesAsync = d.resourceUsesAsync;
+    final c = widget.character;
+    if (c.characterClass.id != 'cleric' || characterId == null) {
+      return const [];
+    }
     final domain = d.domain;
+    final level = c.level;
     return [
-      if (widget.character.characterClass.id == 'cleric' &&
-          characterId != null) ...[
-        const SizedBox(height: 24),
-        Text('Cleric Features', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        Builder(
-          builder: (context) {
-            final partyAsync = ref.watch(partyMembersProvider(characterId));
-            return partyAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (e, st) => const SizedBox.shrink(),
-              data: (members) {
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.favorite, size: 18),
-                        const SizedBox(width: 8),
-                        const Text('Heal target: '),
-                        DropdownButton<int?>(
-                          value: _healTargetPartyMemberId,
-                          items: [
-                            const DropdownMenuItem(
-                              value: null,
-                              child: Text('Myself'),
-                            ),
-                            ...members.map(
-                              (m) => DropdownMenuItem(
-                                value: m.id,
-                                child: Text(
-                                  '${m.name} (${m.currentHp}/${m.maxHp} HP)',
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: (v) =>
-                              _update(() => _healTargetPartyMemberId = v),
-                        ),
-                      ],
+      const SizedBox(height: 24),
+      Text('Cleric Features', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 8),
+      d.resourceUsesAsync.when(
+        loading: () => const SizedBox.shrink(),
+        error: (e, st) => Text('Error: $e'),
+        data: (rows) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (level >= 2) _channelDivinityCard(context, characterId, rows, d),
+            if (domain == 'war' && level >= 3)
+              _warPriestCard(context, characterId, rows),
+            if (domain == 'light' && level >= 3)
+              _wardingFlareCard(context, characterId, rows),
+            if (domain == 'light' && level >= 17)
+              _coronaOfLightCard(context, characterId, rows),
+            if (domain == 'trickery' && level >= 3)
+              _featureCard(
+                context,
+                'Blessing of the Trickster',
+                'Magic action: you or a willing creature within 30 ft has '
+                    'Advantage on Dexterity (Stealth) checks until you finish '
+                    'a Long Rest or use this again.',
+                const [],
+              ),
+            if (_improvedPotentSpellcasting)
+              _featureCard(
+                context,
+                'Improved Blessed Strikes',
+                'When a Cleric cantrip deals damage: you or a creature within '
+                    '60 ft gains ${2 * wisdomModifier(c)} Temporary HP.',
+                [
+                  OutlinedButton(
+                    onPressed: () => _gainTempHp(
+                      2 * wisdomModifier(c),
+                      'Improved Blessed Strikes',
                     ),
+                    child: const Text('Take the Temp HP'),
                   ),
-                );
-              },
-            );
-          },
+                ],
+              ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Divine Spark',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                Text(
-                  'Heal a target, or force a Constitution save (fail: full damage, success: half).',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          final isLife = domain == 'life';
-                          final hasSupreme =
-                              isLife && widget.character.level >= 17;
-                          final result = rollDivineSpark(widget.character);
-                          final healTotal = hasSupreme
-                              ? maxHealingRoll(
-                                      '${divineSparkDiceCount(widget.character.level)}d8',
-                                    ) +
-                                    result.modifier
-                              : result.total;
-
-                          if (_healTargetPartyMemberId == null) {
-                            final maxHp = widget.character.totalHitPoints;
-                            final currentStored = await ref.read(
-                              currentHpProvider(characterId).future,
-                            );
-                            final currentHp = currentStored ?? maxHp;
-
-                            if (currentHp >= maxHp) {
-                              _update(() {
-                                _lastRollResult =
-                                    'Divine Spark: your HP already at maximum ($currentHp/$maxHp) — no healing applied.';
-                              });
-                              return;
-                            }
-
-                            var newHp = (currentHp + healTotal).clamp(0, maxHp);
-                            String selfHealNote = '';
-                            if (isLife && widget.character.level >= 6) {
-                              newHp = (newHp + blessedHealerSelfHeal()).clamp(
-                                0,
-                                maxHp,
-                              );
-                              selfHealNote =
-                                  ' (+ ${blessedHealerSelfHeal()} self-heal, Blessed Healer)';
-                            }
-                            await ref
-                                .read(appDatabaseProvider)
-                                .setCurrentHp(characterId, newHp);
-                            _update(() {
-                              _lastRollResult =
-                                  'Divine Spark (self-heal): ${hasSupreme ? "MAX " : ""}${result.rolls.join('+')} + ${result.modifier} = $healTotal HP$selfHealNote → now $newHp/$maxHp HP';
-                            });
-                          } else {
-                            final members =
-                                ref
-                                    .read(partyMembersProvider(characterId))
-                                    .value ??
-                                [];
-                            final target = members
-                                .where((m) => m.id == _healTargetPartyMemberId)
-                                .firstOrNull;
-                            if (target == null) return;
-
-                            if (target.currentHp >= target.maxHp) {
-                              _update(() {
-                                _lastRollResult =
-                                    'Divine Spark: ${target.name} already at maximum HP (${target.currentHp}/${target.maxHp}) — no healing applied.';
-                              });
-                              return;
-                            }
-
-                            var newHp = (target.currentHp + healTotal).clamp(
-                              0,
-                              target.maxHp,
-                            );
-                            String selfHealNote = '';
-                            if (isLife && widget.character.level >= 6) {
-                              final maxHp = widget.character.totalHitPoints;
-                              final currentStored = await ref.read(
-                                currentHpProvider(characterId).future,
-                              );
-                              final currentSelfHp = currentStored ?? maxHp;
-                              final selfHeal = blessedHealerSelfHeal();
-                              final newSelfHp = (currentSelfHp + selfHeal)
-                                  .clamp(0, maxHp);
-                              await ref
-                                  .read(appDatabaseProvider)
-                                  .setCurrentHp(characterId, newSelfHp);
-                              selfHealNote =
-                                  ' (+ $selfHeal self-heal, Blessed Healer)';
-                            }
-                            await ref
-                                .read(appDatabaseProvider)
-                                .updatePartyMemberHp(target.id, newHp);
-                            _update(() {
-                              _lastRollResult =
-                                  'Divine Spark (${target.name}): ${hasSupreme ? "MAX " : ""}${result.rolls.join('+')} + ${result.modifier} = $healTotal HP$selfHealNote → now $newHp/${target.maxHp} HP';
-                            });
-                          }
-                        },
-                        child: const Text('Heal'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          final result = rollDivineSpark(widget.character);
-                          String targetNote = '';
-                          if (_selectedEnemyId != null) {
-                            final enemies =
-                                ref
-                                    .read(combatEnemiesProvider(characterId))
-                                    .value ??
-                                [];
-                            final target = enemies
-                                .where((e) => e.id == _selectedEnemyId)
-                                .firstOrNull;
-                            if (target != null) {
-                              final newHp = (target.currentHp - result.total)
-                                  .clamp(0, target.maxHp);
-                              if (newHp <= 0) {
-                                await ref
-                                    .read(appDatabaseProvider)
-                                    .removeEnemy(target.id);
-                                targetNote = ' — ${target.name} defeated!';
-                              } else {
-                                await ref
-                                    .read(appDatabaseProvider)
-                                    .updateEnemyHp(target.id, newHp);
-                                targetNote =
-                                    ' — ${target.name}: $newHp/${target.maxHp} HP left';
-                              }
-                            }
-                          }
-                          _update(() {
-                            _lastRollResult =
-                                'Divine Spark (damage, target fails save): ${result.total}$targetNote';
-                          });
-                        },
-                        child: const Text('Damage (fail)'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Turn Undead',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                Text(
-                  'Undead within 30 ft make a Wisdom save or are Frightened + Incapacitated for 1 minute.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _selectedEnemyId == null
-                            ? null
-                            : () async {
-                                final enemies =
-                                    ref
-                                        .read(
-                                          combatEnemiesProvider(characterId),
-                                        )
-                                        .value ??
-                                    [];
-                                final target = enemies
-                                    .where((e) => e.id == _selectedEnemyId)
-                                    .firstOrNull;
-                                if (target == null) return;
-                                final current =
-                                    (jsonDecode(target.conditionsJson) as List)
-                                        .cast<String>();
-                                if (!current.contains(
-                                  'Frightened + Incapacitated (Turn Undead)',
-                                )) {
-                                  current.add(
-                                    'Frightened + Incapacitated (Turn Undead)',
-                                  );
-                                }
-                                await ref
-                                    .read(appDatabaseProvider)
-                                    .updateEnemyConditions(target.id, current);
-                                _update(
-                                  () => _lastRollResult =
-                                      '${target.name}: failed save, Turned.',
-                                );
-                              },
-                        child: const Text('Target failed save'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (widget.character.level >= 5)
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () async {
-                            final result = rollSearUndead(widget.character);
-                            String targetNote = '';
-                            if (_selectedEnemyId != null) {
-                              final enemies =
-                                  ref
-                                      .read(combatEnemiesProvider(characterId))
-                                      .value ??
-                                  [];
-                              final target = enemies
-                                  .where((e) => e.id == _selectedEnemyId)
-                                  .firstOrNull;
-                              if (target != null) {
-                                final newHp = (target.currentHp - result.total)
-                                    .clamp(0, target.maxHp);
-                                if (newHp <= 0) {
-                                  await ref
-                                      .read(appDatabaseProvider)
-                                      .removeEnemy(target.id);
-                                  targetNote = ' — ${target.name} defeated!';
-                                } else {
-                                  await ref
-                                      .read(appDatabaseProvider)
-                                      .updateEnemyHp(target.id, newHp);
-                                  targetNote =
-                                      ' — ${target.name}: $newHp/${target.maxHp} HP left';
-                                }
-                              }
-                            }
-                            _update(() {
-                              _lastRollResult =
-                                  'Sear Undead: ${result.total} Radiant$targetNote';
-                            });
-                          },
-                          child: const Text('Sear Undead'),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (domain == 'war') ...[
-          const SizedBox(height: 8),
-          resourceUsesAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (e, st) => const SizedBox.shrink(),
-            data: (usesRows) {
-              final wisMod = wisdomModifier(widget.character).clamp(1, 20);
-              final row = usesRows
-                  .where((r) => r.resourceId == 'war_priest')
-                  .firstOrNull;
-              final spent = row?.usesSpent ?? 0;
-              final remaining = (wisMod - spent).clamp(0, wisMod);
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'War Priest',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      Text(
-                        'Bonus Action weapon/Unarmed Strike attack. Uses: $remaining / $wisMod (recharge on Short or Long Rest)',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: remaining > 0
-                              ? () => ref
-                                    .read(appDatabaseProvider)
-                                    .useResource(
-                                      characterId,
-                                      'war_priest',
-                                      wisMod,
-                                    )
-                              : null,
-                          child: const Text('Use bonus action attack'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Guided Strike',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    _lastAttackRollForCorrection != null
-                        ? 'Last attack roll: $_lastAttackRollForCorrection'
-                        : 'No recent attack roll to correct.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _lastAttackRollForCorrection == null
-                          ? null
-                          : () {
-                              final corrected = applyGuidedStrike(
-                                _lastAttackRollForCorrection!,
-                              );
-                              _update(() {
-                                _lastRollResult =
-                                    'Guided Strike: $_lastAttackRollForCorrection + 10 = $corrected';
-                              });
-                            },
-                      child: const Text('Apply +10 to missed roll'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        if (domain == 'war' && widget.character.level >= 6)
-          ..._warGodsBlessing(context, d),
-        if (widget.character.level >= 10) ..._divineIntervention(context, d),
-        if (domain == 'life') ...[
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Preserve Life',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    'Total pool: ${preserveLifePool(widget.character.level)} HP, split among Bloodied allies within 30 ft (max half their HP max each).',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) {
-                      final partyAsync = ref.watch(
-                        partyMembersProvider(characterId),
-                      );
-                      return partyAsync.when(
-                        loading: () => const SizedBox.shrink(),
-                        error: (e, st) => const SizedBox.shrink(),
-                        data: (members) {
-                          if (members.isEmpty) {
-                            return const Text(
-                              'No party members added yet. Add allies from the Party screen first.',
-                              style: TextStyle(fontStyle: FontStyle.italic),
-                            );
-                          }
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Text('Target: '),
-                                  DropdownButton<int?>(
-                                    value: _preserveLifeTargetId,
-                                    hint: const Text('Choose ally'),
-                                    items: members
-                                        .map(
-                                          (m) => DropdownMenuItem(
-                                            value: m.id,
-                                            child: Text(
-                                              '${m.name} (${m.currentHp}/${m.maxHp} HP)',
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                    onChanged: (v) => _update(
-                                      () => _preserveLifeTargetId = v,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _preserveLifeController,
-                                      keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
-                                        labelText: 'HP to give this ally',
-                                        isDense: true,
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    onPressed: () async {
-                                      final amount = int.tryParse(
-                                        _preserveLifeController.text,
-                                      );
-                                      if (amount == null ||
-                                          _preserveLifeTargetId == null) {
-                                        return;
-                                      }
-                                      final target = members
-                                          .where(
-                                            (m) =>
-                                                m.id == _preserveLifeTargetId,
-                                          )
-                                          .firstOrNull;
-                                      if (target == null) return;
-                                      final cap = target.maxHp ~/ 2;
-                                      final actualHeal = amount > cap
-                                          ? cap
-                                          : amount;
-                                      final newHp =
-                                          (target.currentHp + actualHeal).clamp(
-                                            0,
-                                            target.maxHp,
-                                          );
-                                      await ref
-                                          .read(appDatabaseProvider)
-                                          .updatePartyMemberHp(
-                                            target.id,
-                                            newHp,
-                                          );
-                                      _update(() {
-                                        _lastRollResult =
-                                            'Preserve Life: ${target.name} healed $actualHeal HP (capped at half max) → $newHp/${target.maxHp}';
-                                        _preserveLifeController.clear();
-                                      });
-                                    },
-                                    child: const Text('Apply'),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        if (domain == 'light') ...[
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Radiance of the Dawn',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    '2d10 + Cleric level Radiant, 30 ft emanation, Con save for half (apply per enemy manually).',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        final result = rollRadianceOfTheDawn(widget.character);
-                        _update(() {
-                          _lastRollResult =
-                              'Radiance of the Dawn: ${result.rolls.join('+')} + ${widget.character.level} = ${result.total} (half on successful save)';
-                        });
-                      },
-                      child: const Text('Roll damage'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Warding Flare',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    'Reaction: impose Disadvantage on an incoming attack. Uses available: ${wardingFlareUses(widget.character)} (min 1, recharge on Long Rest).',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        if (domain == 'trickery') ...[
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Blessing of the Trickster',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    'Grant Advantage on Dexterity (Stealth) checks to yourself or a willing creature within 30 ft, until you finish a Long Rest or use this again.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Invoke Duplicity',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  Text(
-                    'Channel Divinity: create an illusory duplicate of yourself for 1 minute (Cast Spells / Distract / Move benefits). Track manually at the table.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ],
+      ),
+      if (domain == 'war' && level >= 6) ..._warGodsBlessing(context, d),
+      if (level >= 10) ..._divineIntervention(context, d),
     ];
+  }
+
+  bool get _improvedPotentSpellcasting =>
+      widget.character.level >= 14 &&
+      widget.character.classSelections['cleric_blessed_strikes']?.contains(
+            'potent_spellcasting',
+          ) ==
+          true;
+
+  /// Temporary Hit Points don't stack: keep the higher amount.
+  void _gainTempHp(int amount, String source) {
+    if (amount <= _tempHp) {
+      _showRoll('$source: you already have $_tempHp Temporary HP.');
+      return;
+    }
+    _update(() {
+      _tempHp = amount;
+      _tempHpSource = source;
+      _lastRollResult = '$source: $amount Temporary HP.';
+    });
+  }
+
+  /// Spends one Channel Divinity use; false (with a message) if none is left.
+  Future<bool> _useChannelDivinity(
+    int characterId,
+    List<CharacterResourceUse> rows,
+  ) async {
+    final max = channelDivinityUses(widget.character.level);
+    if (_resourceRemaining(rows, 'channel_divinity', max) <= 0) {
+      _showRoll('No Channel Divinity uses left.');
+      return false;
+    }
+    await _spendResource(characterId, 'channel_divinity', max);
+    return true;
+  }
+
+  Widget _channelDivinityCard(
+    BuildContext context,
+    int characterId,
+    List<CharacterResourceUse> rows,
+    _CombatData d,
+  ) {
+    final c = widget.character;
+    final domain = d.domain;
+    final level = c.level;
+    final max = channelDivinityUses(level);
+    final left = _resourceRemaining(rows, 'channel_divinity', max);
+    final dc = _casterRules(d.profBonus)!.saveDc;
+    final sparkDice = '${divineSparkDiceCount(level)}d8';
+    VoidCallback? use(Future<void> Function() action) => left > 0
+        ? () async {
+            if (await _useChannelDivinity(characterId, rows)) await action();
+          }
+        : null;
+    return _featureCard(
+      context,
+      'Channel Divinity ($left/$max)',
+      'One use back on a Short Rest, all on a Long Rest. Save DC $dc.\n'
+          'Divine Spark: $sparkDice + Wis, heal or Con save (half). '
+          'Turn Undead: Wis save or Frightened + Incapacitated for 1 minute'
+          '${level >= 5 ? ', Sear Undead adds Radiant damage' : ''}.',
+      [
+        OutlinedButton(
+          onPressed: use(() => _divineSparkHeal(characterId)),
+          child: const Text('Divine Spark: heal'),
+        ),
+        OutlinedButton(
+          onPressed: use(() => _divineSparkDamage(characterId, dc)),
+          child: const Text('Divine Spark: damage'),
+        ),
+        OutlinedButton(
+          onPressed: use(() => _turnUndead(characterId, dc)),
+          child: const Text('Turn Undead'),
+        ),
+        if (domain == 'life' && level >= 3)
+          OutlinedButton(
+            onPressed: left > 0 ? () => _preserveLife(characterId, rows) : null,
+            child: const Text('Preserve Life'),
+          ),
+        if (domain == 'light' && level >= 3)
+          OutlinedButton(
+            onPressed: use(() => _radianceOfTheDawn(characterId, dc)),
+            child: const Text('Radiance of the Dawn'),
+          ),
+        if (domain == 'trickery' && level >= 3)
+          OutlinedButton(
+            onPressed: use(
+              () async => _update(() {
+                _duplicityRoundsLeft = 10;
+                _lastRollResult =
+                    'Invoke Duplicity: illusion for 1 minute. Advantage on '
+                    'attacks vs creatures within 5 ft of you both'
+                    '${level >= 17 ? "; allies too near the illusion (Improved Duplicity)" : ""}.';
+              }),
+            ),
+            child: const Text('Invoke Duplicity'),
+          ),
+        if (domain == 'war' && level >= 3)
+          OutlinedButton(
+            onPressed: _lastAttackRollForCorrection == null
+                ? null
+                : use(() async {
+                    final roll = _lastAttackRollForCorrection!;
+                    _update(() {
+                      _lastRollResult =
+                          'Guided Strike: $roll + 10 = ${applyGuidedStrike(roll)}';
+                      _lastAttackRollForCorrection = null;
+                    });
+                  }),
+            child: const Text('Guided Strike (+10)'),
+          ),
+        if (_duplicityRoundsLeft != null)
+          InputChip(
+            label: Text(
+              'Duplicity active${_round > 0 ? ': $_duplicityRoundsLeft rds' : ''}',
+            ),
+            onDeleted: () => _update(() => _duplicityRoundsLeft = null),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _divineSparkHeal(int characterId) async {
+    final c = widget.character;
+    final dice = '${divineSparkDiceCount(c.level)}d8';
+    final wis = wisdomModifier(c);
+    // Supreme Healing (Life 17) also covers Channel Divinity healing.
+    final supreme =
+        c.classSelections['cleric_subclass']?.contains('life') == true &&
+        c.level >= 17;
+    final roll = rollDamage(dice, wis);
+    final total = supreme ? maxHealingRoll(dice) + wis : roll.total;
+    if (!mounted) return;
+    final (note, _) = await _healChosenTarget(context, characterId, total);
+    _showRoll(
+      'Divine Spark: ${supreme ? 'MAX ${maxHealingRoll(dice)}' : roll.rolls.join('+')} + $wis = $total HP$note',
+    );
+  }
+
+  Future<void> _divineSparkDamage(int characterId, int dc) async {
+    final roll = rollDivineSpark(widget.character);
+    final note = await _featureSave(
+      characterId,
+      title: 'Divine Spark: DC $dc Constitution save',
+      damage: roll.total,
+      halfOnSave: true,
+    );
+    _showRoll(
+      'Divine Spark: ${roll.rolls.join('+')} + ${roll.modifier} = ${roll.total} '
+      'Necrotic or Radiant (half on save)$note',
+    );
+  }
+
+  Future<void> _turnUndead(int characterId, int dc) async {
+    // Sear Undead (level 5): Wisdom-modifier d8s of Radiant to each Undead
+    // that fails; the damage doesn't end the Turn.
+    final sear = widget.character.level >= 5
+        ? rollSearUndead(widget.character)
+        : null;
+    final note = await _featureSave(
+      characterId,
+      title: 'Turn Undead: DC $dc Wisdom save (Undead only)',
+      multi: true,
+      damage: sear?.total ?? 0,
+      condition: 'Frightened + Incapacitated (Turn Undead)',
+    );
+    _showRoll(
+      'Turn Undead: fail = Frightened + Incapacitated for 1 minute'
+      '${sear == null ? '' : ', Sear Undead ${sear.rolls.join('+')} = ${sear.total} Radiant'}$note',
+    );
+  }
+
+  Future<void> _radianceOfTheDawn(int characterId, int dc) async {
+    final roll = rollRadianceOfTheDawn(widget.character);
+    final note = await _featureSave(
+      characterId,
+      title: 'Radiance of the Dawn: DC $dc Constitution save',
+      multi: true,
+      damage: roll.total,
+      halfOnSave: true,
+    );
+    _showRoll(
+      'Radiance of the Dawn: ${roll.rolls.join('+')} + ${roll.modifier} = '
+      '${roll.total} Radiant (half on save), magical Darkness dispelled$note',
+    );
+  }
+
+  /// A Channel Divinity effect that forces a saving throw on enemies: asks who
+  /// is affected and who failed, then applies damage and conditions.
+  Future<String> _featureSave(
+    int characterId, {
+    required String title,
+    bool multi = false,
+    int damage = 0,
+    bool halfOnSave = false,
+    String? condition,
+  }) async {
+    final enemies = _enemies(characterId);
+    if (enemies.isEmpty || !mounted) return '';
+    final outcomes = await showDialog<Map<int, bool>>(
+      context: context,
+      builder: (_) => _SaveTargetsDialog(
+        title: title,
+        enemies: enemies,
+        multi: multi,
+        preselected: _selectedEnemyId,
+      ),
+    );
+    if (outcomes == null) return ' (not applied)';
+    final parts = <String>[];
+    for (final e in enemies) {
+      final failed = outcomes[e.id];
+      if (failed == null) continue;
+      final amount = failed ? damage : (halfOnSave ? damage ~/ 2 : 0);
+      var line = '${e.name} ${failed ? "fails" : "saves"}';
+      if (amount > 0) line = '$line: ${await _damageEnemy(e, amount)}';
+      if (failed && condition != null) {
+        final survivor = _enemies(
+          characterId,
+        ).where((x) => x.id == e.id).firstOrNull;
+        if (survivor != null) await _addCondition(survivor, condition);
+      }
+      parts.add(line);
+    }
+    return parts.isEmpty ? '' : ' — ${parts.join('; ')}';
+  }
+
+  /// Preserve Life (Life 3): 5 × Cleric level HP split among Bloodied
+  /// creatures (you included), none above half its Hit Point maximum.
+  Future<void> _preserveLife(
+    int characterId,
+    List<CharacterResourceUse> rows,
+  ) async {
+    final c = widget.character;
+    final maxHp = c.totalHitPoints;
+    final myHp = await ref.read(currentHpProvider(characterId).future) ?? maxHp;
+    final members =
+        ref.read(partyMembersProvider(characterId)).value ?? const [];
+    final candidates = <_PreserveLifeTarget>[
+      _PreserveLifeTarget(null, 'You', myHp, maxHp),
+      for (final m in members)
+        _PreserveLifeTarget(m.id, m.name, m.currentHp, m.maxHp),
+    ].where((t) => t.room > 0).toList();
+    if (candidates.isEmpty) {
+      _showRoll('Preserve Life: nobody is Bloodied (at half HP or less).');
+      return;
+    }
+    if (!mounted) return;
+    final split = await showDialog<Map<_PreserveLifeTarget, int>>(
+      context: context,
+      builder: (_) => _PreserveLifeDialog(
+        pool: preserveLifePool(c.level),
+        targets: candidates,
+      ),
+    );
+    if (split == null || split.values.every((v) => v == 0)) return;
+    if (!await _useChannelDivinity(characterId, rows)) return;
+    final notes = <String>[];
+    for (final MapEntry(key: t, value: hp) in split.entries) {
+      if (hp <= 0) continue;
+      final newHp = t.current + hp;
+      if (t.partyMemberId == null) {
+        await ref.read(appDatabaseProvider).setCurrentHp(characterId, newHp);
+      } else {
+        await ref
+            .read(appDatabaseProvider)
+            .updatePartyMemberHp(t.partyMemberId!, newHp);
+      }
+      notes.add('${t.name} +$hp → $newHp/${t.max}');
+    }
+    _showRoll('Preserve Life: ${notes.join('; ')}');
+  }
+
+  Widget _warPriestCard(
+    BuildContext context,
+    int characterId,
+    List<CharacterResourceUse> rows,
+  ) {
+    final max = wardingFlareUses(widget.character);
+    final left = _resourceRemaining(rows, 'war_priest', max);
+    return _featureCard(
+      context,
+      'War Priest ($left/$max)',
+      'Bonus Action: one attack with a weapon or an Unarmed Strike. Uses '
+          'come back on a Short or Long Rest.',
+      [
+        OutlinedButton(
+          onPressed: left > 0
+              ? () async {
+                  await _spendResource(characterId, 'war_priest', max);
+                  _showRoll('War Priest: make one extra attack now.');
+                }
+              : null,
+          child: const Text('Use bonus action attack'),
+        ),
+      ],
+    );
+  }
+
+  Widget _wardingFlareCard(
+    BuildContext context,
+    int characterId,
+    List<CharacterResourceUse> rows,
+  ) {
+    final c = widget.character;
+    final max = wardingFlareUses(c);
+    final left = _resourceRemaining(rows, 'warding_flare', max);
+    final improved = c.level >= 6;
+    return _featureCard(
+      context,
+      'Warding Flare ($left/$max)',
+      'Reaction: a creature you can see within 30 ft has Disadvantage on its '
+          'attack roll. ${improved ? 'Back on a Short or Long Rest; the target of the attack gains 2d6 + Wis Temporary HP.' : 'Back on a Long Rest.'}',
+      [
+        OutlinedButton(
+          onPressed: left > 0
+              ? () async {
+                  await _spendResource(characterId, 'warding_flare', max);
+                  if (!improved) {
+                    _showRoll('Warding Flare: the attack has Disadvantage.');
+                    return;
+                  }
+                  final temp = rollDamage('2d6', wisdomModifier(c));
+                  _showRoll(
+                    'Warding Flare: the attack has Disadvantage; its target '
+                    'gains ${temp.rolls.join('+')} + ${temp.modifier} = '
+                    '${temp.total} Temporary HP.',
+                  );
+                }
+              : null,
+          child: const Text('Use Warding Flare'),
+        ),
+      ],
+    );
+  }
+
+  Widget _coronaOfLightCard(
+    BuildContext context,
+    int characterId,
+    List<CharacterResourceUse> rows,
+  ) {
+    final max = wardingFlareUses(widget.character);
+    final left = _resourceRemaining(rows, 'corona_of_light', max);
+    return _featureCard(
+      context,
+      'Corona of Light ($left/$max)',
+      'Magic action: 1-minute aura of sunlight (60 ft Bright, +30 ft Dim). '
+          'Enemies in the Bright Light have Disadvantage on saves against '
+          'Radiance of the Dawn and spells that deal Fire or Radiant damage.'
+          '${_coronaRoundsLeft == null ? '' : ' Active${_round > 0 ? ': $_coronaRoundsLeft rds' : ''}.'}',
+      [
+        OutlinedButton(
+          onPressed: left > 0 && _coronaRoundsLeft == null
+              ? () async {
+                  await _spendResource(characterId, 'corona_of_light', max);
+                  _update(() {
+                    _coronaRoundsLeft = 10;
+                    _lastRollResult = 'Corona of Light: aura for 1 minute.';
+                  });
+                }
+              : null,
+          child: const Text('Emit Corona of Light'),
+        ),
+        if (_coronaRoundsLeft != null)
+          TextButton(
+            onPressed: () => _update(() => _coronaRoundsLeft = null),
+            child: const Text('Dismiss'),
+          ),
+      ],
+    );
   }
 
   /// War God's Blessing (War, level 6): spend a Channel Divinity use to cast
@@ -740,6 +541,16 @@ extension _ClericSection on _CombatScreenState {
                           'divine_intervention',
                           1,
                         );
+                        if (id == 'wish') {
+                          // Greater Divine Intervention (level 20).
+                          final rests = rollDamage('2d4', 0);
+                          _showRoll(
+                            'Divine Intervention: Wish! You can\'t use Divine '
+                            'Intervention again until you finish '
+                            '${rests.rolls.join('+')} = ${rests.total} Long Rests.',
+                          );
+                          return;
+                        }
                         if (!mounted) return;
                         await _castSpell(
                           this.context,
@@ -775,6 +586,16 @@ extension _ClericSection on _CombatScreenState {
           height: 480,
           child: ListView(
             children: [
+              if (widget.character.level >= 20)
+                ListTile(
+                  dense: true,
+                  title: const Text('Wish'),
+                  subtitle: const Text(
+                    'Greater Divine Intervention: afterwards 2d4 Long Rests '
+                    'before you can use Divine Intervention again',
+                  ),
+                  onTap: () => Navigator.of(ctx).pop('wish'),
+                ),
               for (final s in candidates)
                 ListTile(
                   dense: true,
@@ -798,6 +619,98 @@ extension _ClericSection on _CombatScreenState {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PreserveLifeTarget {
+  final int? partyMemberId;
+  final String name;
+  final int current;
+  final int max;
+
+  const _PreserveLifeTarget(
+    this.partyMemberId,
+    this.name,
+    this.current,
+    this.max,
+  );
+
+  /// HP that can still be restored: only while Bloodied, up to half max.
+  int get room => current * 2 <= max ? max ~/ 2 - current : 0;
+}
+
+/// Splits the Preserve Life pool among Bloodied creatures.
+class _PreserveLifeDialog extends StatefulWidget {
+  final int pool;
+  final List<_PreserveLifeTarget> targets;
+
+  const _PreserveLifeDialog({required this.pool, required this.targets});
+
+  @override
+  State<_PreserveLifeDialog> createState() => _PreserveLifeDialogState();
+}
+
+class _PreserveLifeDialogState extends State<_PreserveLifeDialog> {
+  late final Map<_PreserveLifeTarget, int> _split = {
+    for (final t in widget.targets) t: 0,
+  };
+
+  int get _left => widget.pool - _split.values.fold(0, (a, b) => a + b);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Preserve Life: $_left/${widget.pool} HP left'),
+      content: SizedBox(
+        width: 420,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final t in widget.targets)
+              ListTile(
+                dense: true,
+                title: Text('${t.name} (${t.current}/${t.max} HP)'),
+                subtitle: Text('Up to ${t.room} HP (half its maximum)'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: _split[t]! > 0
+                          ? () => setState(() => _split[t] = _split[t]! - 1)
+                          : null,
+                    ),
+                    Text('${_split[t]}'),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: _split[t]! < t.room && _left > 0
+                          ? () => setState(() => _split[t] = _split[t]! + 1)
+                          : null,
+                    ),
+                    TextButton(
+                      onPressed: () => setState(
+                        () => _split[t] =
+                            _split[t]! + (t.room - _split[t]!).clamp(0, _left),
+                      ),
+                      child: const Text('Max'),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).pop(_split),
+          child: const Text('Heal'),
+        ),
+      ],
     );
   }
 }

@@ -42,7 +42,7 @@ che restituisce `List<Widget>`:
 | `fighter_section.dart` | Guerriero (Tactical Mind) |
 | `barbarian_section.dart` | Barbaro e sottoclassi |
 | `weapons_section.dart` | Armi equipaggiate, Weapon Mastery, Unarmed Strike |
-| `cleric_section.dart` | Chierico e domini |
+| `cleric_section.dart` | Chierico: Channel Divinity (spende gli usi), domini, Divine Intervention |
 | `druid_section.dart` | Druido: slot incantesimo, Wild Shape, Elemental Fury, cerchi |
 | `class_resources_section.dart` | Tracker generico risorse di classe |
 | `round_tracker_section.dart` | Round di combattimento e durate (Concentrazione, Rage, Starry Form…) |
@@ -87,12 +87,15 @@ Regole:
 
 - **Guerriero**: 1–20, tutte le sottoclassi (meccaniche solo Champion/Battle Master;
   Eldritch Knight/Psi Warrior parzialmente testuali), 6 Fighting Style, Weapon Mastery, Studied Attacks.
-- **Chierico**: 1–20, Life/Light/Trickery/War con meccaniche in Combat. Incantesimi in
-  Combat: lista (116, dalle intestazioni del cap. 7) ed effetti; Disciple of Life,
-  Blessed Healer, Supreme Healing e Potent Spellcasting applicati alle cure/trucchetti.
-  **Da verificare col cap. 3 (Chierico)**: trucchetti/preparati per livello oltre il 1°
-  (ora mostrati come "?"), incantesimi di dominio sempre preparati, tabella slot
-  (ora quella da full caster del Druido).
+- **Chierico**: 1–20, verificato sul cap. 3 (tabella, Channel Divinity, Divine Order,
+  Blessed Strikes, Divine Intervention e versione maggiore, domini Life/Light/Trickery).
+  Ogni opzione di Channel Divinity consuma un uso (Divine Spark, Turn Undead + Sear Undead,
+  Preserve Life, Radiance of the Dawn, Invoke Duplicity, Guided Strike, War God's Blessing).
+  Incantesimi: lista di 117 (cap. 3), trucchetti/preparati per livello, incantesimi di
+  dominio sempre preparati. Risorse di sottoclasse che dipendono dalla Saggezza in
+  `subclassResourcesFor` (`class_resources_data.dart`).
+  **Da verificare**: privilegi del War Domain (pagina non inclusa nell'estratto: dati
+  forniti dall'utente).
 - **Barbaro**: 1–20, Berserker/Wild Heart/World Tree/Zealot con meccaniche in Combat.
 - **Druido**: 1–20, Land/Moon/Sea/Stars con meccaniche in Combat; slot incantesimo
   tracciati; Wild Shape a contatore (forme solo come nomi: le statistiche delle
