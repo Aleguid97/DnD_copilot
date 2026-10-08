@@ -23,7 +23,15 @@ extension _WeaponsSection on _CombatScreenState {
               ? '+${info.attackBonus}'
               : '${info.attackBonus}';
           final usesGwf = stats.weaponUsesGreatWeaponFighting(w);
-          final masteryProp = weaponMasteryProperty[w.id];
+          // Mastery only for weapon kinds the character chose; Tactical
+          // Master (Fighter 9) can swap it for Push, Sap or Slow.
+          final nativeMastery =
+              masteredWeaponIds(widget.character).contains(w.id)
+              ? weaponMasteryProperty[w.id]
+              : null;
+          final masteryProp = nativeMastery == null
+              ? null
+              : (_tacticalMasterOverride[w.id] ?? nativeMastery);
           return Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -102,6 +110,10 @@ extension _WeaponsSection on _CombatScreenState {
                             String masteryNote = '';
                             String hitNote = '';
                             final isNat20 = result.rolls.first == 20;
+                            // Champion: Critical Hit on 19-20 (18-20 at 15).
+                            final critRoll =
+                                result.rolls.first >=
+                                weaponCritThreshold(widget.character);
                             if (characterId != null &&
                                 _selectedEnemyId != null) {
                               final enemies =
@@ -117,15 +129,26 @@ extension _WeaponsSection on _CombatScreenState {
                                     isNat20 ||
                                     result.total >= target.armorClass;
                                 hitNote = didHit
-                                    ? (isNat20 ? ' — CRITICAL HIT!' : ' — HIT!')
+                                    ? (critRoll
+                                          ? ' — CRITICAL HIT!'
+                                          : ' — HIT!')
                                     : ' — MISS';
                                 _update(() => _lastAttackHit = didHit);
                                 _update(
                                   () => _lastAttackWasCritical =
-                                      isNat20 && didHit,
+                                      critRoll && didHit,
                                 );
                                 if (isNat20) {
                                   hitNote = ' — CRITICAL HIT (natural 20)!';
+                                } else if (critRoll && didHit) {
+                                  hitNote =
+                                      ' — CRITICAL HIT (natural ${result.rolls.first}, Champion)!';
+                                }
+                                if (critRoll &&
+                                    didHit &&
+                                    hasRemarkableAthlete(widget.character)) {
+                                  hitNote +=
+                                      ' Remarkable Athlete: move half your Speed without provoking Opportunity Attacks.';
                                 }
                                 if (didHit && masteryProp == 'Vex') {
                                   _update(() => _hasAdvantageFromVex = true);
@@ -150,9 +173,10 @@ extension _WeaponsSection on _CombatScreenState {
                                 }
                               }
                             } else {
-                              _update(() => _lastAttackWasCritical = isNat20);
-                              if (isNat20) {
-                                hitNote = ' — CRITICAL HIT (natural 20)!';
+                              _update(() => _lastAttackWasCritical = critRoll);
+                              if (critRoll) {
+                                hitNote =
+                                    ' — CRITICAL HIT (natural ${result.rolls.first})!';
                               }
                               if (masteryProp == 'Vex') {
                                 _update(() => _hasAdvantageFromVex = true);
@@ -330,6 +354,41 @@ extension _WeaponsSection on _CombatScreenState {
                       ),
                     ],
                   ),
+                  if (nativeMastery != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child:
+                          widget.character.characterClass.id == 'fighter' &&
+                              widget.character.level >= 9
+                          ? Wrap(
+                              spacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                const Text('Mastery (Tactical Master):'),
+                                for (final p in {
+                                  nativeMastery,
+                                  'Push',
+                                  'Sap',
+                                  'Slow',
+                                })
+                                  ChoiceChip(
+                                    label: Text(p),
+                                    selected: masteryProp == p,
+                                    onSelected: (_) => _update(() {
+                                      if (p == nativeMastery) {
+                                        _tacticalMasterOverride.remove(w.id);
+                                      } else {
+                                        _tacticalMasterOverride[w.id] = p;
+                                      }
+                                    }),
+                                  ),
+                              ],
+                            )
+                          : Text(
+                              'Mastery: $nativeMastery',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                    ),
                   Builder(
                     builder: (context) {
                       if (masteryProp == null || masteryProp == 'Vex') {
@@ -667,12 +726,14 @@ extension _WeaponsSection on _CombatScreenState {
                     child: OutlinedButton(
                       onPressed: () {
                         final result = rollAttack(info.attackBonus);
-                        final isNat20 = result.rolls.first == 20;
+                        final crit =
+                            result.rolls.first >=
+                            weaponCritThreshold(widget.character);
                         _update(() {
-                          _lastAttackWasCritical = isNat20;
+                          _lastAttackWasCritical = crit;
                           _lastAttackRollForCorrection = result.total;
                           _lastRollResult =
-                              'Unarmed Strike — Attack roll: ${result.rolls.first} $attackText = ${result.total}${isNat20 ? " — CRITICAL HIT!" : ""}';
+                              'Unarmed Strike — Attack roll: ${result.rolls.first} $attackText = ${result.total}${crit ? " — CRITICAL HIT!" : ""}';
                         });
                       },
                       child: Text('Roll to Hit ($attackText)'),

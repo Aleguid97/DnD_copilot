@@ -165,3 +165,19 @@ Future<void> expectInTabs(
   if (finder.evaluate().isEmpty) await findInAnyTab(tester, finder);
   expect(finder, matcher, reason: reason);
 }
+
+/// Adds [itemId] to the test character's inventory and equips it.
+Future<void> equipItem(
+  WidgetTester tester,
+  AppDatabase db,
+  String itemId,
+) async {
+  await runDb(tester, () => db.addInventoryItem(1, itemId));
+  final row = await runDb(
+    tester,
+    () => (db.select(
+      db.characterInventoryItems,
+    )..where((t) => t.itemId.equals(itemId))).getSingle(),
+  );
+  await runDb(tester, () => db.toggleEquipped(row.id, true));
+}

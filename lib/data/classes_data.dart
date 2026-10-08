@@ -1225,6 +1225,7 @@ final List<CharacterClass> allClasses = [
       'History',
       'Insight',
       'Intimidation',
+      'Persuasion',
       'Perception',
       'Survival',
     ],
@@ -1268,8 +1269,8 @@ final List<CharacterClass> allClasses = [
       LevelFeature(
         level: 1,
         fixedTraits: [
-          'Second Wind: Bonus Action, regain 1d10 + Fighter level Hit Points (2 uses, regained on a Short or Long Rest)',
-          'Weapon Mastery: use the mastery properties of 3 weapon types of your choice',
+          'Second Wind: Bonus Action, regain 1d10 + Fighter level Hit Points (2 uses, 3 at level 4, 4 at level 10; one back on a Short Rest, all on a Long Rest)',
+          'Weapon Mastery: use the mastery properties of 3 weapon types of your choice (4 at level 4, 5 at 10, 6 at 16); change one after a Long Rest',
         ],
         choices: [
           Choice(
@@ -1277,49 +1278,7 @@ final List<CharacterClass> allClasses = [
             title: 'Choose 3 weapon types for Weapon Mastery',
             minSelections: 3,
             maxSelections: 3,
-            options: [
-              ChoiceOption(id: 'club', label: 'Club (Sap)'),
-              ChoiceOption(id: 'dagger', label: 'Dagger (Nick)'),
-              ChoiceOption(id: 'greatclub', label: 'Greatclub (Push)'),
-              ChoiceOption(id: 'handaxe', label: 'Handaxe (Vex)'),
-              ChoiceOption(id: 'javelin', label: 'Javelin (Slow)'),
-              ChoiceOption(id: 'light_hammer', label: 'Light Hammer (Nick)'),
-              ChoiceOption(id: 'mace', label: 'Mace (Sap)'),
-              ChoiceOption(id: 'quarterstaff', label: 'Quarterstaff (Topple)'),
-              ChoiceOption(id: 'sickle', label: 'Sickle (Nick)'),
-              ChoiceOption(id: 'spear', label: 'Spear (Sap)'),
-              ChoiceOption(id: 'battleaxe', label: 'Battleaxe (Topple)'),
-              ChoiceOption(id: 'flail', label: 'Flail (Sap)'),
-              ChoiceOption(id: 'glaive', label: 'Glaive (Graze)'),
-              ChoiceOption(id: 'greataxe', label: 'Greataxe (Cleave)'),
-              ChoiceOption(id: 'greatsword', label: 'Greatsword (Graze)'),
-              ChoiceOption(id: 'halberd', label: 'Halberd (Cleave)'),
-              ChoiceOption(id: 'lance', label: 'Lance (Topple)'),
-              ChoiceOption(id: 'longsword', label: 'Longsword (Sap)'),
-              ChoiceOption(id: 'maul', label: 'Maul (Topple)'),
-              ChoiceOption(id: 'morningstar', label: 'Morningstar (Sap)'),
-              ChoiceOption(id: 'pike', label: 'Pike (Push)'),
-              ChoiceOption(id: 'rapier', label: 'Rapier (Vex)'),
-              ChoiceOption(id: 'scimitar', label: 'Scimitar (Nick)'),
-              ChoiceOption(id: 'shortsword', label: 'Shortsword (Vex)'),
-              ChoiceOption(id: 'trident', label: 'Trident (Topple)'),
-              ChoiceOption(id: 'warhammer', label: 'Warhammer (Push)'),
-              ChoiceOption(id: 'war_pick', label: 'War Pick (Sap)'),
-              ChoiceOption(id: 'whip', label: 'Whip (Slow)'),
-              ChoiceOption(id: 'dart', label: 'Dart (Vex)'),
-              ChoiceOption(
-                id: 'light_crossbow',
-                label: 'Light Crossbow (Slow)',
-              ),
-              ChoiceOption(id: 'shortbow', label: 'Shortbow (Vex)'),
-              ChoiceOption(id: 'sling', label: 'Sling (Slow)'),
-              ChoiceOption(id: 'hand_crossbow', label: 'Hand Crossbow (Vex)'),
-              ChoiceOption(
-                id: 'heavy_crossbow',
-                label: 'Heavy Crossbow (Push)',
-              ),
-              ChoiceOption(id: 'longbow', label: 'Longbow (Slow)'),
-            ],
+            options: _fighterMasteryOptions,
           ),
           Choice(
             id: 'fighter_fighting_style',
@@ -1365,8 +1324,8 @@ final List<CharacterClass> allClasses = [
       LevelFeature(
         level: 2,
         fixedTraits: [
-          'Action Surge (1 use): take one additional action on your turn (once per Short or Long Rest)',
-          'Tactical Mind: spend a Second Wind use to add 1d10 to a failed ability check',
+          'Action Surge (1 use): take one additional action on your turn, except the Magic action (once per Short or Long Rest)',
+          'Tactical Mind: when you fail an ability check, spend a Second Wind use to add 1d10 (the use is kept if the check still fails)',
         ],
       ),
       LevelFeature(
@@ -1380,12 +1339,12 @@ final List<CharacterClass> allClasses = [
                 id: 'battle_master',
                 label: 'Battle Master',
                 description:
-                    'Combat Superiority: superiority dice fuel maneuvers (Level 3).',
+                    'Combat Superiority: Superiority Dice fuel maneuvers; Student of War (Level 3).',
                 levelFeatures: {
                   7: LevelFeature(
                     level: 7,
                     fixedTraits: [
-                      'Know Your Enemy: study a creature to learn its capabilities',
+                      'Know Your Enemy: Bonus Action, learn a creature\'s Immunities, Resistances, and Vulnerabilities (once per Long Rest, or expend a Superiority Die)',
                     ],
                   ),
                   10: LevelFeature(
@@ -1397,7 +1356,7 @@ final List<CharacterClass> allClasses = [
                   15: LevelFeature(
                     level: 15,
                     fixedTraits: [
-                      'Relentless: regain a superiority die if you have none left when you roll initiative',
+                      'Relentless: once per turn, when you use a maneuver, you can roll 1d8 instead of expending a Superiority Die',
                     ],
                   ),
                   18: LevelFeature(
@@ -1412,7 +1371,7 @@ final List<CharacterClass> allClasses = [
                 id: 'champion',
                 label: 'Champion',
                 description:
-                    'Improved Critical + Remarkable Athlete: wider crit range, added physical prowess (Level 3).',
+                    'Improved Critical (crit on 19-20) and Remarkable Athlete (Advantage on Initiative and Athletics) (Level 3).',
                 levelFeatures: {
                   7: LevelFeature(
                     level: 7,
@@ -1464,19 +1423,19 @@ final List<CharacterClass> allClasses = [
                   10: LevelFeature(
                     level: 10,
                     fixedTraits: [
-                      'Heroic Warrior: Advantage on Initiative rolls; gain Heroic Inspiration when you roll low Initiative',
+                      'Heroic Warrior: during combat, gain Heroic Inspiration whenever you start your turn without it',
                     ],
                   ),
                   15: LevelFeature(
                     level: 15,
                     fixedTraits: [
-                      'Superior Critical: critical hit range widens further',
+                      'Superior Critical: your weapon and Unarmed Strike attacks score a Critical Hit on 18-20',
                     ],
                   ),
                   18: LevelFeature(
                     level: 18,
                     fixedTraits: [
-                      'Survivor: regain Hit Points at the start of your turn if below half Hit Points',
+                      'Survivor: Advantage on Death Saving Throws (18-20 counts as a 20); at the start of your turn, if Bloodied with at least 1 HP, regain 5 + Constitution modifier HP',
                     ],
                   ),
                 },
@@ -1490,7 +1449,7 @@ final List<CharacterClass> allClasses = [
                   7: LevelFeature(
                     level: 7,
                     fixedTraits: [
-                      'War Magic: replace an attack with a cantrip cast',
+                      'War Magic: when you take the Attack action, replace one attack with a Wizard cantrip that has a casting time of an action',
                     ],
                   ),
                   10: LevelFeature(
@@ -1502,13 +1461,13 @@ final List<CharacterClass> allClasses = [
                   15: LevelFeature(
                     level: 15,
                     fixedTraits: [
-                      'Arcane Charge: teleport 30 feet when you use Action Surge',
+                      'Arcane Charge: when you use Action Surge, teleport up to 30 feet before or after the additional action',
                     ],
                   ),
                   18: LevelFeature(
                     level: 18,
                     fixedTraits: [
-                      'Improved War Magic: replace an attack with a leveled spell cast',
+                      'Improved War Magic: replace two attacks with a level 1 or 2 Wizard spell that has a casting time of an action',
                     ],
                   ),
                 },
@@ -1522,25 +1481,25 @@ final List<CharacterClass> allClasses = [
                   7: LevelFeature(
                     level: 7,
                     fixedTraits: [
-                      'Telekinetic Adept: added telekinetic combat options',
+                      'Telekinetic Adept: Psi-Powered Leap (Bonus Action Fly Speed) and Telekinetic Thrust (Strength save: Prone or pushed 10 ft)',
                     ],
                   ),
                   10: LevelFeature(
                     level: 10,
                     fixedTraits: [
-                      'Guarded Mind: resistance to Psychic damage, reduced effects of Charmed/Frightened',
+                      'Guarded Mind: Resistance to Psychic damage; spend a Psionic Energy Die to end Charmed and Frightened at the start of your turn',
                     ],
                   ),
                   15: LevelFeature(
                     level: 15,
                     fixedTraits: [
-                      'Bulwark of Force: telekinetic shield grants resistance to a damage type',
+                      'Bulwark of Force: Bonus Action, up to Intelligence modifier creatures (min 1) have Half Cover for 1 minute (once per Long Rest or a Psionic Energy Die)',
                     ],
                   ),
                   18: LevelFeature(
                     level: 18,
                     fixedTraits: [
-                      'Telekinetic Master: cast Telekinesis at will without a spell slot',
+                      'Telekinetic Master: always have Telekinesis prepared; cast it without a slot (once per Long Rest or a Psionic Energy Die) and make a Bonus Action weapon attack each turn while concentrating',
                     ],
                   ),
                 },
@@ -1555,6 +1514,13 @@ final List<CharacterClass> allClasses = [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
+        choices: [
+          Choice(
+            id: 'fighter_weapon_mastery_4',
+            title: 'Weapon Mastery: choose 1 more weapon type',
+            options: _fighterMasteryOptions,
+          ),
+        ],
       ),
       LevelFeature(
         level: 5,
@@ -1581,11 +1547,20 @@ final List<CharacterClass> allClasses = [
       LevelFeature(
         level: 9,
         fixedTraits: [
-          'Indomitable (1 use): reroll a failed saving throw (once per Long Rest)',
-          'Tactical Master: your Weapon Mastery properties can be swapped when you finish a Short or Long Rest',
+          'Indomitable (1 use): reroll a failed saving throw with a bonus equal to your Fighter level (once per Long Rest)',
+          'Tactical Master: when you attack with a weapon whose mastery you can use, you can replace its property with Push, Sap, or Slow for that attack',
         ],
       ),
-      LevelFeature(level: 10),
+      LevelFeature(
+        level: 10,
+        choices: [
+          Choice(
+            id: 'fighter_weapon_mastery_10',
+            title: 'Weapon Mastery: choose 1 more weapon type',
+            options: _fighterMasteryOptions,
+          ),
+        ],
+      ),
       LevelFeature(
         level: 11,
         fixedTraits: [
@@ -1603,7 +1578,7 @@ final List<CharacterClass> allClasses = [
         level: 13,
         fixedTraits: [
           'Indomitable (2 uses)',
-          'Studied Attacks: Advantage on an attack roll against a creature if your last attack against it this turn missed',
+          'Studied Attacks: if you miss a creature with an attack roll, you have Advantage on your next attack roll against it before the end of your next turn',
         ],
       ),
       LevelFeature(
@@ -1620,10 +1595,20 @@ final List<CharacterClass> allClasses = [
           'Ability Score Improvement: increase one ability score by 2, or two ability scores by 1 each (max 20), or take a Feat',
         ],
         grantsAbilityScoreImprovement: true,
+        choices: [
+          Choice(
+            id: 'fighter_weapon_mastery_16',
+            title: 'Weapon Mastery: choose 1 more weapon type',
+            options: _fighterMasteryOptions,
+          ),
+        ],
       ),
       LevelFeature(
         level: 17,
-        fixedTraits: ['Action Surge (2 uses)', 'Indomitable (3 uses)'],
+        fixedTraits: [
+          'Action Surge (2 uses, only once per turn)',
+          'Indomitable (3 uses)',
+        ],
       ),
       LevelFeature(level: 18),
       LevelFeature(
@@ -2114,4 +2099,43 @@ final List<CharacterClass> allClasses = [
       ),
     ],
   ),
+];
+
+/// Weapon kinds a Fighter can pick for Weapon Mastery (Simple and Martial).
+const _fighterMasteryOptions = [
+  ChoiceOption(id: 'club', label: 'Club (Sap)'),
+  ChoiceOption(id: 'dagger', label: 'Dagger (Nick)'),
+  ChoiceOption(id: 'greatclub', label: 'Greatclub (Push)'),
+  ChoiceOption(id: 'handaxe', label: 'Handaxe (Vex)'),
+  ChoiceOption(id: 'javelin', label: 'Javelin (Slow)'),
+  ChoiceOption(id: 'light_hammer', label: 'Light Hammer (Nick)'),
+  ChoiceOption(id: 'mace', label: 'Mace (Sap)'),
+  ChoiceOption(id: 'quarterstaff', label: 'Quarterstaff (Topple)'),
+  ChoiceOption(id: 'sickle', label: 'Sickle (Nick)'),
+  ChoiceOption(id: 'spear', label: 'Spear (Sap)'),
+  ChoiceOption(id: 'battleaxe', label: 'Battleaxe (Topple)'),
+  ChoiceOption(id: 'flail', label: 'Flail (Sap)'),
+  ChoiceOption(id: 'glaive', label: 'Glaive (Graze)'),
+  ChoiceOption(id: 'greataxe', label: 'Greataxe (Cleave)'),
+  ChoiceOption(id: 'greatsword', label: 'Greatsword (Graze)'),
+  ChoiceOption(id: 'halberd', label: 'Halberd (Cleave)'),
+  ChoiceOption(id: 'lance', label: 'Lance (Topple)'),
+  ChoiceOption(id: 'longsword', label: 'Longsword (Sap)'),
+  ChoiceOption(id: 'maul', label: 'Maul (Topple)'),
+  ChoiceOption(id: 'morningstar', label: 'Morningstar (Sap)'),
+  ChoiceOption(id: 'pike', label: 'Pike (Push)'),
+  ChoiceOption(id: 'rapier', label: 'Rapier (Vex)'),
+  ChoiceOption(id: 'scimitar', label: 'Scimitar (Nick)'),
+  ChoiceOption(id: 'shortsword', label: 'Shortsword (Vex)'),
+  ChoiceOption(id: 'trident', label: 'Trident (Topple)'),
+  ChoiceOption(id: 'warhammer', label: 'Warhammer (Push)'),
+  ChoiceOption(id: 'war_pick', label: 'War Pick (Sap)'),
+  ChoiceOption(id: 'whip', label: 'Whip (Slow)'),
+  ChoiceOption(id: 'dart', label: 'Dart (Vex)'),
+  ChoiceOption(id: 'light_crossbow', label: 'Light Crossbow (Slow)'),
+  ChoiceOption(id: 'shortbow', label: 'Shortbow (Vex)'),
+  ChoiceOption(id: 'sling', label: 'Sling (Slow)'),
+  ChoiceOption(id: 'hand_crossbow', label: 'Hand Crossbow (Vex)'),
+  ChoiceOption(id: 'heavy_crossbow', label: 'Heavy Crossbow (Push)'),
+  ChoiceOption(id: 'longbow', label: 'Longbow (Slow)'),
 ];

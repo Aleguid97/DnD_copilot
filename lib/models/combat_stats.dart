@@ -39,6 +39,11 @@ class CombatStats {
     bonuses: character.totalAbilityBonuses,
   );
 
+  int get constitutionModifier => character.abilityScores.modifierFor(
+    Ability.constitution,
+    bonuses: character.totalAbilityBonuses,
+  );
+
   GameItem? get _equippedArmor => equippedItems
       .where(
         (i) =>

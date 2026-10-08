@@ -13,6 +13,7 @@ import '../../models/class_resource.dart';
 import '../../models/cleric_features.dart';
 import '../../models/barbarian_features.dart';
 import '../../models/druid_features.dart';
+import '../../models/fighter_features.dart';
 import '../../data/spell_slots_data.dart';
 import '../../data/spells_data.dart';
 import '../../models/spell.dart';
@@ -141,6 +142,10 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
   int? _duplicityRoundsLeft;
   int? _coronaRoundsLeft;
   bool _divineStrikeUsed = false;
+  // Fighter: Tactical Master mastery swaps (weapon id → property), Heroic
+  // Inspiration (Champion's Heroic Warrior).
+  final Map<String, String> _tacticalMasterOverride = {};
+  bool _heroicInspiration = false;
   // HP card: the damage being applied is Bludgeoning/Piercing/Slashing.
   bool _physicalDamage = true;
   // Feats

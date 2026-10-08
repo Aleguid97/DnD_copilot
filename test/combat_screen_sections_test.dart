@@ -22,6 +22,7 @@ List<String> _expectedSections(Character c) {
     'Unarmed Strike',
     if (c.characterClass.id == 'barbarian') 'Barbarian Features',
     if (c.characterClass.id == 'cleric') 'Cleric Features',
+    if (c.characterClass.id == 'fighter') 'Fighter Features',
     if (c.characterClass.id == 'druid') 'Druid Features',
     if (c.characterClass.id == 'druid' || c.characterClass.id == 'cleric')
       'Spellcasting',
@@ -33,7 +34,7 @@ const _subclasses = {
   'barbarian': ['berserker', 'wild_heart', 'world_tree', 'zealot'],
   'cleric': ['life', 'light', 'trickery', 'war'],
   'druid': ['land', 'moon', 'sea', 'stars'],
-  'fighter': ['battle_master', 'champion'],
+  'fighter': ['battle_master', 'champion', 'eldritch_knight', 'psi_warrior'],
 };
 
 void main() {

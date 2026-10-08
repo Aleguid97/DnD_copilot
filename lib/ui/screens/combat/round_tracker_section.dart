@@ -164,6 +164,26 @@ extension _RoundTrackerSection on _CombatScreenState {
       await _endConcentration(characterId);
       notes.add('$concentrationSpell expired');
     }
+    final c = widget.character;
+    if (fighterSubclass(c) == 'champion') {
+      // Heroic Warrior (10): Heroic Inspiration at the start of your turn.
+      if (c.level >= 10 && !_heroicInspiration) {
+        _update(() => _heroicInspiration = true);
+        notes.add('Heroic Inspiration gained');
+      }
+      // Survivor — Heroic Rally (18): Bloodied with at least 1 HP.
+      if (c.level >= 18) {
+        final max = c.totalHitPoints;
+        final hp = await ref.read(currentHpProvider(characterId).future) ?? max;
+        if (hp >= 1 && hp * 2 <= max) {
+          final con = c.abilityScores.modifierFor(
+            Ability.constitution,
+            bonuses: c.totalAbilityBonuses,
+          );
+          notes.add('Heroic Rally${await _healSelf(characterId, 5 + con)}');
+        }
+      }
+    }
     _showRoll('Round $_round.${notes.isEmpty ? '' : ' ${notes.join('; ')}.'}');
   }
 }

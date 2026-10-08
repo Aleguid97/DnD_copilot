@@ -24,7 +24,8 @@ extension _CoreSections on _CombatScreenState {
               }(),
               onTap: () {
                 final total = stats.totalInitiative(profBonus);
-                final hasAdvantage = stats.hasFeralInstinct;
+                final athlete = hasRemarkableAthlete(widget.character);
+                final hasAdvantage = stats.hasFeralInstinct || athlete;
                 final firstRoll = rollAttack(total);
                 DiceRollResult result = firstRoll;
                 String advantageNote = '';
@@ -34,7 +35,7 @@ extension _CoreSections on _CombatScreenState {
                     result = secondRoll;
                   }
                   advantageNote =
-                      ' (Advantage - Feral Instinct: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
+                      ' (Advantage - ${athlete ? 'Remarkable Athlete' : 'Feral Instinct'}: ${firstRoll.rolls.first}/${secondRoll.rolls.first})';
                 }
                 if (widget.character.characterClass.id == 'barbarian' &&
                     widget.character.level >= 15 &&
@@ -498,10 +499,23 @@ extension _CoreSections on _CombatScreenState {
                     title: Text(skill),
                     trailing: OutlinedButton(
                       onPressed: () {
-                        final result = rollAttack(bonus);
+                        // Remarkable Athlete (Champion): Advantage on
+                        // Strength (Athletics) checks.
+                        final advantage =
+                            skill == 'Athletics' &&
+                            hasRemarkableAthlete(widget.character);
+                        final first = rollAttack(bonus);
+                        var result = first;
+                        var advNote = '';
+                        if (advantage) {
+                          final second = rollAttack(bonus);
+                          if (second.total > first.total) result = second;
+                          advNote =
+                              ' (Advantage - Remarkable Athlete: ${first.rolls.first}/${second.rolls.first})';
+                        }
                         _update(() {
                           _lastRollResult =
-                              '$skill: ${result.rolls.first} $bonusText = ${result.total}';
+                              '$skill: ${result.rolls.first} $bonusText = ${result.total}$advNote';
                           _lastSkillRollForCorrection = result.total;
                           _lastSkillRolledName = skill;
                         });

@@ -3,6 +3,7 @@ import '../models/class_resource.dart';
 import '../models/barbarian_features.dart';
 import '../models/cleric_features.dart';
 import '../models/druid_features.dart';
+import '../models/fighter_features.dart';
 import 'spell_slots_data.dart';
 import 'xp_table.dart';
 
@@ -11,9 +12,10 @@ final Map<String, List<ClassResource>> classResources = {
     ClassResource(
       id: 'second_wind',
       name: 'Second Wind',
-      maxUses: (level) => 2,
+      maxUses: secondWindUses,
       availableFromLevel: 1,
-      fullRecoveryOn: RestType.short,
+      fullRecoveryOn: RestType.long,
+      shortRestPartialRecovery: 1,
     ),
     ClassResource(
       id: 'action_surge',

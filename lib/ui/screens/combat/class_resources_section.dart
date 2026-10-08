@@ -75,6 +75,8 @@ extension _ClassResourcesSection on _CombatScreenState {
                   .where(
                     (r) =>
                         r.id != 'war_priest' &&
+                        r.id != 'second_wind' &&
+                        r.id != 'indomitable' &&
                         r.id != 'rage' &&
                         r.id != 'warrior_of_the_gods_pool' &&
                         r.id != 'zealous_presence' &&
