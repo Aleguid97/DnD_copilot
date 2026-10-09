@@ -58,8 +58,11 @@ Regole:
   una sezione di classe.
 - Test di interazione per classe (es. `test/druid_combat_test.dart`) premono i
   pulsanti e verificano risorse/PF; setup comune in `test/helpers/combat_harness.dart`.
-- Slot incantesimo: `lib/data/spell_slots_data.dart` (tabella full caster) espone
-  risorse `spell_slot_N`; il Druido le usa, gli altri incantatori potranno riusarle.
+- Slot incantesimo: `lib/data/spell_slots_data.dart` (tabella full caster ed Eldritch
+  Knight; `spellSlotsFor(character, livello)`) espone risorse `spell_slot_N`.
+- Liste incantesimi: `classSpellLists` è indicizzata per lista (druid, cleric, wizard);
+  `spellListIdFor(character)` dice da quale lista lancia un personaggio (es. Eldritch
+  Knight → wizard). La lista del Mago (242, cap. 3) è già completa per la classe Mago.
 - Incantesimi: catalogo in `lib/data/spells_data.dart` (livello, scuola, C/R/M dalle
   liste del cap. 3 PHB). Per abilitare una classe: aggiungere la sua lista a
   `classSpellLists` e le sue regole (trucchetti, preparati, CD) in `_casterRules`.
@@ -90,8 +93,8 @@ Regole:
   (scelte extra al 4/10/16; la maestria vale solo per le armi scelte), Tactical Master.
   Champion (critico 19/18, Remarkable Athlete, Heroic Warrior, Survivor), Battle Master
   (dadi di superiorità, 20 manovre come pulsanti, Relentless, Know Your Enemy, Student
-  of War), Psi Warrior (dadi psionici e poteri). **Eldritch Knight**: tabella verificata,
-  incantesimi in attesa della lista del Mago (cap. 3, classe Mago).
+  of War), Psi Warrior (dadi psionici e poteri), Eldritch Knight (lista del Mago, slot
+  propri `eldritchKnightSlots`, Intelligenza, Eldritch Strike automatico).
 - **Chierico**: 1–20, verificato sul cap. 3 (tabella, Channel Divinity, Divine Order,
   Blessed Strikes, Divine Intervention e versione maggiore, domini Life/Light/Trickery).
   Ogni opzione di Channel Divinity consuma un uso (Divine Spark, Turn Undead + Sear Undead,

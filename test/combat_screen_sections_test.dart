@@ -5,6 +5,7 @@
 
 import 'package:dnd_prova/data/class_resources_data.dart';
 import 'package:dnd_prova/data/classes_data.dart';
+import 'package:dnd_prova/data/spells_data.dart';
 import 'package:dnd_prova/models/character.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,8 +25,7 @@ List<String> _expectedSections(Character c) {
     if (c.characterClass.id == 'cleric') 'Cleric Features',
     if (c.characterClass.id == 'fighter') 'Fighter Features',
     if (c.characterClass.id == 'druid') 'Druid Features',
-    if (c.characterClass.id == 'druid' || c.characterClass.id == 'cleric')
-      'Spellcasting',
+    if (hasSpellcastingSupport(c)) 'Spellcasting',
     if (hasResources) 'Class Resources',
   ];
 }

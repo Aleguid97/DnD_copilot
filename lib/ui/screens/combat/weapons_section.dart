@@ -144,6 +144,18 @@ extension _WeaponsSection on _CombatScreenState {
                                   hitNote =
                                       ' — CRITICAL HIT (natural ${result.rolls.first}, Champion)!';
                                 }
+                                // Eldritch Strike (Eldritch Knight 10).
+                                if (didHit &&
+                                    fighterSubclass(widget.character) ==
+                                        'eldritch_knight' &&
+                                    widget.character.level >= 10) {
+                                  await _addCondition(
+                                    target,
+                                    _eldritchStrikeLabel,
+                                  );
+                                  hitNote +=
+                                      ' Eldritch Strike: Disadvantage on its next save against your spell.';
+                                }
                                 if (critRoll &&
                                     didHit &&
                                     hasRemarkableAthlete(widget.character)) {

@@ -204,6 +204,7 @@ final Map<String, List<ClassResource> Function(Character)> _subclassResources =
           fullRecoveryOn: RestType.long,
         ),
       ],
+      'fighter:eldritch_knight': (c) => slotResources(eldritchKnightSlots),
       'fighter:psi_warrior': (c) => [
         ClassResource(
           id: 'psionic_energy',

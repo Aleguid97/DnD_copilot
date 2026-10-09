@@ -9,8 +9,7 @@ extension _CombatHelpers on _CombatScreenState {
     return (max - spent).clamp(0, max);
   }
 
-  int _slotMax(int spellLevel) =>
-      fullCasterSlots(widget.character.level, spellLevel);
+  int _slotMax(int spellLevel) => spellSlotsFor(widget.character, spellLevel);
 
   int _slotRemaining(List<CharacterResourceUse> rows, int spellLevel) =>
       _resourceRemaining(

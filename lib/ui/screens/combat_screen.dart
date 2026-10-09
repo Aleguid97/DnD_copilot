@@ -293,7 +293,7 @@ class _CombatScreenState extends ConsumerState<CombatScreen> {
               ..._buildFeatsSection(context, d),
             ],
           ),
-          if (hasSpellcastingSupport(widget.character.characterClass.id))
+          if (hasSpellcastingSupport(widget.character))
             ('Spells', _buildSpellcastingSection(context, d)),
           (
             'Class',

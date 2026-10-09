@@ -78,12 +78,16 @@ SpellEffect _auto(
   String type, {
   String? upcast,
   bool repeat = true,
+  int flat = 0,
+  int upcastFlat = 0,
   String note = '',
 }) => SpellEffect(
   kind: SpellEffectKind.automatic,
   dice: dice,
   damageType: type,
   upcastDice: upcast,
+  flat: flat,
+  upcastFlat: upcastFlat,
   repeatable: repeat,
   note: note,
 );
@@ -586,5 +590,115 @@ final Map<String, SpellEffect> spellEffects = {
     flat: 1000,
     note:
         'Regains all its Hit Points and ends Charmed, Frightened, Paralyzed, Poisoned, Stunned.',
+  ),
+
+  // ----------------------------------------- Wizard list (Eldritch Knight)
+  'chill_touch': _attack(
+    '1d10',
+    'Necrotic',
+    melee: true,
+    cantrip: true,
+    note:
+        'The target can\'t regain Hit Points until the end of your next turn.',
+  ),
+  'mind_sliver': _save(
+    _int,
+    dice: '1d6',
+    type: 'Psychic',
+    half: false,
+    cantrip: true,
+    multi: false,
+    note:
+        'On a failed save, subtract 1d4 from its next save before the end of your next turn.',
+  ),
+  'chromatic_orb': _attack(
+    '3d8',
+    'Acid, Cold, Fire, Lightning, Poison or Thunder (your choice)',
+    upcast: '1d8',
+    note:
+        'Doubles on the d8s: the orb leaps to another target within 30 ft (with a level 2+ slot).',
+  ),
+  'color_spray': _save(
+    _con,
+    condition: 'Blinded',
+    note: '15-ft Cone; Blinded until the end of your next turn.',
+  ),
+  'magic_missile': _auto(
+    '3d4',
+    'Force',
+    flat: 3,
+    upcast: '1d4',
+    upcastFlat: 1,
+    repeat: false,
+    note:
+        'Three darts of 1d4 + 1 (one more per slot level above 1), all on one creature or spread out.',
+  ),
+  'witch_bolt': _attack(
+    '2d12',
+    'Lightning',
+    upcast: '1d12',
+    note: 'Later turns: Bonus Action for 1d12 Lightning automatically.',
+  ),
+  'cloud_of_daggers': _auto(
+    '4d4',
+    'Slashing',
+    upcast: '2d4',
+    note:
+        '5-ft Cube; also on entering or ending a turn there. Magic action: move it 30 ft.',
+  ),
+  'dragons_breath': _save(
+    _dex,
+    dice: '3d6',
+    type: 'Acid, Cold, Fire, Lightning or Poison (chosen)',
+    upcast: '1d6',
+    repeat: true,
+    note: 'The touched creature exhales a 15-ft Cone as a Magic action.',
+  ),
+  'melfs_acid_arrow': _attack(
+    '4d4',
+    'Acid',
+    upcast: '1d4',
+    note:
+        'Another 2d4 Acid (+1d4 per slot level above 2) at the end of its next turn; half the initial damage on a miss.',
+  ),
+  'mind_spike': _save(
+    _wis,
+    dice: '3d8',
+    type: 'Psychic',
+    upcast: '1d8',
+    multi: false,
+    note: 'On a failed save you always know where the target is.',
+  ),
+  'scorching_ray': _attack(
+    '2d6',
+    'Fire',
+    note: 'Three rays (one more per slot level above 2): attack once per ray.',
+  ),
+  'vampiric_touch': _attack(
+    '3d6',
+    'Necrotic',
+    melee: true,
+    upcast: '1d6',
+    repeat: true,
+    note: 'You regain HP equal to half the Necrotic damage dealt.',
+  ),
+  'vitriolic_sphere': _save(
+    _dex,
+    dice: '10d4',
+    type: 'Acid',
+    upcast: '2d4',
+    note:
+        '20-ft Sphere; on a failed save another 5d4 Acid at the end of its next turn.',
+  ),
+  'phantasmal_killer': _save(
+    _wis,
+    dice: '4d10',
+    type: 'Psychic',
+    upcast: '1d10',
+    multi: false,
+    repeat: true,
+    condition: 'Phantasmal Killer: Disadvantage on checks and attacks',
+    note:
+        'Save again at the end of each of its turns: fail = damage again, success = spell ends.',
   ),
 };

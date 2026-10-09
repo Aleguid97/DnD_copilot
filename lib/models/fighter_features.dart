@@ -273,3 +273,14 @@ List<Maneuver> knownManeuvers(Character c) {
   if (level >= 5) return ('d8', 6);
   return ('d6', 4);
 }
+
+// ---------------------------------------------------------------------------
+// Eldritch Knight
+
+/// Wizard cantrips known: 2, 3 from Fighter level 10.
+int eldritchKnightCantrips(int level) => level >= 10 ? 3 : 2;
+
+/// Prepared spells (Eldritch Knight Spellcasting table), Fighter levels 3-20.
+int eldritchKnightPrepared(int level) => const [
+  0, 0, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13, //
+][(level - 1).clamp(0, 19)];

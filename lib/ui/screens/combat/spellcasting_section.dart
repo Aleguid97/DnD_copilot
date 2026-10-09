@@ -34,6 +34,20 @@ extension _SpellcastingSection on _CombatScreenState {
           attackBonus: druidSpellAttackBonus(c, profBonus),
           abilityMod: druidWisdomModifier(c),
         );
+      case 'fighter':
+        // Eldritch Knight (chapter 3): Wizard spells, Intelligence.
+        final intMod = c.abilityScores.modifierFor(
+          Ability.intelligence,
+          bonuses: c.totalAbilityBonuses,
+        );
+        return _CasterRules(
+          cantrips: eldritchKnightCantrips(c.level),
+          prepared: eldritchKnightPrepared(c.level),
+          alwaysPreparedNames: const [],
+          saveDc: 8 + profBonus + intMod,
+          attackBonus: profBonus + intMod,
+          abilityMod: intMod,
+        );
       case 'cleric':
         final wis = wisdomModifier(c);
         return _CasterRules(
@@ -87,7 +101,7 @@ extension _SpellcastingSection on _CombatScreenState {
     final rules = _casterRules(d.profBonus);
     if (characterId == null ||
         rules == null ||
-        !hasSpellcastingSupport(widget.character.characterClass.id)) {
+        !hasSpellcastingSupport(widget.character)) {
       return const [];
     }
     final theme = Theme.of(context);
@@ -198,7 +212,7 @@ extension _SpellcastingSection on _CombatScreenState {
             limit: rules.cantrips ?? 99,
             candidates: [
               for (final id
-                  in classSpellLists[widget.character.characterClass.id]!)
+                  in classSpellLists[spellListIdFor(widget.character)]!)
                 if (allSpells[id]!.isCantrip) allSpells[id]!,
             ],
             current: known,
@@ -257,10 +271,7 @@ extension _SpellcastingSection on _CombatScreenState {
                     limit: rules.prepared ?? 99,
                     candidates: [
                       for (final id
-                          in classSpellLists[widget
-                              .character
-                              .characterClass
-                              .id]!)
+                          in classSpellLists[spellListIdFor(widget.character)]!)
                         if (!allSpells[id]!.isCantrip &&
                             allSpells[id]!.level <= _maxSlotLevel &&
                             !alwaysIds.contains(id))

@@ -2,6 +2,10 @@ part of '../combat_screen.dart';
 
 /// Conditions placed by a spell are tagged "Condition (Spell)" so they can be
 /// removed when the spell's Concentration ends.
+/// Marker left by an Eldritch Knight's weapon hit; used up by the next save
+/// against one of the knight's spells.
+const _eldritchStrikeLabel = 'Eldritch Strike (Disadvantage on next save)';
+
 String _spellConditionLabel(String condition, String spellName) =>
     '$condition ($spellName)';
 
@@ -169,7 +173,11 @@ extension _SpellEffectsEngine on _CombatScreenState {
         return;
 
       case SpellEffectKind.automatic:
-        final roll = rollDamage(dice!, damageMod);
+        final roll = rollDamage(
+          dice!,
+          damageMod +
+              scaledFlat(effect, spellLevel: spell.level, slotLevel: slotLevel),
+        );
         final target = _enemies(
           characterId,
         ).where((e) => e.id == _selectedEnemyId).firstOrNull;
@@ -177,7 +185,7 @@ extension _SpellEffectsEngine on _CombatScreenState {
             ? ' — ${await _damageEnemy(target, roll.total)}'
             : '';
         _showRoll(
-          '$prefix${spell.name}: ${roll.rolls.join('+')}${damageMod != 0 ? " +$damageMod" : ""} = ${roll.total} $type$hit$note',
+          '$prefix${spell.name}: ${roll.rolls.join('+')}${roll.modifier != 0 ? " +${roll.modifier}" : ""} = ${roll.total} $type$hit$note',
         );
         return;
 
@@ -297,6 +305,12 @@ extension _SpellEffectsEngine on _CombatScreenState {
         for (final e in enemies) {
           final failed = outcomes[e.id];
           if (failed == null) continue;
+          if (_conditionsOf(e).contains(_eldritchStrikeLabel)) {
+            await ref.read(appDatabaseProvider).updateEnemyConditions(e.id, [
+              for (final x in _conditionsOf(e))
+                if (x != _eldritchStrikeLabel) x,
+            ]);
+          }
           final full = (dmg?.total ?? 0) + (extra?.total ?? 0);
           final amount = failed ? full : (effect.halfOnSave ? full ~/ 2 : 0);
           var line = '${e.name} ${failed ? "fails" : "saves"}';

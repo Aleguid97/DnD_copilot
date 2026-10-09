@@ -27,6 +27,24 @@ extension _FighterSection on _CombatScreenState {
               ..._battleMasterCards(context, characterId, rows, d),
             if (subclass == 'psi_warrior' && c.level >= 3)
               ..._psiWarriorCards(context, characterId, rows, d),
+            if (subclass == 'eldritch_knight' && c.level >= 3)
+              _featureCard(
+                context,
+                'Eldritch Knight',
+                [
+                  'Spells: Spells tab (Wizard list, Intelligence).',
+                  'War Bond: you can\'t be disarmed of a bonded weapon; Bonus Action to summon it (up to two bonded weapons).',
+                  if (c.level >= 7)
+                    c.level >= 18
+                        ? 'Improved War Magic: replace two attacks of the Attack action with a level 1-2 Wizard spell (casting time: an action).'
+                        : 'War Magic: replace one attack of the Attack action with a Wizard cantrip (casting time: an action).',
+                  if (c.level >= 10)
+                    'Eldritch Strike: a weapon hit marks the target; it has Disadvantage on its next save against your spell (applied automatically).',
+                  if (c.level >= 15)
+                    'Arcane Charge: when you use Action Surge, teleport up to 30 ft before or after the extra action.',
+                ].join('\n'),
+                const [],
+              ),
             if (subclass == 'champion' && c.level >= 10)
               _featureCard(
                 context,
